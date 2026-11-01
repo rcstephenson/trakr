@@ -7,7 +7,8 @@ const EQUIPMENT: Equipment[] = ['barbell', 'dumbbell', 'cable', 'machine', 'body
 const KINDS: ExerciseKind[] = ['compound', 'isolation'];
 const LOADS: LoadType[] = ['total', 'per-hand', 'bodyweight-plus', 'none'];
 
-const field = 'min-h-touch w-full rounded-btn border border-hairline-strong bg-bg px-3 text-base text-ink';
+const field =
+  'min-h-touch w-full rounded-btn border border-hairline-strong bg-bg px-3 text-base text-ink';
 
 function Select<T extends string>({
   label,

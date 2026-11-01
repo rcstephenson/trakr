@@ -21,6 +21,7 @@ const SWATCHES = [
   ['ink', 'bg-ink'],
   ['muted', 'bg-muted'],
   ['hair', 'bg-hairline'],
+  ['hair-strong', 'bg-hairline-strong'],
   ['accent', 'bg-accent'],
   ['accent-ink', 'bg-accent-ink'],
   ['pr', 'bg-pr'],
