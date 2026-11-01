@@ -225,6 +225,16 @@ Implemented by F02 in `src/db/repositories/` and `src/hooks/`; every UI feature 
 
 Reactive hooks (`useLiveQuery`): `useSettings()`, `useActiveProgram()`, `useActiveSession()`, `useSession(id)`, `useSessionSets(sessionId)`, `useLastPerformance(exerciseId, excludeSessionId?)`, `useSessions(range?)`, `useActivities(range?)`, `useExerciseHistory(exerciseId)` (completed sessions + their sets for that exercise).
 
+Implementation notes (as built by F02; authoritative over the table above where they differ):
+- `get(...)` and `getActive()` return `null` when nothing is found; hooks return `undefined` only while loading. Test with `!x` / `=== null`, not `=== undefined`.
+- `history.forExercise(exerciseId)` (wrapped by `useExerciseHistory`) returns completed sessions containing the exercise, oldest first, each with all its sets for that exercise **including warm-ups**; filter on `isWarmup` where needed.
+- `sessions.list({from, to, status})` and `activities.list({from, to})` take inclusive ISO bounds on `startedAt` and return newest first. `sets.listBySession` sorts by slot then set index; `sets.listByExercise` is oldest first and includes warm-ups.
+- `sets.add` takes the set fields minus `id` (`isWarmup` defaults to false, `completedAt` to now); `activities.add` takes the fields minus `id`.
+- `settings.update` accepts a partial `increments` and merges it per equipment.
+- `sessions.swapExercise` rewrites the target's `exerciseId` and `kind` but leaves already-logged sets alone. `programs.save` keeps the existing active flag unless `activate` is true. `programs.remove` leaves past sessions alone.
+- `useSession`, `useSessionSets`, `useLastPerformance` and `useExerciseHistory` accept an `undefined` id.
+- `lastPerformance` picks the most recent completed session by `startedAt`.
+
 Display rule: every weight shown in the UI goes through `formatWeight()` from `domain/units.ts` with `useSettings().unit`, so changing units in Settings updates every screen.
 
 ---
