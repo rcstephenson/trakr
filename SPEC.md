@@ -260,7 +260,7 @@ Display rule: every weight shown in the UI goes through `formatWeight()` from `d
 
 ## 6. Screens & Routes
 
-Bottom tab bar (always visible except during an active session where it is replaced with a session footer): **Today · History · Progress · Program**. Settings via an icon in the Program header.
+Bottom tab bar (always visible except during an active session, where it is hidden and the sticky session header carries back, title and Finish): **Today · History · Progress · Program**. Settings via an icon in the Program header.
 
 | Route | Screen | Purpose |
 |---|---|---|
@@ -320,6 +320,8 @@ Each exercise is a card. **Each set is ONE text input** holding `weight x reps`,
 
 ## 7. Design System — "Signal"
 
+The full, code-verified spec sheet is `docs/design-system.md`.
+
 **Mood:** precise, cool, a little technical. Think instrument panel or lab notebook, not a wellness app: hairline rules, mono numerals, terse uppercase micro-labels, near-black ink, and one electric accent used sparingly like an indicator light. Everything the user *did* (numbers) is the hero; chrome stays quiet.
 
 ### Colour tokens
@@ -331,11 +333,12 @@ Each exercise is a card. **Each set is ONE text input** holding `weight x reps`,
 | `--raised` | `#FFFFFF` | `#171C24` |
 | `--ink` (text) | `#0A0E14` | `#E8EDF2` |
 | `--muted` | `#5B6572` | `#8893A0` |
-| `--hairline` (borders) | `#D3D9E0` | `#232A33` |
+| `--hairline` (borders, dividers) | `#D3D9E0` | `#232A33` |
+| `--hairline-strong` (form-control borders, >= 3:1) | `#7D8794` | `#657080` |
 | `--accent` (fills, ticks, active) | `#C6FF3D` | `#C6FF3D` |
 | `--on-accent` (text on accent fills) | `#0A0E14` | `#0A0C10` |
 | `--accent-ink` (accent-coloured text and lines) | `#3D5A00` | `#C6FF3D` |
-| `--pr` | `#B86E00` | `#FFB84D` |
+| `--pr` (icons and borders only; fails AA for small text on Paper) | `#B86E00` | `#FFB84D` |
 | `--danger` | `#C62839` | `#FF6B7A` |
 
 Theme: `system` by default; both themes are first-class. Primary buttons are ink-on-paper (light) or accent fill (dark); the accent is for the *current* thing (active tab tick, current row, logged-set tick, PR, chart line), never for large areas.
@@ -344,23 +347,23 @@ Theme: `system` by default; both themes are first-class. Primary buttons are ink
 - **UI:** Geist (variable). **Numbers, labels and data:** Geist Mono. Both self-hosted via `@fontsource-variable` packages (works offline). If Geist packages aren't available, use Space Grotesk + JetBrains Mono.
 - Every number the user logged or sees as data (weights, reps, volume, dates in lists, durations) is mono with tabular figures.
 - Micro-labels: mono, 11px, uppercase, +0.08em tracking, `--muted` (e.g. `LAST`, `UPPER A`, `THIS WEEK`).
-- Scale: 11 (micro) / 13 / 15 / 18 / 24 / 40 (hero numerals and the next-workout name). Weights 400/500/600.
+- Scale (Tailwind `micro` / `xs` / `sm` / `base` / `xl` / `display`): 11 / 13 / 15 / 18 / 24 / 40 (hero numerals and the next-workout name). `base` is 18px by design. Every text-entry control is at least 16px so iOS Safari does not zoom on focus. Weights 400/500/600.
 
 ### Shape and surfaces
 - 1px hairline borders instead of shadows. Depth comes from the `--bg` → `--surface` → `--raised` steps. No drop shadows, no gradients except the page grid below.
-- Radii are small: cards 8px, inputs and buttons 6px, chips 4px (rectangular, not pills).
-- Page background carries a faint dot grid (24px pitch, ~4–5% ink) like graph paper; cards sit on top as solid surfaces.
-- Section headers are indexed micro-labels (`01 / UPPER A`), set rows are ledger lines with a mono index on the left, and the current row has a 2px accent bar on its left edge.
+- Radii are small: cards 8px, inputs and buttons 6px, chips 4px (rectangular, not pills; the selected-chip underline is a square-ended 2px line). Segmented controls come in three sanctioned forms: chip row, joined radio group, inverted radio group (see `docs/design-system.md` 6.11).
+- Page background carries a faint dot grid (24px pitch; a 1px dot at 9% ink, which reads as roughly 4–5% overall) like graph paper; cards sit on top as solid surfaces.
+- Section headers are indexed micro-labels (`01 / UPPER A`), set rows are ledger lines with a mono index on the left, and the focused row has a 2px accent bar on its left edge plus an inset 2px focus ring.
 - Progress is shown with thin segmented bars (sets logged per exercise, workouts per week, the 7-day schedule) rather than plain counters.
-- Tab bar: mono labels, a 2px accent tick above the active tab. Today's hero shows the next workout name in large display type over the 7-day cycle strip with the next slot highlighted.
+- Tab bar: mono labels, a 2px accent tick above the active tab (drawn in `--accent-ink`, so it is visible on Paper and lime on Graphite). Today's hero shows the next workout name in large display type over the 7-day cycle strip with the next slot highlighted.
 - Charts: 1.5px accent line, no area fill, hollow dots, hairline grid, mono axes, tooltip as a small ledger card.
 
 ### Interaction
-- Minimum 48px touch targets for every tappable control (the text input rows are ≥ 48px tall). Primary actions in the bottom thumb zone. No hover-dependent UI.
-- Motion: 120ms ease-out; the logged-set tick is the only flourish. Respect `prefers-reduced-motion`.
-- Accessibility: WCAG AA contrast in both themes (use `--accent-ink`, not `--accent`, for accent text on Paper), labelled inputs, visible 2px accent focus rings, screen-reader text on icon buttons, colour is never the only signal.
+- Minimum 48px touch targets for every tappable control (the text input rows are ≥ 48px tall; non-interactive read-only lines such as the session-detail set line may be 44px). Primary actions in the bottom thumb zone. No hover-dependent UI.
+- Motion: 120ms ease-out; the logged-set tick is the only flourish, and it is a static icon swap (log arrow to check) with no animation. Respect `prefers-reduced-motion`.
+- Accessibility: WCAG AA contrast in both themes (use `--accent-ink`, not `--accent`, for accent text on Paper), labelled inputs, visible 2px focus rings (`--accent-ink`, at least 3:1 on every surface in both themes; the set-entry field uses an inset ring), form-control borders at least 3:1 (`--hairline-strong`), 16px minimum text in inputs, screen-reader text on icon buttons, colour is never the only signal.
 - Layout: designed for 360–430px wide; on larger screens content is centered at max 560px.
-- Voice: terse and lowercase-friendly; no exclamation marks, no emoji except the 🏆 on PRs.
+- Voice: terse and lowercase-friendly; no exclamation marks, no emoji except the 🏆 in the finish summary's PR list; elsewhere a PR is the amber `Trophy` icon.
 
 ---
 

@@ -37,7 +37,7 @@ Rules:
 4. **Hairlines, not shadows.** Depth comes from the `bg` > `surface` > `raised` steps plus a 1px border. No drop shadows, no blur, no gradients except the page dot grid.
 5. **Mono is for data.** Anything logged or measured, plus every micro-label, is Geist Mono with tabular figures. Geist (sans) is for names, prose and buttons.
 6. **Small, square-ish shapes.** Cards 8px, buttons and inputs 6px, chips 4px (never pills), segments 2px.
-7. **Terse voice.** Short labels, no exclamation marks, no coaching copy, no emoji except 🏆 on PRs.
+7. **Terse voice.** Short labels, no exclamation marks, no coaching copy, no emoji except 🏆 in the finish summary's PR list.
 8. **Ledger and instrument metaphors.** Sections are indexed (`01 / THIS WEEK`), sets are ledger lines with a mono index, progress is a segmented bar like a level meter, and the page carries a faint graph-paper dot grid.
 
 ---
@@ -56,12 +56,13 @@ All colours are CSS custom properties defined in `src/styles/index.css`. Paper i
 | `--ink` | `text-ink`, `bg-ink`, `border-ink` | `#0a0e14` | `#e8edf2` | Primary text and strong strokes (selected chip border, done segments, workout-done tile). |
 | `--muted` | `text-muted` | `#5b6572` | `#8893a0` | Secondary text, micro-labels, inactive tabs, placeholders, icons at rest. |
 | `--hairline` | `border-hairline`, `bg-hairline`, `divide-hairline` | `#d3d9e0` | `#232a33` | All 1px borders, dividers, rest/off segments, skeleton fill. |
+| `--hairline-strong` | `border-hairline-strong` | `#7d8794` | `#657080` | Borders of form controls (text inputs, selects, textareas, the file picker) so the field boundary reaches 3:1. Never for cards, rows or dividers. |
 | `--accent` | `bg-accent` (fill only) | `#c6ff3d` | `#c6ff3d` | The lime. Fills, ticks, bars, selection highlight. Identical in both themes. |
 | `--on-accent` | `text-on-accent` | `#0a0e14` | `#0a0c10` | Text/icons on an accent fill (collapsed-card check tile, `::selection`). |
 | `--accent-ink` | `text-accent`, `border-accent` (remapped) | `#3d5a00` | `#c6ff3d` | Accent-coloured **text and lines**. Dark olive on Paper so it passes AA; equals the lime on Graphite. |
 | `--primary` | `bg-primary`, `border-primary` | `#0a0e14` | `#c6ff3d` | Primary button fill and selected state of the settings segmented control. |
 | `--on-primary` | `text-on-primary` | `#f8fafb` | `#0a0c10` | Text on `--primary`. |
-| `--pr` | `text-pr`, `border-pr` | `#b86e00` | `#ffb84d` | Personal-record amber. Icon and badge outline only (see contrast). |
+| `--pr` | `text-pr`, `border-pr` | `#b86e00` | `#ffb84d` | Personal-record amber. **Icons and badge outlines only, never small text** (fails AA on Paper; see contrast). |
 | `--danger` | `text-danger`, `border-danger` | `#c62839` | `#ff6b7a` | Destructive actions and invalid input. |
 | `--scrim` | `bg-scrim` | `rgb(10 14 20 / 0.5)` | `rgb(0 0 0 / 0.65)` | Backdrop behind sheets. |
 
@@ -88,11 +89,12 @@ So `text-accent` on Paper is dark olive `#3d5a00`, not lime. There is no utility
 | Accent line/outline that must be visible on Paper | `border-accent` (`--accent-ink`) | Rely on lime alone on Paper (1.04 to 1.18:1). |
 | Main call-to-action button | `--primary` via `Button` (ink on Paper, lime on Graphite) | Hand-roll `bg-accent` buttons. |
 | Text on a lime fill | `text-on-accent` | `text-ink` (works today by coincidence on Paper, but not a token guarantee). |
+| Active-state bar (tab tick, chip and radio underline, focused-row bar, resume bar) | `bg-accent-ink` (olive on Paper, lime on Graphite) | `bg-accent` lime on Paper (1.04 to 1.18:1). |
 | Focus ring | `outline: 2px solid var(--accent-ink)` (global) | A lime outline. |
 
 ### 2.4 Semantic colours
 
-- **PR (`--pr`)**: amber. Used as the colour of the `Trophy` icon (`text-pr`) and as a 1px border on the warm-up `W` badge. PR *text* is `text-ink` with the amber icon beside it. The 🏆 emoji is used in the finish summary.
+- **PR (`--pr`)**: amber. Used as the colour of the `Trophy` icon (`text-pr`) and as a 1px border on the warm-up `W` badge. PR *text* is `text-ink` with the amber icon beside it. The 🏆 emoji appears only in the finish summary's PR list; everywhere else the amber `Trophy` icon is used. `--pr` is for icons and borders, never for small text (3.5 to 4.0:1 on Paper).
 - **Danger (`--danger`)**: destructive `Button variant="danger"` (red text, red 1px border, raised fill), invalid set-entry text and hint, import error headings, backup error status. Always paired with words or an `aria-invalid`, never colour alone.
 - There is no success/warning colour. "Done" is expressed in ink (`done` segment, workout-done tile) or the lime tick, not green.
 
@@ -123,16 +125,20 @@ Computed with a small Node script that converts sRGB to relative luminance and a
 | `danger` on `bg` | 4.92 | 7.12 | AA text |
 | `danger` on `surface` | 5.33 | 6.66 | AA text |
 | `danger` on `raised` | 5.58 | 6.22 | AA text |
-| `hairline` on `bg` | 1.25 | 1.35 | Decorative divider only (fails 3:1 as a component boundary; see [Spec drift](#13-spec-drift)) |
+| `hairline-strong` on `bg` | 3.21 | 3.90 | Form-control border (WCAG 1.4.11, 3:1) |
+| `hairline-strong` on `surface` | 3.48 | 3.65 | as above |
+| `hairline-strong` on `raised` | 3.64 | 3.41 | as above |
+| `hairline` on `bg` | 1.25 | 1.35 | Decorative divider only (cards, rows, rules; never the sole boundary of a form control) |
 | `hairline` on `surface` | 1.36 | 1.26 | as above |
 | `hairline` on `raised` | 1.42 | 1.18 | as above |
 | `bg` on `ink` (week-done tile) | 17.06 | 16.61 | AA text/icon |
+| Focus ring (`accent-ink`) on `bg` / `surface` / `raised` | 6.96 / 7.54 / 7.89 | 16.56 / 15.50 / 14.47 | Passes 3:1 on every surface in both themes |
 
 Take-aways:
 - All text roles (`ink`, `muted`, `accent-ink`, `danger`, `on-*`) pass AA in both themes on all three surfaces.
 - `--pr` on Paper is **not** AA for small text; keep it as an icon colour or outline, with the label in `text-ink`.
 - Lime (`--accent`) is never text on Paper.
-- Hairlines are decorative by design. Interactive boundaries that rely on a hairline alone (input and unselected chip borders) are below 3:1; text and labels carry the meaning.
+- Hairlines are decorative. Form controls use `--hairline-strong` (3.2 to 3.9:1) so their boundary is perceivable. Unselected chips keep the hairline because their mono label (4.5:1+) identifies them; selection is carried by border, fill and underline, not by hairline contrast.
 
 ### 2.6 Dot grid recipe
 
@@ -150,7 +156,7 @@ body {
 }
 ```
 
-The dot is about 2px across at 9% ink, which reads as roughly the 4 to 5% ink the SPEC describes. Do not enlarge or darken it; it must stay below the level where it competes with text.
+The literal value is 9% ink on a 1px core fading to transparent at 1.2px; because the dot is only about 2px across on a 24px pitch, the overall page tone shifts by well under 1%. Do not enlarge or darken it; it must stay below the level where it competes with text.
 
 ---
 
@@ -167,7 +173,7 @@ Both are self-hosted through npm (`@fontsource-variable/geist`, `@fontsource-var
 
 ### 3.2 Type scale
 
-`tailwind.config.ts` **overrides** the default size ramp. Note that `text-base` is 18px (not 16px) and `text-xl` and `text-2xl` are both 24px.
+`tailwind.config.ts` **overrides** the default size ramp with six distinct steps (there is no `2xl`). Note that `text-base` is 18px, not Tailwind's default 16px: it is the size for inputs, so every text-entry control is at least 16px and iOS Safari does not zoom on focus.
 
 | Utility | Size / line-height | Typical use |
 |---|---|---|
@@ -175,10 +181,10 @@ Both are self-hosted through npm (`@fontsource-variable/geist`, `@fontsource-var
 | `text-xs` | 13px / 18px | Secondary data lines, chip text, mono card headers, row meta |
 | `text-sm` | 15px / 22px | Body (the `body` default), button labels, row titles, hints |
 | `text-base` | 18px / 24px | Set-entry input, form inputs, session title, stat values, card h2 |
-| `text-xl` / `text-2xl` | 24px / 30px | Page title (`PageHeader`), sheet title, PR card value |
+| `text-xl` | 24px / 30px | Page title (`PageHeader`), sheet title, PR card value |
 | `text-display` | 40px / 42px | Next-workout name on the Today hero (with `tracking-tighter`, weight 600) |
 
-Raw sizes outside the scale exist in two places only: `text-[10px]` for the cycle-strip labels and the `R3` RIR badge, and the swatch captions on `/dev/ui`. Treat them as exceptions, not precedent.
+There are no off-scale literals: the cycle-strip labels, the `R3` RIR badge and the `/dev/ui` swatch captions use `micro` (11px). Do not add `text-[Npx]`.
 
 ### 3.3 Weights and tracking
 
@@ -250,7 +256,7 @@ Stays in the UI font: workout and exercise names in rows, button labels, titles,
 | `rounded-btn` | 6px | Buttons, text inputs, segmented controls, tooltip, stat tiles, icon boxes |
 | `rounded-chip` | 4px | Chips, schedule tiles, week-day tiles, warm-up badge, check tile |
 | `rounded-[2px]` | 2px | Segments, intensity swatches, 8px accent squares, sheet grab handle |
-| `rounded-full` | pill | Only the 2px accent underline inside a selected chip (a line cap, not a shape) |
+| `rounded-none` | square | The 2px selected-chip underline (a straight line; there are no pills anywhere) |
 
 Borders are always **1px** (`border`) in `border-hairline` unless a state changes the colour (`border-ink` selected, `border-danger`, `border-primary`). The only 2px strokes are accent bars/ticks (`h-0.5` / `w-0.5`), the note rule (`border-l-2 border-hairline`), and the focus outline. There are no shadows anywhere.
 
@@ -274,7 +280,7 @@ Tailwind's 4px scale is unchanged. Named additions: `gutter` = 16px (`px-gutter`
 
 ### 4.3 Touch targets
 
-Every tappable control is at least **48x48px**: `min-h-touch` / `min-w-touch` (both 48px in the config). Exceptions are the 56px primary hero button (`min-h-[56px]`) and tab bar items (`min-h-[56px]`), which are larger. Small visuals sit inside larger hit areas (e.g. a 12px intensity swatch inside a 48px button). Read-only rows may be shorter (the read-only detail set line is 44px) because they are not controls.
+Every tappable control is at least **48x48px**: `min-h-touch` / `min-w-touch` (both 48px in the config). Exceptions are the 56px primary hero button (`min-h-[56px]`) and tab bar items (`min-h-[56px]`), which are larger. Small visuals sit inside larger hit areas (e.g. a 12px intensity swatch inside a 48px button). Read-only rows may be shorter (the read-only detail set line is 44px, a deliberate exemption) because they are not controls.
 
 ### 4.4 Layout
 
@@ -347,7 +353,7 @@ Purpose: a single-select filter or choice. Props: `selected` (boolean), plus but
 
 Classes: `relative inline-flex min-h-touch items-center justify-center rounded-chip border px-4 font-mono text-xs font-medium uppercase tracking-micro transition-colors`.
 - Unselected: `border-hairline bg-surface text-muted`.
-- Selected: `border-ink bg-raised text-ink` plus a 2px lime underline (`absolute inset-x-1.5 bottom-0 h-0.5 rounded-full bg-accent`).
+- Selected: `border-ink bg-raised text-ink` plus a 2px underline (`absolute inset-x-1.5 bottom-0 h-0.5 bg-accent-ink`, square-ended).
 
 Selection is signalled by border, fill, text colour and the underline, so it does not depend on lime. Groups: wrap in `role="group"` with an `aria-label`, `flex gap-1.5`.
 
@@ -409,7 +415,7 @@ Four fixed tabs: Today (`CalendarCheck`), History (`History`), Progress (`LineCh
 
 Anatomy: `nav` `fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface pb-safe`; inner `ul mx-auto flex max-w-app`; each item `flex-1`, `min-h-[56px]`, column of 20px icon + mono micro label (`font-mono text-micro font-medium uppercase tracking-micro`).
 - Inactive: `text-muted`, icon `strokeWidth` 1.75.
-- Active: `text-ink`, icon `strokeWidth` 2.25, and a 2px lime tick across the top edge (`absolute inset-x-5 -top-px h-0.5 bg-accent`, `data-testid="tab-tick"`).
+- Active: `text-ink`, icon `strokeWidth` 2.25, and a 2px tick across the top edge (`absolute inset-x-5 -top-px h-0.5 bg-accent-ink`, `data-testid="tab-tick"`).
 
 Hidden on `/session/*` (the session has its own sticky header).
 
@@ -510,7 +516,7 @@ Two modes: `value`/`total` produces `on` then `off` segments (sets logged, worko
 ### 6.3 Ledger set row
 
 ```
- ▌ 02 │ 135 x 8                              │  ↵  │      focused row: 2px lime bar at far left
+ ▌ 02 │ 135 x 8                              │  ↵  │      focused row: ring on the field + 2px bar at far left
    ^48px   ^ single text input (mono, 18px)    ^48px
  ▌    │ 100 lb × 8                                   │      preview caption (micro, mono)
 ```
@@ -519,9 +525,9 @@ One 48px-high line per set: `li.group.relative.flex.min-h-12.items-start.border-
 
 | Part | Spec |
 |---|---|
-| Index button | 48x48, `num text-xs font-medium text-muted`, shows `01`..; opens set options (`aria-label="Set N options"`). Warm-up shows a `W` badge (`rounded-chip border border-pr px-1 font-semibold text-ink`); RIR shows `R3` under it (`text-[10px]`). |
-| Entry input | **One** `type="text"` field holding `weight x reps`. `num h-12 w-full bg-transparent px-1 text-base font-medium`; `placeholder:font-normal placeholder:text-muted`; `focus:outline-none` (the row bar replaces the ring). Placeholder `weight x reps` (`reps` for load type `none`). Attributes: `inputMode="text" enterKeyHint="done" autoCapitalize="off" autoCorrect="off" autoComplete="off" spellCheck={false}`, `aria-label="Set N entry"`. Selects its text on focus. |
-| Focus bar | `absolute inset-y-0 left-0 hidden w-0.5 bg-accent group-focus-within:block` |
+| Index button | 48x48, `num text-xs font-medium text-muted`, shows `01`..; opens set options (`aria-label="Set N options"`). Warm-up shows a `W` badge (`rounded-chip border border-pr px-1 font-semibold text-ink`); RIR shows `R3` under it (`text-micro`). |
+| Entry input | **One** `type="text"` field holding `weight x reps`. `num h-12 w-full bg-transparent px-2 text-base font-medium`; `placeholder:font-normal placeholder:text-muted`; the global focus ring is kept but drawn **inset** (`focus-visible:outline-offset-[-2px]`) so it stays inside the 48px cell. Placeholder `weight x reps` (`reps` for load type `none`). Attributes: `inputMode="text" enterKeyHint="done" autoCapitalize="off" autoCorrect="off" autoComplete="off" spellCheck={false}`, `aria-label="Set N entry"`. Selects its text on focus. |
+| Focus | Inset 2px `--accent-ink` ring around the entry field (6.96 to 7.89:1 on Paper, lime on Graphite) plus a 2px left bar (`absolute inset-y-0 left-0 hidden w-0.5 bg-accent-ink group-focus-within:block`) as the secondary flourish. Selected text and caret also show focus. |
 | Logged | Right cell is a 48px button with a `Check` (22px, stroke 3, `text-accent`), `aria-pressed`, `aria-label="Un-log set N"`. Tapping un-logs. Text is `text-ink`. |
 | Unlogged with history prefill | Text is `text-muted` until edited (prefill is not a value yet). Right cell is `CornerDownLeft` (20px, `text-muted`, left hairline), `aria-label="Log set N"`, disabled at 30% opacity when the entry is invalid. |
 | Edited logged row | Right cell switches to the log icon (`Update set N`) until saved. |
@@ -556,7 +562,7 @@ Container: `flex divide-x divide-hairline border-t border-hairline`. Each cell: 
 └─────────────────────────────────────────────┘
 ```
 
-`Card tone="raised" className="flex flex-col gap-5 p-5"`. Cycle strip: `SegmentedBar` `states` (rest = `rest`, next = `current`, earlier = `done`, later = `off`) with a label row of `micro` abbreviations (`UA`, `REST`; `text-[10px]`, `aria-hidden`, the bar carries the accessible text). The **Resume** variant adds a 2px lime left bar (`absolute inset-y-0 left-0 w-0.5 bg-accent`, extra `pl-6`) and the label `In progress · started 12:04` (static time; no running clock).
+`Card tone="raised" className="flex flex-col gap-5 p-5"`. Cycle strip: `SegmentedBar` `states` (rest = `rest`, next = `current`, earlier = `done`, later = `off`) with a label row of `micro` abbreviations (`UA`, `REST`; 11px, `aria-hidden`, the bar carries the accessible text). The **Resume** variant adds a 2px lime left bar (`absolute inset-y-0 left-0 w-0.5 bg-accent`, extra `pl-6`) and the label `In progress · started 12:04` (static time; no running clock).
 
 ### 6.6 Week strip tiles
 
@@ -606,17 +612,17 @@ DURATION (MIN)
 └──────────────────────────────┘
 ```
 
-`Field` = `flex flex-col gap-1.5` with `<label className="micro">`. Text inputs use `inputClass` (`min-h-touch w-full rounded-btn border border-hairline bg-raised px-3 text-base text-ink placeholder:text-muted`); numeric, date and time inputs use `numInputClass` (`num` + the same). Keep text at 16px or larger (18px here) so iOS does not zoom on focus. Pair fields in `grid grid-cols-2 gap-3`; start sections with `SectionLabel` (`-mb-2` to tighten under the `gap-5` form stack).
+`Field` = `flex flex-col gap-1.5` with `<label className="micro">`. Text inputs use `inputClass` (`min-h-touch w-full rounded-btn border border-hairline-strong bg-raised px-3 text-base text-ink placeholder:text-muted`); numeric, date and time inputs use `numInputClass` (`num` + the same). Keep text at 16px or larger (18px here) so iOS does not zoom on focus; `tests/e2e/p1-polish.spec.ts` checks every text-entry control on every main screen. Use `border-hairline-strong` for any new form control. Pair fields in `grid grid-cols-2 gap-3`; start sections with `SectionLabel` (`-mb-2` to tighten under the `gap-5` form stack).
 
 ### 6.11 Segmented controls (three sanctioned forms)
 
 | Form | Where | Spec |
 |---|---|---|
 | Chip row | Filters, ranges, type choice | `Chip` (4px radius, gap, underline) |
-| Joined radio group | Metric toggle (progress) | `grid grid-cols-3 rounded-btn border border-hairline bg-surface`, cells `min-h-touch border-l border-hairline font-mono text-xs font-medium uppercase tracking-micro`; selected `bg-raised text-ink` + 2px lime underline; `role="radiogroup"` / `role="radio"` / `aria-checked` |
+| Joined radio group | Metric toggle (progress) | `grid grid-cols-3 rounded-btn border border-hairline bg-surface`, cells `min-h-touch border-l border-hairline font-mono text-xs font-medium uppercase tracking-micro`; selected `bg-raised text-ink` + 2px underline (`bg-accent-ink`); `role="radiogroup"` / `role="radio"` / `aria-checked` |
 | Inverted radio group | Settings (unit, theme) | `inline-flex divide-x divide-hairline overflow-hidden rounded-btn border border-hairline bg-bg`; selected `bg-primary text-on-primary` |
 
-Choose by context: a filter that changes a list = chips; a mutually exclusive mode of one view = joined group; a persistent preference = inverted group. Do not invent a fourth.
+These three are the sanctioned set and are deliberately different (filter vs. mode vs. preference); do not unify them. Choose by context: a filter that changes a list = chips; a mutually exclusive mode of one view = joined group; a persistent preference = inverted group. Do not invent a fourth.
 
 ### 6.12 Pace / stat card
 
@@ -669,16 +675,17 @@ Counters are rendered as `SegmentedBar`s (sets per exercise, workouts per week, 
 - Global default: `transition-duration: 120ms`, `ease-out` (set in `tailwind.config.ts`). Used by `transition-colors` (chips, segmented cells, intensity swatches) and Button's `transition-[opacity,transform]`.
 - Pressed feedback: Button `active:translate-y-px active:opacity-80`; rows `active:bg-bg`.
 - Other motion that exists: skeleton `animate-pulse` on the Today loading cards, and a 180-degree chevron rotation in the Program notes toggle (`transition-transform`). Sheets and tabs appear instantly.
-- The intended single flourish is the logged-set tick. In code it is a state change of the right-hand cell (log arrow to lime-ink check) with no keyframes; keep it that small. Do not add confetti, bounces, count-ups or celebratory animation.
+- The single flourish is the logged-set tick: a **static icon swap** of the right-hand cell (log arrow to `--accent-ink` check) with no animation, by design. Keep it that small. Do not add confetti, bounces, count-ups or celebratory animation.
 - `prefers-reduced-motion: reduce` clamps all animation and transition durations to `0.01ms`, iterations to 1, and scroll behaviour to auto, globally in `index.css`.
 
 ### 8.2 Focus
 
 ```css
 :focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.overflow-hidden :focus-visible { outline-offset: -2px; }   /* inset inside clipped list cards */
 ```
 
-Global, keyboard-only (`:focus-visible`). `--accent-ink` gives 6.96 to 7.89:1 on Paper surfaces and the lime on Graphite. The one deliberate exception is the set-entry input (`focus:outline-none`), where the row-level 2px lime left bar (`group-focus-within`) marks focus, together with the selected text and caret. Do not remove outlines elsewhere. Dragging uses `ring-2 ring-accent`.
+Global, keyboard-only (`:focus-visible`; text inputs always match). `--accent-ink` gives 6.96 to 7.89:1 on Paper surfaces and the lime (14.5 to 16.6:1) on Graphite, so every focusable control has a ring of at least 3:1 in both themes. Inside `overflow-hidden` list cards the ring is drawn inset so it is never clipped. The set-entry input keeps the ring too, inset (`focus-visible:outline-offset-[-2px]`), with the 2px left row bar (`bg-accent-ink`) as a secondary cue. Do not remove outlines anywhere. Dragging uses `ring-2 ring-accent`.
 
 ### 8.3 Labelling rules
 
@@ -761,7 +768,8 @@ Files in `public/icons/`: `icon.svg` (favicon), `icon-192.png`, `icon-512.png`, 
 | `name` / `short_name` | Trakr | `vite.config.ts` |
 | `display` / `orientation` | `standalone` / `portrait` | `vite.config.ts` |
 | `theme_color`, `background_color` | `#0A0C10` (Graphite bg) | `vite.config.ts` |
-| `<meta name="theme-color">` | `#eef1f4` (Paper bg) | `index.html` |
+| `<meta name="theme-color">` | Two tags: `#eef1f4` for `(prefers-color-scheme: light)`, `#0a0c10` for `dark` | `index.html` |
+| Runtime | `applyTheme()` rewrites every theme-color tag to the applied `--bg`, so the status bar follows the in-app toggle, not only the OS | `src/lib/theme.ts` |
 | iOS | `apple-mobile-web-app-capable`, status bar `default`, title Trakr | `index.html` |
 
 ---
@@ -806,7 +814,7 @@ Rule of thumb: the *input* grammar is the compact ASCII `x`; every *display* of 
 
 ### 10.3 Emoji and symbols
 
-🏆 is the only emoji and is reserved for personal records (`role="img" aria-label="Personal record"`). Elsewhere PR is the amber `Trophy` icon. Typographic characters in use: `×`, `·`, en dash `–`, ellipsis `…` in loading text. No other emoji, no decorative symbols.
+🏆 is the only emoji. It appears in one place, the PR list of the finish summary (`role="img" aria-label="Personal record"`). Everywhere else a PR is the amber `Trophy` icon (plus the word `PR`). Typographic characters in use: `×`, `·`, en dash `–`, ellipsis `…` in loading text. No other emoji, no decorative symbols.
 
 ### 10.4 Empty, error and confirmation copy
 
@@ -841,7 +849,7 @@ No exclamation marks, no "Oops", no second-person pep talk, no advice about weig
 | 12 | Use `buttonClass(...)` on a `<Link>` for navigation buttons. | Nest a `<Button>` inside a `<Link>` (two tab stops) in new code. |
 | 13 | Use `danger` as outlined text-on-raised. | Fill buttons solid red or use red for non-destructive emphasis. |
 | 14 | Pair state colour with a shape/text cue (check, underline, hint). | Rely on colour alone (e.g. red/green only). |
-| 15 | Use 🏆 only for personal records. | Add celebratory emoji, confetti or animated badges. |
+| 15 | Use 🏆 only in the finish summary's PR list. | Add celebratory emoji, confetti or animated badges. |
 | 16 | Keep section headers indexed and ruled (`01 / LABEL ────`). | Use bold H2s with no rule or index on a new screen. |
 
 ---
@@ -867,7 +875,7 @@ No exclamation marks, no "Oops", no second-person pep talk, no advice about weig
 2. Map it in `tailwind.config.ts` under `theme.extend.colors` (`name: 'var(--name)'`).
 3. Compute contrast for every text/background pair it will meet in both themes (use the formula in 2.5) and record it in section 2.5.
 4. Add a swatch to `SWATCHES` in `src/dev/UiDemo.tsx`.
-5. Update section 2 here and `SPEC.md` §7. If the theme-colour meta values change, update `index.html` and `vite.config.ts`.
+5. Update section 2 here and `SPEC.md` §7. If the theme-colour meta values change, update `index.html` (both tags), `src/lib/theme.ts` and `vite.config.ts`.
 
 ### 12.3 Contrast script (reference)
 
@@ -887,6 +895,7 @@ ratio('3d5a00', 'f8fafb'); // accent-ink on Paper surface -> 7.54
 ### 12.5 Gates
 
 - **Touch targets:** every interactive element at least 48px in both dimensions (`min-h-touch` / `min-w-touch`).
+- **Focus and zoom:** every focusable control shows a >= 3:1 ring in both themes; every text-entry control is >= 16px; form-control borders use `--hairline-strong` (>= 3:1). Guarded by `tests/e2e/p1-polish.spec.ts`.
 - **Contrast:** AA text (4.5:1) in both themes; `--pr` and lime are never small text on Paper.
 - **No horizontal scroll** at 390px (`tests/e2e/f00-shell.spec.ts`).
 - **No hard-coded colours outside the token layer:** no hex or `rgb()` in `src/**/*.tsx` (currently none; only `index.css` and the app icons contain hex). Charts pass `var(--token)` strings.
@@ -899,18 +908,22 @@ ratio('3d5a00', 'f8fafb'); // accent-ink on Paper surface -> 7.54
 
 ## 13. Spec drift
 
-Differences between the code and `SPEC.md` §7 / §6.1, plus inconsistencies worth reconciling. The document follows the code.
+All thirteen items from the first audit are resolved: either the code was fixed or `SPEC.md` §7 was updated to match the code (and this sheet follows both). Deliberately kept differences, each with its reason:
 
-1. **Logged-set flourish.** SPEC §7 calls the logged-set tick "the only flourish". The code has no animation on it; the cell simply swaps from the log arrow to a static check. Either add a short (120ms) tick transition or reword the spec.
-2. **Dot-grid opacity.** SPEC says "~4–5% ink". The code uses `color-mix(in srgb, var(--ink) 9%, transparent)` on a 1px radius dot; the net visual weight is faint but the literal value is 9%.
-3. **Focus ring colour.** SPEC says "visible 2px accent focus rings". The code uses `--accent-ink` (olive on Paper, lime on Graphite), which is the AA-safe reading of "accent". The set-entry input suppresses the outline and uses a 2px lime row bar instead, which is only about 1.1:1 against Paper surfaces (the caret and selected text still indicate focus).
-4. **Lime-only indicators on Paper.** The tab tick, the chip underline and the focused-row bar are `bg-accent` (lime) with no outline, so they are near-invisible on Paper (1.04 to 1.18:1). Other cues (ink text, heavier icon stroke, `border-ink`) carry the meaning, but SPEC §7's "colour is never the only signal" is only met by those secondary cues. Consider `--accent-ink` for these on Paper.
-5. **PR marker.** SPEC says no emoji "except the 🏆 on PRs". The code uses the 🏆 emoji only in the finish summary; the session detail and progress screens use the amber `Trophy` lucide icon, and `UiDemo` shows `text-pr` on a mono string (`--pr` is 3.5 to 4.0:1 on Paper, below AA for text).
-6. **`--pr` text.** SPEC lists `--pr` as a token without a usage restriction; on Paper it fails 4.5:1 for small text. The code only uses it for icons/borders (plus the demo line).
-7. **Hairline contrast.** Hairlines are 1.18 to 1.42:1 against their surfaces, below the 3:1 non-text guideline for input and unselected-chip boundaries. SPEC claims "WCAG AA contrast in both themes"; this holds for text but not for these borders.
-8. **Type scale aliases.** SPEC lists six sizes (11/13/15/18/24/40). The config defines `xl` and `2xl` as the same 24/30 and overrides `base` to 18px (unlike Tailwind's 16px). Off-scale `text-[10px]` is used for cycle labels and RIR. `text-sm` (15px) is used for the Progress search input and the editor note field, which is below the 16px iOS zoom threshold; the other inputs use 18px.
-9. **Manifest/theme comment and colours.** `vite.config.ts` comments "Light theme --bg and --accent" but sets `#0A0C10` (Graphite). `<meta name="theme-color">` is static Paper `#eef1f4` and does not follow the Graphite theme, so the browser chrome mismatches in dark mode.
-10. **Session footer.** SPEC §6 mentions the tab bar being "replaced with a session footer" during a session. The code hides the tab bar and has no footer; Finish lives in the sticky header (top-right), not the thumb zone.
-11. **Segmented controls.** SPEC does not define them. The code has three forms (chips, joined radio group with underline, inverted `bg-primary` radio group). Consider consolidating, or keep them as documented in 6.11.
-12. **Read-only set line height.** The session detail set line is 44px (`min-h-[44px]`), below the 48px rule; it is not interactive, so this is a deliberate exception rather than a violation.
-13. **Pill detail.** The chip underline uses `rounded-full` (a 2px line cap), the only use of that radius against SPEC's "rectangular, not pills".
+none.
+
+Resolution log (for the record):
+
+1. **Logged-set flourish.** Kept static; SPEC §7 now says the tick is a static icon swap with no animation (8.1).
+2. **Dot-grid opacity.** SPEC §7 and 2.6 now state the real value: a 1px dot at 9% ink, 24px pitch.
+3. **Focus ring colour / set-entry focus.** Ring stays `--accent-ink` (SPEC wording updated). The set-entry input now shows an inset 2px ring on both themes (previously suppressed).
+4. **Lime-only indicators on Paper.** Tab tick, chip and radio underlines, focused-row bar, resume bar and schedule-tile bar now use `bg-accent-ink` (olive on Paper, lime on Graphite). Lime remains for fills and 8px squares.
+5. **PR marker.** SPEC §7 and 10.3 now say the 🏆 appears only in the finish summary; elsewhere the amber `Trophy` icon.
+6. **`--pr` text.** SPEC token table and 2.1 now mark `--pr` as icons and borders only.
+7. **Hairline contrast.** New `--hairline-strong` (`#7d8794` / `#657080`, 3.2 to 3.9:1) for form-control borders; card and row hairlines are unchanged and documented as decorative.
+8. **Type scale.** `2xl` removed (six distinct steps), `text-[10px]` literals replaced by `micro`, and the Progress search, editor note, swap search, note sheet and picker fields moved from 15px to `base` (18px) so nothing is under 16px.
+9. **Manifest/theme colour.** `index.html` carries light and dark theme-color tags, `applyTheme()` syncs them with the applied theme, and the misleading `vite.config.ts` comment is fixed.
+10. **Session footer.** SPEC §6 now says Finish lives in the sticky session header.
+11. **Segmented controls.** The three forms are the sanctioned set (6.11) and SPEC §7 points here.
+12. **Read-only set line height.** 44px is a documented exemption for non-interactive lines (4.3, SPEC §7).
+13. **Pill detail.** The chip underline is now square (no `rounded-full`).
