@@ -19,6 +19,7 @@ This document is the source of truth for implementation agents. Each feature in 
 ### Non-Goals (v1)
 - Multi-user accounts, social features, coaching.
 - Nutrition tracking (the source markdown contains nutrition notes; display only, not tracked).
+- Timers of any kind: no rest timer and no running workout/elapsed clock. (A finished session's duration is still recorded and shown as a plain stat.)
 - Training recommendations of any kind: no suggested weights/reps, progression hints, deload prompts, or routine advice.
 - Native apps. (The PWA is installable to the home screen.)
 - Cloud sync — designed for, but deferred to F14.
@@ -94,7 +95,7 @@ trakr/
 │   ├── components/
 │   │   ├── ui/                   # primitives: Button, Card, Stepper, Sheet, Chip, TabBar, EmptyState
 │   │   ├── today/                # Today screen pieces
-│   │   ├── session/              # ExerciseCard, SetRow, RestTimer
+│   │   ├── session/              # ExerciseCard, SetRow (single text entry), sheets
 │   │   ├── history/              # feed, session summary
 │   │   ├── charts/               # ProgressChart, Sparkline
 │   │   ├── activity/             # activity form pieces
@@ -111,7 +112,7 @@ trakr/
 │   │   ├── rotation.ts           # next workout in the schedule
 │   │   ├── stats.ts              # e1RM, volume, PRs
 │   │   ├── units.ts              # lb/kg conversion and formatting
-│   │   ├── restTimer.ts          # remaining-time computation
+│   │   ├── setEntry.ts           # parse/format the single "weight x reps" text entry
 │   │   ├── activity.ts           # pace and activity formatting
 │   │   └── markdownImport.ts     # parse markdown tables → Program
 │   ├── hooks/                    # useActiveSession, useLastPerformance, useSettings ...
@@ -143,7 +144,6 @@ The markdown source is reinterpreted into this JSON. It separates the **exercise
   "name": "V-Taper Hypertrophy — Upper/Lower",
   "description": "Lean muscle, V-taper emphasis.",
   "schedule": ["upper-a", "lower-a", "rest", "upper-b", "lower-b", "rest", "rest"],
-  "restSeconds": { "compound": 150, "isolation": 75 },
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -183,7 +183,6 @@ Mapping rules from `workouts/workout_A.md`:
 - Names containing " or " / " / " (e.g. "Incline Dumbbell or Barbell Press", "Dips / Machine Chest Press", "Pull-Up or Neutral-Grip Lat Pulldown", "Machine or Dumbbell Lateral Raise") → split into separate catalog exercises; first is `exerciseId`, rest go in `alternatives`. Notes like "Optional swap: seated DB overhead press" also add an alternative.
 - Identical names across days map to the same exercise id (Rear-Delt Fly, Hip Thrust, Back Squat, Romanian Deadlift, Seated Leg Curl, Hip Abduction Machine, Core / Leg Raise).
 - "Weekly layout: Upper A / Lower A / Rest / Upper B / Lower B / Rest / Rest" → `schedule`.
-- "Rest: 2–3 min compounds, 60–90 sec isolation" → `restSeconds` (used only as the rest-timer default).
 - Weekly Volume, Execution Rules (including the progression rule), Nutrition, Changes, Research → `notes` (markdown, display only; the app does not act on it).
 - `load`: dumbbell exercises default to `per-hand`; pull-ups/dips default to `bodyweight-plus`; core/leg raise → `none` or `bodyweight-plus`.
 
@@ -198,10 +197,10 @@ All ids are ULIDs (sortable by creation time) except catalog/template ids, which
 | `sessions` | `id` | `startedAt`, `programId`, `workoutId`, `status` | `programId`, `workoutId`, `workoutName` (snapshot), `startedAt`, `finishedAt?`, `status: "active" \| "completed" \| "discarded"`, `notes?`, `bodyweight?` |
 | `sets` | `id` | `sessionId`, `exerciseId`, `[exerciseId+completedAt]` | `sessionId`, `exerciseId`, `slotIndex` (position in workout), `setIndex`, `weight`, `unit: "lb" \| "kg"`, `reps`, `rir?` (reps in reserve), `isWarmup: boolean`, `completedAt` |
 | `activities` | `id` | `startedAt`, `type` | `type` (e.g. run, cycle, swim, climb, sport, class, walk, other), `title?`, `startedAt`, `durationMin?`, `distance?`, `distanceUnit?: "km" \| "mi"`, `intensity?: 1–5`, `notes?` |
-| `settings` | `key` | — | single row `key: "app"`: `unit`, `increments` (per equipment, e.g. barbell 5 lb, dumbbell 5 lb, cable/machine 2.5 lb), `restTimerEnabled`, `restTimerSound`, `theme: "light" \| "dark" \| "system"`, `rotationPointer?` |
+| `settings` | `key` | — | single row `key: "app"`: `unit`, `theme: "light" \| "dark" \| "system"`, `rotationPointer?` |
 
 Notes:
-- Sessions snapshot the template targets at start (`targets: {slotIndex, exerciseId, sets, repMin, repMax, kind}[]`; `kind` drives the rest-timer duration) so later program edits don't rewrite history.
+- Sessions snapshot the template targets at start (`targets: {slotIndex, exerciseId, sets, repMin, repMax, kind}[]`) so later program edits don't rewrite history.
 - A session's exercise slot may be swapped to an alternative; sets record the actual `exerciseId` used.
 - Dexie schema versions must be bumped with migrations, never edited in place once released.
 
@@ -266,7 +265,7 @@ Bottom tab bar (always visible except during an active session where it is repla
 | Route | Screen | Purpose |
 |---|---|---|
 | `/` | Today | Hero card: "Next up: **Upper B** · 9 exercises" with a large **Start** button. Secondary: pick another workout; **+ Log activity**. If a session is active, the hero becomes **Resume**. Below: this week's strip (Mon–Sun dots: done/rest/upcoming), last 3 entries. |
-| `/session/:id` | Active session | Vertical list of exercise cards (§6.1). Sticky header: workout name, elapsed time, Finish. |
+| `/session/:id` | Active session | Vertical list of exercise cards (§6.1). Sticky header: workout name, Finish (no running clock). |
 | `/history` | History | Reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
 | `/history/session/:id` | Session detail | Read-only summary (sets, volume, PRs) with Edit mode to fix mistakes; Delete. |
 | `/progress` | Exercises | Searchable list of exercises with a sparkline of top-set weight and last-performed date. |
@@ -274,66 +273,94 @@ Bottom tab bar (always visible except during an active session where it is repla
 | `/activity/new`, `/activity/:id` | Activity form | Type chips, date/time (default now), duration, distance (shown for run/cycle/swim/walk), intensity 1–5, notes. |
 | `/program` | Program | Active program overview: schedule, workouts with exercise rows (sets × rep range). Read-only notes section rendered from markdown. Edit, Import, Export. |
 | `/program/edit/:workoutId` | Workout editor | Reorder (drag handle), add/remove exercises, edit sets/reps/notes/alternatives. |
-| `/settings` | Settings | Units, weight increments, rest timer, theme, backup export/import, "Clear all data" (double confirm). |
+| `/settings` | Settings | Units, theme, backup export/import, "Clear all data" (double confirm). |
 
 ### 6.1 Active session — the core interaction
 
-Each exercise is a card:
+Each exercise is a card. **Each set is ONE text input** holding `weight x reps`, no separate weight and reps fields, no steppers:
 
 ```
 ┌──────────────────────────────────────────────┐
-│ Cable Lateral Raise              5 × 12–20   │
-│ Last: 15 lb × 20, 20, 18, 17, 16             │  ← last session, data only
-│ ───────────────────────────────────────────  │
-│ 1   [ − 15 lb + ]   [ − 20 + ]        ( ✓ )  │  ← completed: tinted row
-│ 2   [ − 15 lb + ]   [ − 20 + ]        ( ✓ )  │
-│ 3   [ − 15 lb + ]   [ − 18 + ]        (   )  │  ← prefilled from last session
-│ ...                                          │
+│ 05 · CABLE LATERAL RAISE          5 × 12–20  │
+│ LAST  15×20 · 15×20 · 15×18 · 15×17 · 15×16  │  ← last session, data only
+│ ▰▰▰▱▱                                        │  ← sets logged (segmented bar)
+│ ──────────────────────────────────────────── │
+│ 1  15 x 20                              ✓    │  ← logged: signal tick, editable
+│ 2  15 x 20                              ✓    │
+│ 3  15 x 18                          ( ↵ )    │  ← prefilled from last, muted
+│ 4  weight x reps                              │  ← no history: placeholder
 │ + Add set     ⇄ Swap exercise     ⋯ Note     │
 └──────────────────────────────────────────────┘
 ```
 
-- Rows are prefilled with exactly what was logged for that set last session (or blank if no history), so repeating is one tap. No adjustment is applied. Values are shown in muted color until edited or completed.
-- **Tap ✓ = log the set as shown** (the 1-tap path). Tapping a value opens the numeric keypad (`inputmode="decimal"`); steppers use the equipment increment.
-- Completing a set auto-fills the next row with the same weight/reps and starts the rest timer.
-- Long-press/⋯ on a row: mark warm-up, set RIR, delete.
-- Card collapses to a one-line summary when all sets are complete; the next incomplete card scrolls into view.
-- Swap exercise: choose from `alternatives` or the catalog; history shown is for the swapped-in exercise.
-- Every change persists immediately to IndexedDB (no Save button). Reloading or closing the tab resumes the session.
-- **Finish**: summary sheet (duration, sets, volume, PRs 🏆) → marks session completed. Sessions with zero sets can be discarded.
+**Entry grammar** (`domain/setEntry.ts`, pure and unit-tested):
+- `parseSetEntry(text, { load, unit })` → `{ ok: true, weight, reps, unit } | { ok: false, hint }`; `formatSetEntry(weight, reps)` → canonical `"135 x 8"`.
+- Separator between weight and reps is `x`, `X`, `×`, `*` or whitespace, with optional spaces: `135x8`, `135 x 8`, `135 8`, `62.5x10`, `60×12` are all the same kind of entry.
+- Weight is a non-negative number with an optional `.` decimal; reps is an integer ≥ 1. An optional `lb` or `kg` suffix on the weight (`100kg x 5`) is converted to the display unit.
+- Load type: `total` and `per-hand` need `weight x reps`. `bodyweight-plus`: `+25 x 8` or `25 x 8` means 25 added; `bw x 12`, `0 x 12` or just `12` means bodyweight. `none` (core work): reps only (`12`) is the normal entry; the stored weight is 0.
+- Anything else is invalid: the row shows a short mono hint (`weight x reps`) and does not log. Never guess.
 
-### 6.2 Rest timer
-- Floating pill at the bottom: countdown from `restSeconds` (compound/isolation), tap to ±15 s or dismiss.
-- On completion: vibration (`navigator.vibrate`) and optional short sound; uses timestamps (not intervals) so it stays correct when the screen locks.
-- Keep the screen awake during a session via the Wake Lock API where supported.
+**Behaviour**
+- The input is a normal text field: `inputMode="text"`, `enterKeyHint="done"`, `autoCapitalize="off"`, `autoCorrect="off"`, `spellCheck={false}`, mono font. (Phone number pads have no `x`; the text keyboard's number row plus a space is the fast path.)
+- Rows are prefilled with exactly what was logged for that set last session, formatted canonically (or empty with the placeholder `weight x reps` if no history). No adjustment is applied. Prefilled text is muted until edited or logged.
+- **Enter (or tapping the ↵ / ✓ button) logs the set as shown.** Repeating last session is one keypress. As the user types, a small mono preview of the parsed value (`100 lb × 8`) or the hint is shown; invalid text disables logging.
+- Logging set N moves focus to the next unlogged row's input, so a full exercise can be entered without leaving the keyboard. If that row has no history prefill, it is prefilled with the set just logged.
+- Logged rows stay editable: change the text and press Enter to update the stored set in place. Tapping the ✓ on a logged row un-logs (deletes) it.
+- Tapping the set number opens options: mark warm-up, set RIR, delete.
+- A card collapses to a one-line summary when all its sets are logged; the next incomplete card scrolls into view.
+- Swap exercise: choose from `alternatives` or the catalog; history shown is for the swapped-in exercise.
+- Every change persists immediately to IndexedDB (no Save button). Reloading resumes the session (an un-logged draft in a row is not persisted).
+- The session screen has **no running clock**. Finish opens a summary sheet (sets, volume, PRs 🏆, and the plain recorded duration) → marks the session completed. Sessions with zero sets can be discarded.
+- Session detail (History) edit mode uses the same single-input row.
+
+### 6.2 Screen awake
+- There are no timers anywhere in the app. Keep the screen awake during an open session via the Wake Lock API where supported (needs HTTPS, so it works once deployed).
 
 ---
 
-## 7. Design System
+## 7. Design System — "Signal"
 
-**Mood:** bright, airy, calm, confident. Lots of white space, a single vivid accent, no visual noise.
+**Mood:** precise, cool, a little technical. Think instrument panel or lab notebook, not a wellness app: hairline rules, mono numerals, terse uppercase micro-labels, near-black ink, and one electric accent used sparingly like an indicator light. Everything the user *did* (numbers) is the hero; chrome stays quiet.
 
-| Token | Light | Dark (optional) |
+### Colour tokens
+
+| Token | Light "Paper" | Dark "Graphite" |
 |---|---|---|
-| `--bg` | `#F7F8FA` | `#0E1013` |
-| `--surface` (cards) | `#FFFFFF` | `#171A1F` |
-| `--text` | `#0F172A` | `#F1F5F9` |
-| `--text-muted` | `#64748B` | `#94A3B8` |
-| `--border` | `#E5E7EB` | `#262A31` |
-| `--accent` | `#4F46E5` (indigo) | `#818CF8` |
-| `--accent-soft` | `#EEF2FF` | `#1E1B4B` |
-| `--success` (completed set) | `#10B981` / soft `#ECFDF5` | `#34D399` |
-| `--warning` | `#F59E0B` | |
-| `--pr` (records) | `#F59E0B` gold | |
+| `--bg` | `#EEF1F4` | `#0A0C10` |
+| `--surface` | `#F8FAFB` | `#11151B` |
+| `--raised` | `#FFFFFF` | `#171C24` |
+| `--ink` (text) | `#0A0E14` | `#E8EDF2` |
+| `--muted` | `#5B6572` | `#8893A0` |
+| `--hairline` (borders) | `#D3D9E0` | `#232A33` |
+| `--accent` (fills, ticks, active) | `#C6FF3D` | `#C6FF3D` |
+| `--on-accent` (text on accent fills) | `#0A0E14` | `#0A0C10` |
+| `--accent-ink` (accent-coloured text and lines) | `#3D5A00` | `#C6FF3D` |
+| `--pr` | `#B86E00` | `#FFB84D` |
+| `--danger` | `#C62839` | `#FF6B7A` |
 
-- **Typography:** Inter (or system UI stack). Numbers use `font-variant-numeric: tabular-nums`. Scale: 13 / 15 / 17 / 22 / 28 px. Weights 400/500/600.
-- **Shape:** cards 16 px radius, buttons 12 px, chips full-round. Shadows: one soft level (`0 1px 2px rgb(0 0 0 / .04), 0 4px 16px rgb(0 0 0 / .04)`).
-- **Spacing:** 4 px base; 16 px page gutter; 12 px between cards.
-- **Touch:** minimum 48 × 48 px targets; primary actions in the bottom thumb zone; no hover-dependent UI.
-- **Motion:** 150–200 ms ease-out; respect `prefers-reduced-motion`.
-- **Accessibility:** WCAG AA contrast, labelled inputs, focus rings, screen-reader text on icon buttons.
-- **Layout:** designed for 360–430 px wide; on larger screens content is centered at max 560 px.
-- Light theme is the default; dark is a settings toggle (`system` follows OS).
+Theme: `system` by default; both themes are first-class. Primary buttons are ink-on-paper (light) or accent fill (dark); the accent is for the *current* thing (active tab tick, current row, logged-set tick, PR, chart line), never for large areas.
+
+### Type
+- **UI:** Geist (variable). **Numbers, labels and data:** Geist Mono. Both self-hosted via `@fontsource-variable` packages (works offline). If Geist packages aren't available, use Space Grotesk + JetBrains Mono.
+- Every number the user logged or sees as data (weights, reps, volume, dates in lists, durations) is mono with tabular figures.
+- Micro-labels: mono, 11px, uppercase, +0.08em tracking, `--muted` (e.g. `LAST`, `UPPER A`, `THIS WEEK`).
+- Scale: 11 (micro) / 13 / 15 / 18 / 24 / 40 (hero numerals and the next-workout name). Weights 400/500/600.
+
+### Shape and surfaces
+- 1px hairline borders instead of shadows. Depth comes from the `--bg` → `--surface` → `--raised` steps. No drop shadows, no gradients except the page grid below.
+- Radii are small: cards 8px, inputs and buttons 6px, chips 4px (rectangular, not pills).
+- Page background carries a faint dot grid (24px pitch, ~4–5% ink) like graph paper; cards sit on top as solid surfaces.
+- Section headers are indexed micro-labels (`01 / UPPER A`), set rows are ledger lines with a mono index on the left, and the current row has a 2px accent bar on its left edge.
+- Progress is shown with thin segmented bars (sets logged per exercise, workouts per week, the 7-day schedule) rather than plain counters.
+- Tab bar: mono labels, a 2px accent tick above the active tab. Today's hero shows the next workout name in large display type over the 7-day cycle strip with the next slot highlighted.
+- Charts: 1.5px accent line, no area fill, hollow dots, hairline grid, mono axes, tooltip as a small ledger card.
+
+### Interaction
+- Minimum 48px touch targets for every tappable control (the text input rows are ≥ 48px tall). Primary actions in the bottom thumb zone. No hover-dependent UI.
+- Motion: 120ms ease-out; the logged-set tick is the only flourish. Respect `prefers-reduced-motion`.
+- Accessibility: WCAG AA contrast in both themes (use `--accent-ink`, not `--accent`, for accent text on Paper), labelled inputs, visible 2px accent focus rings, screen-reader text on icon buttons, colour is never the only signal.
+- Layout: designed for 360–430px wide; on larger screens content is centered at max 560px.
+- Voice: terse and lowercase-friendly; no exclamation marks, no emoji except the 🏆 on PRs.
 
 ---
 
@@ -395,16 +422,14 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 
 #### F05 · Active session logging
 - **Depends on:** F04
-- **Scope:** §6.1 entirely: ExerciseCard, SetRow, prefill from last performance, 1-tap complete, steppers + numeric keypad, add/delete set, warm-up flag, RIR, swap exercise, per-exercise note, autosave, collapse completed cards, Finish summary sheet with PRs, discard empty session, Wake Lock.
+- **Scope:** §6.1 entirely: ExerciseCard, SetRow with the single `weight x reps` text entry, prefill from last performance, Enter to log, add/delete set, warm-up flag, RIR, swap exercise, per-exercise note, autosave, collapse completed cards, Finish summary sheet with PRs, discard empty session, Wake Lock. (Rebuilt in R1a; the original stepper UI is superseded.)
 - **Done when:** E2E: start Upper A, log all sets with 1-tap on prefilled values, reload mid-session and resume with data intact, finish, see summary; a second Upper A session shows "Last: …" and prefills its rows from the first session.
 
-#### F06 · Rest timer
-- **Depends on:** F05 (wires into the `onSetCompleted` hook-in point F05 leaves in `Session.tsx`)
-- **Scope:** §6.2 floating timer, ±15 s, dismiss, vibration/sound, timestamp-based, settings toggle respected.
-- **Done when:** unit test for remaining-time computation across simulated sleep; E2E shows the timer after completing a set.
+#### F06 · ~~Rest timer~~ (removed)
+- Dropped by product decision: Trakr has no timers. Built once, then deleted in R1a.
 
 #### F07 · History & session detail/edit
-- **Depends on:** F05 (reuses its SetRow for edit mode); runs in parallel with F06
+- **Depends on:** F05 (reuses its SetRow for edit mode)
 - **Scope:** `/history` feed grouped by week with filter chips; `/history/session/:id` summary with edit (change weight/reps, add/remove sets) and delete (confirm).
 - **Done when:** E2E: edit a logged set's weight and see it reflected in Last performance on the next session.
 
@@ -425,7 +450,7 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 
 #### F11 · Settings & backup
 - **Depends on:** F02
-- **Scope:** §6 Settings: units, increments, rest timer, theme; export backup (§4.3) via file download / Web Share API on mobile; import with replace/merge; clear all data.
+- **Scope:** §6 Settings: units, theme; export backup (§4.3) via file download / Web Share API on mobile; import with replace/merge; clear all data.
 - **Done when:** round-trip test: export → clear → import restores identical data; switching units converts displayed values (component test here; checked across all screens in F13).
 
 ### Wave 3 — Ship
@@ -439,6 +464,25 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 - **Depends on:** F12
 - **Scope:** full mobile E2E suite run, Lighthouse targets (§8), accessibility audit, visual consistency pass against §7, fix defects found.
 - **Done when:** all §8 targets met and the suite is green.
+
+### Redesign round (R1) — after F12, before the final QA
+
+Product changes requested after the first build: a distinctive look ("Signal", §7), no timers, and one text entry per set (§6.1).
+
+#### R1a · Logging rework: single text entry, no timers
+- **Depends on:** F12 merged.
+- **Scope:** `domain/setEntry.ts` + tests (grammar in §6.1); rebuild `SetRow` as the single-input row (also used by History edit mode); focus flow, preview/hint, prefill, un-log; **remove** the rest timer (`restTimer.ts`, `useRestTimer`, `RestTimer.tsx`, their tests and e2e), the running clock in the Session header, the `restSeconds` field (types, Zod schema, bundled program, markdown importer, with schema parsing still tolerant of old files containing it), the `restTimerEnabled`/`restTimerSound`/`increments` settings (types, defaults, Settings UI, backup schema must still accept old backups containing them), and the `NumberStepper`. Update every unit/e2e test that touched weight/reps fields. Does **not** restyle anything beyond what the new row needs.
+- **Done when:** unit tests cover the grammar (all separators, decimals, unit suffix, bodyweight-plus, load `none`, invalid input); e2e: log a full exercise purely with the keyboard (type `100x8` Enter, then Enter on prefilled rows), reload, finish; a second session prefills the first's values; editing a logged row updates it; old backups still import; no timer UI remains anywhere (grep for `RestTimer`/`restSeconds` returns nothing in `src/`).
+
+#### R1b · Signal design foundation
+- **Depends on:** F12 merged (runs in parallel with R1a).
+- **Scope:** §7 in full for the foundation layer: CSS variables for both themes in `styles/index.css`, Tailwind mapping, fonts (`@fontsource-variable` packages; the only dependency additions allowed), dot-grid page background, all `components/ui/*` primitives restyled (Button, Card, Chip, Sheet, EmptyState, TabBar, PageHeader, ConfirmDialog, plus a new `SectionLabel`, `SegmentedBar`, `Mono` number helper), the app shell, the Today screen (hero with schedule strip, no running clock on Resume), and `/dev/ui` updated. Do not edit `src/components/session/*`, Settings, or anything R1a owns.
+- **Done when:** the app builds and every existing test passes; Today and `/dev/ui` match §7 in both themes at 360/390/430 px (screenshots reviewed); contrast checked for `--accent-ink` on Paper.
+
+#### R1c · Restyle all remaining screens
+- **Depends on:** R1a and R1b merged.
+- **Scope:** apply §7 to Session (exercise cards, set rows, finish sheet), History feed and session detail, Progress list and charts, Activity form, Program overview and editor, Settings, import/export sheets. No behaviour changes. Delete the unused `Stepper` primitive.
+- **Done when:** every screen reviewed via screenshots at 390 px in both themes; tests green; no hard-coded colours outside the token layer.
 
 ### Later (optional)
 
@@ -455,27 +499,18 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 
 ## 10. Dependency Graph
 
+Built so far (all merged): F00–F05, F07–F12 (F06 was built then removed). Remaining:
+
 ```
-F00 ─┬─► F01 ───────────────────────────────┐
-     ├─► F02 ─┬─► F04 ─► F05 ─┬─► F06        │
-     └─► F03 ─┤               └─► F07        ├─► F12 ─► F13 ─► (F14)
-              ├─► F08                        │
-              ├─► F09                        │
-              ├─► F10 (also needs F01)       │
-              └─► F11 ───────────────────────┘
+F12 ─┬─► R1a (logging rework, no timers) ─┐
+     └─► R1b (Signal foundation) ─────────┴─► R1c (restyle all screens) ─► F13 (final QA) ─► (F14)
 ```
 
 | Step | Run in parallel | Starts when merged |
 |---|---|---|
-| 1 | F00 | — |
-| 2 | F01, F02, F03 | F00 |
-| 3 | F04, F08, F09, F10, F11 | F01, F02, F03 |
-| 4 | F05 | F04 (don't wait for the rest of step 3) |
-| 5 | F06, F07 | F05 |
-| 6 | F12 | all of F04–F11 |
-| 7 | F13 | F12 |
-
-**MVP = F00–F06** (start a workout, log sets with last-time prefill, rest timer). Everything after improves review, editing, and shipping.
+| 8 | R1a, R1b | F12 |
+| 9 | R1c | R1a, R1b |
+| 10 | F13 | R1c |
 
 ---
 
