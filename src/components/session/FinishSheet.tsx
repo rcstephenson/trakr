@@ -100,7 +100,7 @@ export function FinishSheet(props: FinishSheetProps) {
                         🏆
                       </span>
                       <span className="min-w-0 flex-1 truncate">{ex?.name ?? pr.id}</span>
-                      <span className="num shrink-0 font-semibold text-pr">
+                      <span className="num shrink-0 font-semibold text-ink">
                         {w} × {pr.set.reps}
                       </span>
                     </li>

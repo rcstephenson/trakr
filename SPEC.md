@@ -93,7 +93,7 @@ trakr/
 │   │   ├── WorkoutEditor.tsx
 │   │   └── Settings.tsx
 │   ├── components/
-│   │   ├── ui/                   # primitives: Button, Card, Stepper, Sheet, Chip, TabBar, EmptyState
+│   │   ├── ui/                   # primitives: Button, Card, Sheet, Chip, TabBar, EmptyState
 │   │   ├── today/                # Today screen pieces
 │   │   ├── session/              # ExerciseCard, SetRow (single text entry), sheets
 │   │   ├── history/              # feed, session summary

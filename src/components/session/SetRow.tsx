@@ -75,7 +75,7 @@ export function SetRow(props: SetRowProps) {
         type="button"
         onClick={props.onOptions}
         aria-label={`Set ${n} options`}
-        className="num flex h-12 w-10 shrink-0 flex-col items-center justify-center text-xs font-medium text-muted"
+        className="num flex h-12 w-12 shrink-0 flex-col items-center justify-center text-xs font-medium text-muted"
       >
         {isWarmup ? (
           <span className="rounded-chip border border-pr px-1 font-semibold text-ink">W</span>

@@ -3,15 +3,7 @@
   "id": "v-taper-upper-lower",
   "name": "V-Taper Hypertrophy — Upper/Lower",
   "description": "Lean muscle, V-taper/hourglass emphasis.",
-  "schedule": [
-    "upper-a",
-    "lower-a",
-    "rest",
-    "upper-b",
-    "lower-b",
-    "rest",
-    "rest"
-  ],
+  "schedule": ["upper-a", "lower-a", "rest", "upper-b", "lower-b", "rest", "rest"],
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -19,11 +11,7 @@
       "equipment": "barbell",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "chest",
-        "triceps",
-        "front-delts"
-      ]
+      "muscles": ["chest", "triceps", "front-delts"]
     },
     {
       "id": "chest-supported-row",
@@ -31,12 +19,7 @@
       "equipment": "machine",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "lats",
-        "upper-back",
-        "rear-delts",
-        "biceps"
-      ]
+      "muscles": ["lats", "upper-back", "rear-delts", "biceps"]
     },
     {
       "id": "incline-dumbbell-press",
@@ -44,11 +27,7 @@
       "equipment": "dumbbell",
       "kind": "compound",
       "load": "per-hand",
-      "muscles": [
-        "chest",
-        "front-delts",
-        "triceps"
-      ]
+      "muscles": ["chest", "front-delts", "triceps"]
     },
     {
       "id": "incline-barbell-press",
@@ -56,11 +35,7 @@
       "equipment": "barbell",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "chest",
-        "front-delts",
-        "triceps"
-      ]
+      "muscles": ["chest", "front-delts", "triceps"]
     },
     {
       "id": "lat-pulldown",
@@ -68,11 +43,7 @@
       "equipment": "cable",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "lats",
-        "upper-back",
-        "biceps"
-      ]
+      "muscles": ["lats", "upper-back", "biceps"]
     },
     {
       "id": "neutral-grip-lat-pulldown",
@@ -80,11 +51,7 @@
       "equipment": "cable",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "lats",
-        "upper-back",
-        "biceps"
-      ]
+      "muscles": ["lats", "upper-back", "biceps"]
     },
     {
       "id": "pull-up",
@@ -92,11 +59,7 @@
       "equipment": "bodyweight",
       "kind": "compound",
       "load": "bodyweight-plus",
-      "muscles": [
-        "lats",
-        "upper-back",
-        "biceps"
-      ]
+      "muscles": ["lats", "upper-back", "biceps"]
     },
     {
       "id": "dips",
@@ -104,11 +67,7 @@
       "equipment": "bodyweight",
       "kind": "compound",
       "load": "bodyweight-plus",
-      "muscles": [
-        "chest",
-        "triceps",
-        "front-delts"
-      ]
+      "muscles": ["chest", "triceps", "front-delts"]
     },
     {
       "id": "machine-chest-press",
@@ -116,11 +75,7 @@
       "equipment": "machine",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "chest",
-        "triceps",
-        "front-delts"
-      ]
+      "muscles": ["chest", "triceps", "front-delts"]
     },
     {
       "id": "seated-db-overhead-press",
@@ -128,11 +83,7 @@
       "equipment": "dumbbell",
       "kind": "compound",
       "load": "per-hand",
-      "muscles": [
-        "front-delts",
-        "lateral-delts",
-        "triceps"
-      ]
+      "muscles": ["front-delts", "lateral-delts", "triceps"]
     },
     {
       "id": "single-arm-cable-pulldown",
@@ -140,10 +91,7 @@
       "equipment": "cable",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "lats",
-        "upper-back"
-      ]
+      "muscles": ["lats", "upper-back"]
     },
     {
       "id": "seated-cable-row",
@@ -151,12 +99,7 @@
       "equipment": "cable",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "lats",
-        "upper-back",
-        "rear-delts",
-        "biceps"
-      ]
+      "muscles": ["lats", "upper-back", "rear-delts", "biceps"]
     },
     {
       "id": "cable-lateral-raise",
@@ -164,9 +107,7 @@
       "equipment": "cable",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "lateral-delts"
-      ]
+      "muscles": ["lateral-delts"]
     },
     {
       "id": "machine-lateral-raise",
@@ -174,9 +115,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "lateral-delts"
-      ]
+      "muscles": ["lateral-delts"]
     },
     {
       "id": "dumbbell-lateral-raise",
@@ -184,9 +123,7 @@
       "equipment": "dumbbell",
       "kind": "isolation",
       "load": "per-hand",
-      "muscles": [
-        "lateral-delts"
-      ]
+      "muscles": ["lateral-delts"]
     },
     {
       "id": "rear-delt-fly",
@@ -194,10 +131,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "rear-delts",
-        "upper-back"
-      ]
+      "muscles": ["rear-delts", "upper-back"]
     },
     {
       "id": "triceps-pressdown",
@@ -205,9 +139,7 @@
       "equipment": "cable",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "triceps"
-      ]
+      "muscles": ["triceps"]
     },
     {
       "id": "overhead-triceps-extension",
@@ -215,9 +147,7 @@
       "equipment": "cable",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "triceps"
-      ]
+      "muscles": ["triceps"]
     },
     {
       "id": "dumbbell-curl",
@@ -225,9 +155,7 @@
       "equipment": "dumbbell",
       "kind": "isolation",
       "load": "per-hand",
-      "muscles": [
-        "biceps"
-      ]
+      "muscles": ["biceps"]
     },
     {
       "id": "preacher-curl",
@@ -235,9 +163,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "biceps"
-      ]
+      "muscles": ["biceps"]
     },
     {
       "id": "hip-thrust",
@@ -245,10 +171,7 @@
       "equipment": "barbell",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "glute-max",
-        "hamstrings"
-      ]
+      "muscles": ["glute-max", "hamstrings"]
     },
     {
       "id": "back-squat",
@@ -256,11 +179,7 @@
       "equipment": "barbell",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "quads",
-        "glute-max",
-        "hamstrings"
-      ]
+      "muscles": ["quads", "glute-max", "hamstrings"]
     },
     {
       "id": "romanian-deadlift",
@@ -268,11 +187,7 @@
       "equipment": "barbell",
       "kind": "compound",
       "load": "total",
-      "muscles": [
-        "hamstrings",
-        "glute-max",
-        "upper-back"
-      ]
+      "muscles": ["hamstrings", "glute-max", "upper-back"]
     },
     {
       "id": "bulgarian-split-squat",
@@ -280,11 +195,7 @@
       "equipment": "dumbbell",
       "kind": "compound",
       "load": "per-hand",
-      "muscles": [
-        "quads",
-        "glute-max",
-        "glute-med"
-      ]
+      "muscles": ["quads", "glute-max", "glute-med"]
     },
     {
       "id": "seated-leg-curl",
@@ -292,9 +203,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "hamstrings"
-      ]
+      "muscles": ["hamstrings"]
     },
     {
       "id": "hip-abduction-machine",
@@ -302,10 +211,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "glute-med",
-        "glute-max"
-      ]
+      "muscles": ["glute-med", "glute-max"]
     },
     {
       "id": "leg-extension",
@@ -313,9 +219,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "quads"
-      ]
+      "muscles": ["quads"]
     },
     {
       "id": "standing-calf-raise",
@@ -323,9 +227,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "calves"
-      ]
+      "muscles": ["calves"]
     },
     {
       "id": "seated-calf-raise",
@@ -333,9 +235,7 @@
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
-      "muscles": [
-        "calves"
-      ]
+      "muscles": ["calves"]
     },
     {
       "id": "core-leg-raise",
@@ -343,9 +243,7 @@
       "equipment": "bodyweight",
       "kind": "isolation",
       "load": "none",
-      "muscles": [
-        "abs"
-      ]
+      "muscles": ["abs"]
     }
   ],
   "workouts": [
@@ -491,9 +389,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": [
-            "incline-barbell-press"
-          ]
+          "alternatives": ["incline-barbell-press"]
         },
         {
           "exerciseId": "pull-up",
@@ -501,9 +397,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": [
-            "neutral-grip-lat-pulldown"
-          ]
+          "alternatives": ["neutral-grip-lat-pulldown"]
         },
         {
           "exerciseId": "dips",
@@ -511,10 +405,7 @@
           "repMin": 8,
           "repMax": 12,
           "notes": "Optional swap: seated DB overhead press",
-          "alternatives": [
-            "machine-chest-press",
-            "seated-db-overhead-press"
-          ]
+          "alternatives": ["machine-chest-press", "seated-db-overhead-press"]
         },
         {
           "exerciseId": "single-arm-cable-pulldown",
@@ -538,9 +429,7 @@
           "repMin": 12,
           "repMax": 20,
           "notes": "Different variation than Upper A",
-          "alternatives": [
-            "dumbbell-lateral-raise"
-          ]
+          "alternatives": ["dumbbell-lateral-raise"]
         },
         {
           "exerciseId": "rear-delt-fly",
