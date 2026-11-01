@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "v-taper-upper-lower",
+  "name": "V-Taper Hypertrophy — Upper/Lower",
+  "description": "Lean muscle, V-taper emphasis. (Stub: F01 replaces this with the full program.)",
+  "schedule": ["upper-a", "lower-a", "rest", "upper-b", "lower-b", "rest", "rest"],
+  "restSeconds": { "compound": 150, "isolation": 75 },
+  "exercises": [
+    {
+      "id": "barbell-bench-press",
+      "name": "Barbell Bench Press",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": ["chest", "triceps", "front-delts"]
+    },
+    {
+      "id": "chest-supported-row",
+      "name": "Chest-Supported Row",
+      "equipment": "machine",
+      "kind": "compound",
+      "load": "total",
+      "muscles": ["lats", "upper-back", "rear-delts", "biceps"]
+    }
+  ],
+  "workouts": [
+    {
+      "id": "upper-a",
+      "name": "Upper A",
+      "items": [
+        {
+          "exerciseId": "barbell-bench-press",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "chest-supported-row",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "",
+          "alternatives": []
+        }
+      ]
+    }
+  ],
+  "notes": ""
+}

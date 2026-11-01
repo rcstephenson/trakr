@@ -1,0 +1,9 @@
+node_modules
+dist
+playwright-report
+test-results
+package-lock.json
+SPEC.md
+workouts
+docs
+.claude
