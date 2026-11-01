@@ -6,19 +6,16 @@ import { FinishSheet, formatDuration } from '../components/session/FinishSheet';
 import { useExerciseCatalog, useNow, useProgramById } from '../components/session/hooks';
 import { NoteSheet } from '../components/session/NoteSheet';
 import { readSlotNotes, writeSlotNote } from '../components/session/prefill';
+import { RestTimer } from '../components/session/RestTimer';
 import { SwapSheet } from '../components/session/SwapSheet';
 import { Button, EmptyState, PageHeader } from '../components/ui';
 import * as sessionsRepo from '../db/repositories/sessions';
 import type { SessionTarget } from '../domain/types';
 import { useSession } from '../hooks/useSession';
+import { startRestTimer } from '../hooks/useRestTimer';
 import { useSessionSets } from '../hooks/useSessionSets';
 import { useSettings } from '../hooks/useSettings';
 import { useWakeLock } from '../hooks/useWakeLock';
-
-// F06: rest timer hook-in
-function onSetCompleted(target: SessionTarget) {
-  void target;
-}
 
 export default function Session() {
   const { id } = useParams();
@@ -106,6 +103,11 @@ export default function Session() {
   const swapping = session.targets.find((t) => t.slotIndex === swapSlot);
   const workout = program?.workouts.find((w) => w.id === session.workoutId);
 
+  // F06: rest timer hook-in
+  function onSetCompleted(target: SessionTarget) {
+    if (program) startRestTimer(program.restSeconds[target.kind]);
+  }
+
   async function finish() {
     if (!id || busy) return;
     setBusy(true);
@@ -157,6 +159,7 @@ export default function Session() {
         ))}
       </ul>
 
+      <RestTimer />
       <SwapSheet
         open={swapping !== undefined}
         onClose={() => setSwapSlot(null)}
