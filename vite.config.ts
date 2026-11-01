@@ -16,7 +16,7 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
-        // Light theme --bg and --accent (src/styles/index.css).
+        // Graphite --bg (src/styles/index.css): the splash/launch colour is dark.
         theme_color: '#0A0C10',
         background_color: '#0A0C10',
         icons: [
