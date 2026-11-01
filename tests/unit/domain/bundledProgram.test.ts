@@ -24,7 +24,15 @@ describe('bundled v-taper-upper-lower program', () => {
   });
 
   it('has the 7-entry weekly schedule', () => {
-    expect(load().schedule).toEqual(['upper-a', 'lower-a', 'rest', 'upper-b', 'lower-b', 'rest', 'rest']);
+    expect(load().schedule).toEqual([
+      'upper-a',
+      'lower-a',
+      'rest',
+      'upper-b',
+      'lower-b',
+      'rest',
+      'rest',
+    ]);
   });
 
   it('shares ids for exercises repeated across days', () => {
@@ -48,11 +56,23 @@ describe('bundled v-taper-upper-lower program', () => {
   it('populates alternatives for the "X or Y" / "X / Y" rows and the DB overhead press swap', () => {
     const p = load();
     const upperB = p.workouts.find((w) => w.id === 'upper-b')!;
-    expect(upperB.items[0]).toMatchObject({ exerciseId: 'incline-dumbbell-press', alternatives: ['incline-barbell-press'] });
-    expect(upperB.items[1]).toMatchObject({ exerciseId: 'pull-up', alternatives: ['neutral-grip-lat-pulldown'] });
+    expect(upperB.items[0]).toMatchObject({
+      exerciseId: 'incline-dumbbell-press',
+      alternatives: ['incline-barbell-press'],
+    });
+    expect(upperB.items[1]).toMatchObject({
+      exerciseId: 'pull-up',
+      alternatives: ['neutral-grip-lat-pulldown'],
+    });
     expect(upperB.items[2].exerciseId).toBe('dips');
-    expect(upperB.items[2].alternatives).toEqual(['machine-chest-press', 'seated-db-overhead-press']);
-    expect(upperB.items[5]).toMatchObject({ exerciseId: 'machine-lateral-raise', alternatives: ['dumbbell-lateral-raise'] });
+    expect(upperB.items[2].alternatives).toEqual([
+      'machine-chest-press',
+      'seated-db-overhead-press',
+    ]);
+    expect(upperB.items[5]).toMatchObject({
+      exerciseId: 'machine-lateral-raise',
+      alternatives: ['dumbbell-lateral-raise'],
+    });
   });
 
   it('keeps sets, reps and notes as in the source', () => {
@@ -67,7 +87,13 @@ describe('bundled v-taper-upper-lower program', () => {
 
   it('includes the source notes sections', () => {
     const notes = load().notes ?? '';
-    for (const h of ['## Weekly Volume', '## Execution Rules', '## Nutrition', '## Changes From the Original Draft', '## Supporting Research']) {
+    for (const h of [
+      '## Weekly Volume',
+      '## Execution Rules',
+      '## Nutrition',
+      '## Changes From the Original Draft',
+      '## Supporting Research',
+    ]) {
       expect(notes).toContain(h);
     }
     expect(notes).toContain('**Lifter:**');

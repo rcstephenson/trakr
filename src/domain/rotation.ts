@@ -9,7 +9,9 @@
  */
 export function nextWorkoutId(
   program: Pick<Program, 'schedule'>,
-  completedSessions: ReadonlyArray<Pick<Session, 'workoutId' | 'status' | 'startedAt' | 'finishedAt'>>,
+  completedSessions: ReadonlyArray<
+    Pick<Session, 'workoutId' | 'status' | 'startedAt' | 'finishedAt'>
+  >,
 ): string {
   const order = program.schedule.filter((id) => id !== 'rest');
   const first = order[0];

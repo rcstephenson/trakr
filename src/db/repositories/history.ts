@@ -48,3 +48,8 @@ export async function forExercise(exerciseId: string): Promise<Performance[]> {
   }
   return result.sort((a, b) => a.session.startedAt.localeCompare(b.session.startedAt));
 }
+
+/** Ids of every exercise that has at least one logged set (even if missing from the catalog). */
+export async function loggedExerciseIds(): Promise<string[]> {
+  return (await db.sets.orderBy('exerciseId').uniqueKeys()) as string[];
+}

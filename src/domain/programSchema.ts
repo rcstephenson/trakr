@@ -103,9 +103,7 @@ type InferredProgram = z.infer<typeof ProgramSchema>;
 const _assignableToProgram = (p: InferredProgram): Program => p;
 void _assignableToProgram;
 
-export type ParseProgramResult =
-  | { ok: true; program: Program }
-  | { ok: false; errors: string[] };
+export type ParseProgramResult = { ok: true; program: Program } | { ok: false; errors: string[] };
 
 function formatPath(path: PropertyKey[]): string {
   let out = '';
@@ -133,6 +131,8 @@ function describeIssue(issue: z.core.$ZodIssue): string {
 export function parseProgram(input: unknown): ParseProgramResult {
   const result = ProgramSchema.safeParse(input);
   if (result.success) return { ok: true, program: result.data };
-  const errors = result.error.issues.map((issue) => `${formatPath(issue.path)}: ${describeIssue(issue)}`);
+  const errors = result.error.issues.map(
+    (issue) => `${formatPath(issue.path)}: ${describeIssue(issue)}`,
+  );
   return { ok: false, errors };
 }

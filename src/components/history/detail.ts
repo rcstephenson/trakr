@@ -1,10 +1,12 @@
-import type { SetEntry } from '../../domain/types';
+import type { SessionTarget, SetEntry } from '../../domain/types';
 
 export interface SetGroup {
   key: string;
   slotIndex: number;
   exerciseId: string;
   sets: SetEntry[];
+  /** Template rep minimum, only on placeholder groups that have no logged sets. */
+  repMin?: number;
 }
 
 /**
@@ -28,6 +30,27 @@ export function groupSets(sets: ReadonlyArray<SetEntry>): SetGroup[] {
   const result = [...groups.values()];
   for (const g of result) g.sets.sort((a, b) => a.setIndex - b.setIndex);
   return result;
+}
+
+/**
+ * Adds an empty group for every template slot with no logged sets, so edit mode can add sets
+ * back to an exercise whose sets were all deleted. Slots that already have a group are left alone.
+ */
+export function withEmptySlots(
+  groups: ReadonlyArray<SetGroup>,
+  targets: ReadonlyArray<SessionTarget>,
+): SetGroup[] {
+  const filled = new Set(groups.map((g) => g.slotIndex));
+  const empty: SetGroup[] = targets
+    .filter((t) => !filled.has(t.slotIndex))
+    .map((t) => ({
+      key: `${t.slotIndex}:${t.exerciseId}`,
+      slotIndex: t.slotIndex,
+      exerciseId: t.exerciseId,
+      sets: [],
+      repMin: t.repMin,
+    }));
+  return [...groups, ...empty].sort((a, b) => a.slotIndex - b.slotIndex);
 }
 
 const SLOT_NOTE = /^Exercise \d+: /;
