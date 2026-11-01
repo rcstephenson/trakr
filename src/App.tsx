@@ -1,6 +1,7 @@
-import { lazy, Suspense } from 'react';
+﻿import { lazy, Suspense } from 'react';
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { TabBar } from './components/ui';
+import UpdatePrompt from './components/UpdatePrompt';
 import { useApplyTheme } from './hooks/useApplyTheme';
 import Today from './routes/Today';
 import Session from './routes/Session';
@@ -53,6 +54,7 @@ export default function App() {
           {SeedDemo ? <Route path="/dev/seed" element={<SeedDemo />} /> : null}
         </Route>
       </Routes>
+      <UpdatePrompt />
     </BrowserRouter>
   );
 }
