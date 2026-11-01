@@ -102,7 +102,14 @@ export default function WorkoutEditor() {
         ...draft,
         {
           key: newId(),
-          item: { exerciseId: exercise.id, sets: 3, repMin: 8, repMax: 12, notes: '', alternatives: [] },
+          item: {
+            exerciseId: exercise.id,
+            sets: 3,
+            repMin: 8,
+            repMax: 12,
+            notes: '',
+            alternatives: [],
+          },
         },
       ]);
     } else if (picker?.mode === 'alt') {
@@ -143,14 +150,14 @@ export default function WorkoutEditor() {
     <>
       <PageHeader
         title={workout.name}
-        subtitle="Edit template. Past sessions are not changed."
+        subtitle="Edit template · past sessions unchanged"
         action={
           <Link
             to="/program"
             aria-label="Back to program"
-            className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-btn text-muted"
+            className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-btn text-ink active:bg-surface"
           >
-            <ArrowLeft size={22} aria-hidden="true" />
+            <ArrowLeft size={20} aria-hidden="true" />
           </Link>
         }
       />
@@ -179,11 +186,11 @@ export default function WorkoutEditor() {
         </Button>
       </div>
 
-      <div className="pb-safe fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-app flex-col gap-2 border-t border-border bg-surface p-gutter">
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-app flex-col gap-2 border-t border-hairline bg-surface p-gutter">
         {undo ? (
           <div
             role="status"
-            className="flex min-h-touch items-center justify-between text-sm text-text"
+            className="num flex min-h-touch items-center justify-between text-xs text-ink"
           >
             <span>Removed {nameOf(undo.draft.item.exerciseId)}</span>
             <Button variant="ghost" onClick={restore}>
@@ -218,7 +225,10 @@ function NotFound() {
         title="Workout not found"
         description="This workout is not in the active program."
         action={
-          <Link to="/program" className="text-sm font-semibold text-accent">
+          <Link
+            to="/program"
+            className="font-mono text-xs font-semibold uppercase tracking-micro text-accent"
+          >
             Back to program
           </Link>
         }

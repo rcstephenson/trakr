@@ -102,7 +102,7 @@ export function DataSection() {
 
   return (
     <>
-      <SettingsGroup title="Data">
+      <SettingsGroup title="Data" index={3}>
         <SettingsRow label="Export backup" description="Save all your data as a JSON file">
           <Button variant="secondary" disabled={busy} onClick={() => void onExport()}>
             <Download size={18} aria-hidden="true" />
@@ -139,7 +139,7 @@ export function DataSection() {
       {status ? (
         <p
           role={status.kind === 'error' ? 'alert' : 'status'}
-          className={`px-gutter text-sm ${status.kind === 'error' ? 'text-danger' : 'text-muted'}`}
+          className={`num px-gutter text-xs ${status.kind === 'error' ? 'text-danger' : 'text-ink'}`}
         >
           {status.text}
         </p>
@@ -148,7 +148,7 @@ export function DataSection() {
       <Sheet open={pending !== null} onClose={() => setPending(null)} title="Import backup">
         {s ? (
           <>
-            <dl className="mb-4 grid grid-cols-[1fr_auto] gap-y-1 text-sm">
+            <dl className="mb-4 grid grid-cols-[1fr_auto] gap-y-1.5 border-y border-hairline py-3 text-sm">
               {(
                 [
                   ['Programs', s.counts.programs],
@@ -159,12 +159,12 @@ export function DataSection() {
                 ] as const
               ).map(([k, v]) => (
                 <div key={k} className="contents">
-                  <dt className="text-muted">{k}</dt>
-                  <dd className="tabular text-right text-text">{v}</dd>
+                  <dt className="micro">{k}</dt>
+                  <dd className="num text-right text-ink">{v}</dd>
                 </div>
               ))}
-              <dt className="text-muted">Date range</dt>
-              <dd className="text-right text-text">
+              <dt className="micro">Date range</dt>
+              <dd className="num text-right text-xs text-ink">
                 {s.dateRange ? `${fmtDate(s.dateRange.from)} – ${fmtDate(s.dateRange.to)}` : 'None'}
               </dd>
             </dl>
@@ -203,7 +203,7 @@ export function DataSection() {
       />
 
       <Sheet open={clearStep === 2} onClose={closeClear} title="Type DELETE to confirm">
-        <label htmlFor="clear-confirm" className="mb-2 block text-sm text-muted">
+        <label htmlFor="clear-confirm" className="mb-2 block text-sm text-ink">
           Type DELETE (capital letters) to permanently erase all data.
         </label>
         <input
@@ -212,7 +212,7 @@ export function DataSection() {
           onChange={(e) => setTyped(e.target.value)}
           autoCapitalize="characters"
           autoComplete="off"
-          className="mb-4 min-h-touch w-full rounded-btn border border-border bg-bg px-3 text-base text-text"
+          className="num mb-4 min-h-touch w-full rounded-btn border border-hairline bg-bg px-3 text-base text-ink"
         />
         <div className="flex flex-col gap-2">
           <Button

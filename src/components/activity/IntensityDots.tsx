@@ -6,7 +6,7 @@ export function IntensityDots({
   onChange: (value: number | undefined) => void;
 }) {
   return (
-    <div role="group" aria-label="Intensity" className="flex gap-1">
+    <div role="group" aria-label="Intensity" className="flex gap-1.5">
       {[1, 2, 3, 4, 5].map((n) => {
         const filled = value !== undefined && n <= value;
         return (
@@ -16,12 +16,12 @@ export function IntensityDots({
             aria-label={`Intensity ${n}`}
             aria-pressed={value === n}
             onClick={() => onChange(value === n ? undefined : n)}
-            className="flex min-h-touch min-w-touch items-center justify-center"
+            className="flex min-h-touch flex-1 items-center justify-center"
           >
             <span
               className={[
-                'h-5 w-5 rounded-full border transition-colors',
-                filled ? 'border-accent bg-accent' : 'border-border bg-surface',
+                'h-3 w-full rounded-[2px] border transition-colors',
+                filled ? 'border-accent bg-accent' : 'border-hairline bg-raised',
               ].join(' ')}
             />
           </button>

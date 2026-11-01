@@ -2,8 +2,7 @@ import { convert, roundForDisplay } from './units';
 import type { LoadType, Unit } from './types';
 
 export type SetEntryResult =
-  | { ok: true; weight: number; reps: number; unit: Unit }
-  | { ok: false; hint: string };
+  { ok: true; weight: number; reps: number; unit: Unit } | { ok: false; hint: string };
 
 export interface SetEntryOptions {
   load: LoadType;

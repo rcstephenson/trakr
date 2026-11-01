@@ -2,9 +2,16 @@ import { useRef, useState } from 'react';
 import { ArrowLeftRight, Check, MessageSquare, Plus } from 'lucide-react';
 import * as setsRepo from '../../db/repositories/sets';
 import { formatSetEntry } from '../../domain/setEntry';
-import type { Exercise, LoadType, Session, SessionTarget, SetEntry, Settings } from '../../domain/types';
+import type {
+  Exercise,
+  LoadType,
+  Session,
+  SessionTarget,
+  SetEntry,
+  Settings,
+} from '../../domain/types';
 import { useLastPerformance } from '../../hooks/useLastPerformance';
-import { Button, Card, Sheet } from '../ui';
+import { Button, Card, SectionLabel, SegmentedBar, Sheet } from '../ui';
 import { formatSets, prefillForSet, weightInUnit } from './prefill';
 import { SetRow, type ParsedSet } from './SetRow';
 
@@ -84,7 +91,11 @@ export function ExerciseCard(props: ExerciseCardProps) {
   async function log(i: number, parsed: ParsedSet) {
     const entry = entries.get(i);
     if (entry) {
-      await setsRepo.update(entry.id, { weight: parsed.weight, unit: parsed.unit, reps: parsed.reps });
+      await setsRepo.update(entry.id, {
+        weight: parsed.weight,
+        unit: parsed.unit,
+        reps: parsed.reps,
+      });
       return;
     }
     const draft = drafts[i];
@@ -156,6 +167,8 @@ export function ExerciseCard(props: ExerciseCardProps) {
     return e ? [e] : [];
   });
 
+  const index = String(slot + 1).padStart(2, '0');
+
   if (allDone && !expanded) {
     return (
       <Card className="!p-0" data-testid="exercise-card" data-slot={slot}>
@@ -163,14 +176,17 @@ export function ExerciseCard(props: ExerciseCardProps) {
           type="button"
           onClick={() => setExpanded(true)}
           aria-label={`${name}, all sets complete. Expand`}
-          className="flex min-h-touch w-full items-center gap-3 p-4 text-left"
+          className="flex min-h-touch w-full items-center gap-3 p-3 text-left"
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success text-on-accent">
-            <Check size={18} aria-hidden="true" />
+          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-chip bg-accent text-on-accent">
+            <Check size={16} strokeWidth={3} aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-base font-semibold text-text">{name}</span>
-            <span className="block truncate text-xs text-muted">
+            <span className="block truncate font-mono text-xs font-semibold uppercase tracking-wide text-ink">
+              <span className="mr-1.5 text-muted">{index}</span>
+              {name}
+            </span>
+            <span className="num block truncate text-xs text-muted">
               {formatSets(loggedSets, settings.unit, exercise)}
             </span>
           </span>
@@ -183,23 +199,41 @@ export function ExerciseCard(props: ExerciseCardProps) {
   const optionDraft = optionsRow !== null ? drafts[optionsRow] : undefined;
   const optionWarmup = optionEntry?.isWarmup ?? optionDraft?.isWarmup ?? false;
   const optionRir = optionEntry ? optionEntry.rir : optionDraft?.rir;
+  const actionClass =
+    'inline-flex min-h-touch flex-1 items-center justify-center gap-1.5 whitespace-nowrap font-mono text-micro font-medium uppercase tracking-micro text-ink active:bg-bg';
 
   return (
-    <Card className="!px-3" data-testid="exercise-card" data-slot={slot}>
-      <div className="flex items-baseline justify-between gap-3 px-1">
-        <h3 className="min-w-0 text-base font-semibold text-text">{name}</h3>
-        <span className="tabular shrink-0 text-xs text-muted">
-          {target.sets} × {repRange(target)}
-        </span>
+    <Card className="!p-0" data-testid="exercise-card" data-slot={slot}>
+      <div className="px-3 pt-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="min-w-0 font-mono text-xs font-semibold uppercase leading-5 tracking-wide text-ink">
+            <span className="mr-1.5 text-accent" aria-hidden="true">
+              {index} ·
+            </span>
+            {name}
+          </h3>
+          <span className="num shrink-0 text-xs text-muted">
+            {target.sets} × {repRange(target)}
+          </span>
+        </div>
+        {lastSets && lastSets.length > 0 ? (
+          <p className="num mt-1 text-xs text-muted" data-testid="last-line">
+            <span className="micro mr-1.5">Last:</span>{' '}
+            {formatSets(lastSets, settings.unit, exercise)}
+          </p>
+        ) : null}
+        {note ? (
+          <p className="mt-1.5 border-l-2 border-hairline pl-2 text-xs text-ink">{note}</p>
+        ) : null}
+        <SegmentedBar
+          className="mt-3"
+          value={completedCount}
+          total={rowCount}
+          label={`${completedCount} of ${rowCount} sets logged`}
+        />
       </div>
-      {lastSets && lastSets.length > 0 ? (
-        <p className="tabular mt-0.5 px-1 text-xs text-muted" data-testid="last-line">
-          Last: {formatSets(lastSets, settings.unit, exercise)}
-        </p>
-      ) : null}
-      {note ? <p className="mt-1 px-1 text-xs text-text">{note}</p> : null}
 
-      <ul className="mt-3 flex flex-col gap-1">
+      <ul className="mt-2 border-t border-hairline">
         {rows.map((i) => {
           const entry = entries.get(i);
           const draft = drafts[i];
@@ -224,21 +258,24 @@ export function ExerciseCard(props: ExerciseCardProps) {
         })}
       </ul>
 
-      <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-border pt-2">
-        <Button variant="ghost" onClick={() => setExtra(rowCount + 1 - target.sets)}>
-          <Plus size={16} aria-hidden="true" />
+      <div className="flex divide-x divide-hairline border-t border-hairline">
+        <button
+          type="button"
+          className={actionClass}
+          onClick={() => setExtra(rowCount + 1 - target.sets)}
+        >
+          <Plus size={14} aria-hidden="true" />
           Add set
-        </Button>
-        <Button variant="ghost" onClick={props.onSwap}>
-          <ArrowLeftRight size={16} aria-hidden="true" />
+        </button>
+        <button type="button" className={`${actionClass} !flex-[1.7]`} onClick={props.onSwap}>
+          <ArrowLeftRight size={14} aria-hidden="true" />
           Swap exercise
-        </Button>
-        <Button variant="ghost" onClick={props.onNote}>
-          <MessageSquare size={16} aria-hidden="true" />
+        </button>
+        <button type="button" className={actionClass} onClick={props.onNote}>
+          <MessageSquare size={14} aria-hidden="true" />
           Note
-        </Button>
+        </button>
       </div>
-
       <Sheet
         open={optionsRow !== null}
         onClose={() => setOptionsRow(null)}
@@ -254,7 +291,9 @@ export function ExerciseCard(props: ExerciseCardProps) {
             Warm-up set
           </Button>
           <div>
-            <p className="mb-2 text-sm text-muted">Reps in reserve</p>
+            <SectionLabel as="p" className="mb-2">
+              Reps in reserve
+            </SectionLabel>
             <div className="flex gap-2">
               {[0, 1, 2, 3, 4, 5].map((n) => (
                 <Button

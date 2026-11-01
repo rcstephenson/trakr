@@ -12,12 +12,22 @@ const ok = (weight: number, reps: number, unit: Unit = 'lb') => ({
 });
 
 describe('parseSetEntry: separators', () => {
-  it.each(['135 x 8', '135x8', '135X8', '135 X 8', '135×8', '135 × 8', '135*8', '135 * 8', '135 8', '  135   8  ', '135 x8', '135x 8'])(
-    'accepts %j',
-    (text) => {
-      expect(p(text)).toEqual(ok(135, 8));
-    },
-  );
+  it.each([
+    '135 x 8',
+    '135x8',
+    '135X8',
+    '135 X 8',
+    '135×8',
+    '135 × 8',
+    '135*8',
+    '135 * 8',
+    '135 8',
+    '  135   8  ',
+    '135 x8',
+    '135x 8',
+  ])('accepts %j', (text) => {
+    expect(p(text)).toEqual(ok(135, 8));
+  });
 
   it('does not treat a plain number as weight and reps', () => {
     expect(p('1358').ok).toBe(false);
@@ -112,7 +122,23 @@ describe('parseSetEntry: per-hand', () => {
 });
 
 describe('parseSetEntry: invalid input', () => {
-  const cases = ['', '   ', 'abc', 'x', '135x', 'x8', '135 x x 8', '135 x 8 x 3', '1 2 3', '135,8', '8 reps', 'bw x 12', '+25 x 8', '135 lb', '135'];
+  const cases = [
+    '',
+    '   ',
+    'abc',
+    'x',
+    '135x',
+    'x8',
+    '135 x x 8',
+    '135 x 8 x 3',
+    '1 2 3',
+    '135,8',
+    '8 reps',
+    'bw x 12',
+    '+25 x 8',
+    '135 lb',
+    '135',
+  ];
   it.each(cases)('rejects %j for total load with a hint', (text) => {
     const r = p(text);
     expect(r.ok).toBe(false);
@@ -149,7 +175,11 @@ describe('formatSetEntry', () => {
   it('round-trips through the parser', () => {
     const loads: LoadType[] = ['total', 'per-hand', 'bodyweight-plus', 'none'];
     for (const load of loads) {
-      for (const [w, r] of [[0, 12], [135, 8], [62.5, 10]] as const) {
+      for (const [w, r] of [
+        [0, 12],
+        [135, 8],
+        [62.5, 10],
+      ] as const) {
         if (load === 'none' && w !== 0) continue;
         if (load !== 'none' && load !== 'bodyweight-plus' && w === 0) continue;
         expect(p(formatSetEntry(w, r, load), load)).toEqual(ok(w, r));

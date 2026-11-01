@@ -1,7 +1,7 @@
 import type { Exercise, SetEntry, Unit } from '../../domain/types';
 import { findPRs } from '../../domain/stats';
 import { formatWeight } from '../../domain/units';
-import { Button, Sheet } from '../ui';
+import { Button, SectionLabel, Sheet } from '../ui';
 import { usePriorSets } from './hooks';
 import { weightInUnit } from './prefill';
 
@@ -28,9 +28,11 @@ export function formatDuration(ms: number): string {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-btn bg-bg p-3">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="tabular text-xl font-semibold text-text">{value}</p>
+    <div className="rounded-btn border border-hairline bg-bg p-3">
+      <p className="micro">{label}</p>
+      <p className="num mt-1 whitespace-nowrap text-base font-semibold tracking-tight text-ink">
+        {value}
+      </p>
     </div>
   );
 }
@@ -79,9 +81,9 @@ export function FinishSheet(props: FinishSheetProps) {
           </div>
           {prs.length > 0 ? (
             <section aria-label="Personal records" className="mb-4">
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
+              <SectionLabel as="h3" className="mb-2">
                 Records
-              </h3>
+              </SectionLabel>
               <ul className="flex flex-col gap-1">
                 {prs.map((pr, i) => {
                   const ex = exercises.get(pr.id);
@@ -90,12 +92,15 @@ export function FinishSheet(props: FinishSheetProps) {
                     bodyweightPlus: ex?.load === 'bodyweight-plus',
                   });
                   return (
-                    <li key={i} className="flex items-center gap-2 text-sm text-text">
+                    <li
+                      key={i}
+                      className="flex items-center gap-2 border-t border-hairline py-2 text-sm text-ink first:border-t-0"
+                    >
                       <span role="img" aria-label="Personal record">
                         🏆
                       </span>
                       <span className="min-w-0 flex-1 truncate">{ex?.name ?? pr.id}</span>
-                      <span className="tabular shrink-0 text-muted">
+                      <span className="num shrink-0 font-semibold text-pr">
                         {w} × {pr.set.reps}
                       </span>
                     </li>

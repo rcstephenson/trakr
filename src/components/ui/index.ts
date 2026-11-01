@@ -8,5 +8,4 @@ export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { SectionLabel, type SectionLabelProps } from './SectionLabel';
 export { SegmentedBar, type SegmentedBarProps, type SegmentState } from './SegmentedBar';
 export { Sheet, type SheetProps } from './Sheet';
-export { Stepper, type StepperProps } from './Stepper';
 export { TabBar } from './TabBar';

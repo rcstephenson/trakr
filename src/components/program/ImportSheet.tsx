@@ -78,7 +78,7 @@ export function ImportSheet({
         Choose a program <code>.json</code> file, or a <code>.md</code> file with workout tables.
         You can review it before it is saved.
       </p>
-      <label htmlFor={inputId} className="mb-1 block text-sm font-medium text-text">
+      <label htmlFor={inputId} className="micro mb-1 block">
         Program file
       </label>
       <input
@@ -86,7 +86,7 @@ export function ImportSheet({
         type="file"
         accept=".json,.md,.markdown,application/json,text/markdown"
         onChange={(e) => void onFile(e.target.files?.[0])}
-        className="mb-4 block w-full text-sm text-text"
+        className="num mb-4 block w-full rounded-btn border border-dashed border-hairline bg-bg p-3 text-xs text-ink file:mr-3 file:rounded-btn file:border file:border-hairline file:bg-raised file:px-3 file:py-2 file:font-mono file:text-xs file:uppercase file:text-ink"
       />
 
       {preview?.kind === 'error' ? (
@@ -94,7 +94,7 @@ export function ImportSheet({
           <p className="mb-1 text-sm font-semibold text-danger">
             {preview.fileName} could not be imported. Nothing was saved.
           </p>
-          <ul className="list-disc pl-5 text-sm text-text">
+          <ul className="list-disc pl-5 text-sm text-ink">
             {preview.errors.map((err, i) => (
               <li key={i}>{err}</li>
             ))}
@@ -104,12 +104,12 @@ export function ImportSheet({
 
       {program ? (
         <div className="mb-4" data-testid="import-preview">
-          <h3 className="text-base font-semibold text-text">{program.name}</h3>
-          <p className="mb-2 text-sm text-muted">
+          <h3 className="text-base font-semibold tracking-tight text-ink">{program.name}</h3>
+          <p className="num mb-2 text-xs text-muted">
             {program.workouts.length} workouts · {exerciseCount} exercise slots ·{' '}
             {program.exercises.length} exercises
           </p>
-          <ul className="mb-2 text-sm text-text">
+          <ul className="num mb-2 divide-y divide-hairline border-y border-hairline text-xs text-ink [&>li]:py-1.5">
             {program.workouts.map((w) => (
               <li key={w.id}>
                 {w.name}: {w.items.length} exercises
@@ -121,7 +121,7 @@ export function ImportSheet({
               A program with the id “{program.id}” already exists and will be replaced.
             </p>
           ) : null}
-          <label className="flex min-h-touch items-center gap-3 text-sm text-text">
+          <label className="flex min-h-touch items-center gap-3 text-sm text-ink">
             <input
               type="checkbox"
               checked={activate}

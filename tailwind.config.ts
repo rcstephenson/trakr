@@ -13,16 +13,9 @@ export default {
         'accent-ink': 'var(--accent-ink)',
         primary: 'var(--primary)',
         'on-primary': 'var(--on-primary)',
-        // Legacy names (kept so unrestyled screens still work).
-        text: 'var(--ink)',
         muted: 'var(--muted)',
-        border: 'var(--hairline)',
         accent: 'var(--accent)',
-        'accent-soft': 'var(--accent-soft)',
         'on-accent': 'var(--on-accent)',
-        success: 'var(--success)',
-        'success-soft': 'var(--success-soft)',
-        warning: 'var(--warning)',
         danger: 'var(--danger)',
         pr: 'var(--pr)',
         scrim: 'var(--scrim)',
@@ -63,9 +56,6 @@ export default {
         card: '8px',
         btn: '6px',
         chip: '4px',
-      },
-      boxShadow: {
-        card: 'none',
       },
       letterSpacing: { micro: '0.08em' },
       spacing: {

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActivityRow, SessionRow } from '../components/history/FeedRows';
 import { buildFeed, type FeedFilter } from '../components/history/feed';
-import { Button, Chip, EmptyState, PageHeader } from '../components/ui';
+import { Button, Chip, EmptyState, Mono, PageHeader, SectionLabel } from '../components/ui';
 import { useActivities } from '../hooks/useActivities';
 import { useSessions } from '../hooks/useSessions';
 import { useSettings } from '../hooks/useSettings';
@@ -46,8 +46,8 @@ export default function History() {
           }
         />
       ) : (
-        <div className="flex flex-col gap-4 px-gutter pb-6">
-          <div className="flex gap-2" role="group" aria-label="Filter history">
+        <div className="flex flex-col gap-5 px-gutter pb-6">
+          <div className="flex gap-1.5" role="group" aria-label="Filter history">
             {FILTERS.map((f) => (
               <Chip key={f.id} selected={filter === f.id} onClick={() => setFilter(f.id)}>
                 {f.label}
@@ -55,14 +55,17 @@ export default function History() {
             ))}
           </div>
           {groups.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted">Nothing to show for this filter.</p>
+            <p className="micro py-8 text-center">Nothing to show for this filter.</p>
           ) : (
-            groups.map((g) => (
+            groups.map((g, gi) => (
               <section key={g.key} aria-label={g.label}>
-                <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
+                <SectionLabel
+                  index={gi + 1}
+                  action={<Mono>{String(g.items.length).padStart(2, '0')}</Mono>}
+                >
                   {g.label}
-                </h2>
-                <ul className="flex flex-col gap-3">
+                </SectionLabel>
+                <ul className="mt-2 divide-y divide-hairline overflow-hidden rounded-card border border-hairline bg-surface">
                   {g.items.map((item) => (
                     <li key={item.key}>
                       {item.kind === 'session' ? (

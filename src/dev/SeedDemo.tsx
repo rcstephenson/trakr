@@ -50,7 +50,7 @@ export default function SeedDemo() {
           >
             Clear demo data
           </Button>
-          <p role="status" className="min-h-[22px] text-sm text-text">
+          <p role="status" className="min-h-[22px] text-sm text-ink">
             {message}
           </p>
         </Card>

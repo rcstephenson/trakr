@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Exercise } from '../../domain/types';
-import { Sheet } from '../ui';
+import { SectionLabel, Sheet } from '../ui';
 
 export interface SwapSheetProps {
   open: boolean;
@@ -18,10 +18,10 @@ function Option({ exercise, onPick }: { exercise: Exercise; onPick: (id: string)
       <button
         type="button"
         onClick={() => onPick(exercise.id)}
-        className="flex min-h-touch w-full items-center justify-between gap-3 rounded-btn px-3 text-left text-sm text-text active:bg-accent-soft"
+        className="flex min-h-touch w-full items-center justify-between gap-3 rounded-btn px-3 text-left text-sm text-ink active:bg-bg"
       >
         <span className="min-w-0 truncate font-medium">{exercise.name}</span>
-        <span className="shrink-0 text-xs capitalize text-muted">{exercise.equipment}</span>
+        <span className="micro shrink-0">{exercise.equipment}</span>
       </button>
     </li>
   );
@@ -60,9 +60,9 @@ export function SwapSheet({
     <Sheet open={open} onClose={close} title="Swap exercise">
       {alternatives.length > 0 ? (
         <section aria-label="Alternatives" className="mb-3">
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
+          <SectionLabel as="h3" index={1} className="mb-1">
             Alternatives
-          </h3>
+          </SectionLabel>
           <ul>
             {alternatives.map((e) => (
               <Option key={e.id} exercise={e} onPick={onPick} />
@@ -71,16 +71,16 @@ export function SwapSheet({
         </section>
       ) : null}
       <section aria-label="All exercises">
-        <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
+        <SectionLabel as="h3" index={alternatives.length > 0 ? 2 : 1} className="mb-2">
           All exercises
-        </h3>
+        </SectionLabel>
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search exercises"
           aria-label="Search exercises"
-          className="mb-2 min-h-touch w-full rounded-btn border border-border bg-bg px-3 text-sm text-text"
+          className="mb-2 min-h-touch w-full rounded-btn border border-hairline bg-bg px-3 text-sm text-ink"
         />
         {others.length === 0 ? (
           <p className="px-3 py-2 text-sm text-muted">No matching exercises.</p>

@@ -7,8 +7,7 @@ const EQUIPMENT: Equipment[] = ['barbell', 'dumbbell', 'cable', 'machine', 'body
 const KINDS: ExerciseKind[] = ['compound', 'isolation'];
 const LOADS: LoadType[] = ['total', 'per-hand', 'bodyweight-plus', 'none'];
 
-const field =
-  'min-h-touch w-full rounded-btn border border-border bg-surface px-3 text-sm text-text';
+const field = 'min-h-touch w-full rounded-btn border border-hairline bg-bg px-3 text-sm text-ink';
 
 function Select<T extends string>({
   label,
@@ -22,9 +21,13 @@ function Select<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <label className="block text-sm font-medium text-text">
+    <label className="micro block">
       {label}
-      <select className={`${field} mt-1`} value={value} onChange={(e) => onChange(e.target.value as T)}>
+      <select
+        className={`${field} mt-1`}
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+      >
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
@@ -98,7 +101,7 @@ export function ExercisePicker({
             if (name.trim()) create();
           }}
         >
-          <label className="block text-sm font-medium text-text">
+          <label className="micro block">
             Name
             <input
               className={`${field} mt-1`}
@@ -119,7 +122,7 @@ export function ExercisePicker({
         </form>
       ) : (
         <>
-          <label className="mb-3 block text-sm font-medium text-text">
+          <label className="micro mb-3 block">
             Search exercises
             <input
               type="search"
@@ -134,10 +137,10 @@ export function ExercisePicker({
                 <button
                   type="button"
                   onClick={() => pick(e)}
-                  className="flex min-h-touch w-full flex-col justify-center border-b border-border text-left"
+                  className="flex min-h-touch w-full flex-col justify-center border-b border-hairline text-left"
                 >
-                  <span className="text-sm font-medium text-text">{e.name}</span>
-                  <span className="text-xs text-muted">
+                  <span className="text-sm font-medium text-ink">{e.name}</span>
+                  <span className="micro">
                     {e.equipment} · {e.kind}
                   </span>
                 </button>

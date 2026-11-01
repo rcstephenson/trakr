@@ -1,6 +1,7 @@
+import { useEffect, useId, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { GripVertical, Plus, Trash2, X } from 'lucide-react';
-import { Card, Stepper } from '../ui';
+import { Card } from '../ui';
 import type { WorkoutItem } from '../../domain/types';
 
 export interface DraftItem {
@@ -8,6 +9,49 @@ export interface DraftItem {
   item: WorkoutItem;
 }
 
+/** Small labelled whole-number input (sets / reps). Commits valid numbers >= 1 as you type. */
+function NumberField({
+  label,
+  caption,
+  value,
+  onChange,
+}: {
+  label: string;
+  caption: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const id = useId();
+  const [text, setText] = useState(String(value));
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+  return (
+    <div className="flex-1">
+      <label htmlFor={id} className="micro block">
+        <span className="sr-only">{label}</span>
+        <span aria-hidden="true">{caption}</span>
+      </label>
+      <input
+        id={id}
+        type="text"
+        inputMode="numeric"
+        value={text}
+        onChange={(e) => {
+          const t = e.target.value.replace(/\D/g, '');
+          setText(t);
+          const n = Number.parseInt(t, 10);
+          if (Number.isFinite(n) && n >= 1) onChange(n);
+        }}
+        onBlur={() => setText(String(value))}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+        }}
+        className="num mt-1 min-h-touch w-full rounded-btn border border-hairline bg-raised px-3 text-center text-base font-semibold text-ink"
+      />
+    </div>
+  );
+}
 export function SortableItemCard({
   draft,
   nameOf,
@@ -21,8 +65,15 @@ export function SortableItemCard({
   onRemove: () => void;
   onAddAlternative: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id: draft.key });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: draft.key });
   const { item } = draft;
   const name = nameOf(item.exerciseId);
 
@@ -36,7 +87,12 @@ export function SortableItemCard({
         zIndex: isDragging ? 10 : undefined,
       }}
     >
-      <Card className={isDragging ? 'shadow-card ring-2 ring-accent' : ''} role="group" aria-label={name}>
+      <Card
+        tone="raised"
+        className={isDragging ? 'ring-2 ring-accent' : ''}
+        role="group"
+        aria-label={name}
+      >
         <div className="mb-2 flex items-center gap-1">
           <button
             type="button"
@@ -48,7 +104,9 @@ export function SortableItemCard({
           >
             <GripVertical size={22} aria-hidden="true" />
           </button>
-          <h2 className="min-w-0 flex-1 text-base font-semibold text-text">{name}</h2>
+          <h2 className="min-w-0 flex-1 font-mono text-xs font-semibold uppercase tracking-wide text-ink">
+            {name}
+          </h2>
           <button
             type="button"
             aria-label={`Remove ${name}`}
@@ -59,39 +117,37 @@ export function SortableItemCard({
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <Stepper
+        <div className="flex items-end gap-2">
+          <NumberField
             label={`Sets for ${name}`}
+            caption="Sets"
             value={item.sets}
-            step={1}
-            min={1}
             onChange={(sets) => onChange({ ...item, sets })}
           />
-        </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <Stepper
+          <NumberField
             label={`Min reps for ${name}`}
+            caption="Min reps"
             value={item.repMin}
-            step={1}
-            min={1}
-            onChange={(repMin) => onChange({ ...item, repMin, repMax: Math.max(repMin, item.repMax) })}
+            onChange={(repMin) =>
+              onChange({ ...item, repMin, repMax: Math.max(repMin, item.repMax) })
+            }
           />
-          <Stepper
+          <NumberField
             label={`Max reps for ${name}`}
+            caption="Max reps"
             value={item.repMax}
-            step={1}
-            min={1}
-            onChange={(repMax) => onChange({ ...item, repMax, repMin: Math.min(repMax, item.repMin) })}
+            onChange={(repMax) =>
+              onChange({ ...item, repMax, repMin: Math.min(repMax, item.repMin) })
+            }
           />
         </div>
-
-        <label className="mt-2 block text-xs text-muted">
+        <label className="micro mt-3 block">
           Notes for {name}
           <input
             type="text"
             value={item.notes}
             onChange={(e) => onChange({ ...item, notes: e.target.value })}
-            className="mt-1 min-h-touch w-full rounded-btn border border-border bg-surface px-3 text-sm text-text"
+            className="mt-1 min-h-touch w-full rounded-btn border border-hairline bg-raised px-3 text-sm normal-case tracking-normal text-ink"
           />
         </label>
 
@@ -99,7 +155,7 @@ export function SortableItemCard({
           {item.alternatives.map((alt) => (
             <span
               key={alt}
-              className="inline-flex min-h-touch items-center gap-1 rounded-full border border-border pl-3 text-sm text-text"
+              className="inline-flex min-h-touch items-center gap-1 rounded-chip border border-hairline bg-bg pl-3 text-xs text-ink"
             >
               or {nameOf(alt)}
               <button
@@ -117,7 +173,7 @@ export function SortableItemCard({
           <button
             type="button"
             onClick={onAddAlternative}
-            className="inline-flex min-h-touch items-center gap-1 rounded-btn px-2 text-sm font-semibold text-accent"
+            className="inline-flex min-h-touch items-center gap-1 rounded-btn px-2 font-mono text-xs font-semibold uppercase tracking-micro text-accent"
           >
             <Plus size={16} aria-hidden="true" />
             Add alternative

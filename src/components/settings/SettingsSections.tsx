@@ -4,7 +4,7 @@ import { Segmented, SettingsGroup, SettingsRow } from './SettingsGroup';
 
 export function UnitsSection({ settings }: { settings: Settings }) {
   return (
-    <SettingsGroup title="Units">
+    <SettingsGroup title="Units" index={1}>
       <SettingsRow label="Weight unit" description="Stored data is never changed">
         <Segmented
           label="Weight unit"
@@ -22,7 +22,7 @@ export function UnitsSection({ settings }: { settings: Settings }) {
 
 export function AppearanceSection({ settings }: { settings: Settings }) {
   return (
-    <SettingsGroup title="Appearance">
+    <SettingsGroup title="Appearance" index={2}>
       <SettingsRow label="Theme">
         <Segmented
           label="Theme"

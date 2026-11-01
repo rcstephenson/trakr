@@ -25,7 +25,11 @@ const fullFmt = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
 });
 
-const tick = { fill: 'var(--text-muted)', fontSize: 13 };
+const tick = {
+  fill: 'var(--muted)',
+  fontSize: 11,
+  fontFamily: '"Geist Mono Variable", ui-monospace, monospace',
+};
 
 interface TipProps {
   active?: boolean;
@@ -38,10 +42,14 @@ function InspectTooltip({ active, payload, metric, unit }: TipProps) {
   if (!active || !payload?.length) return null;
   const point = payload[0].payload;
   return (
-    <div className="max-w-[220px] rounded-btn border border-border bg-surface p-3 text-xs shadow-card">
-      <p className="text-muted">{fullFmt.format(point.t)}</p>
-      <p className="text-base font-semibold text-text">{formatMetricValue(metric, point, unit)}</p>
-      <p className="mt-1 text-muted">{point.sets.map((s) => formatSet(s, unit)).join(', ')}</p>
+    <div className="num max-w-[220px] rounded-btn border border-ink bg-raised p-2.5 text-xs">
+      <p className="micro">{fullFmt.format(point.t)}</p>
+      <p className="mt-0.5 text-base font-semibold text-ink">
+        {formatMetricValue(metric, point, unit)}
+      </p>
+      <p className="mt-1 border-t border-hairline pt-1 text-muted">
+        {point.sets.map((s) => formatSet(s, unit)).join(', ')}
+      </p>
     </div>
   );
 }
@@ -59,7 +67,7 @@ export function ProgressChart({ points, metric, metricLabel, unit }: ProgressCha
     >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--border)" />
+          <CartesianGrid vertical={false} stroke="var(--hairline)" />
           <XAxis
             dataKey="t"
             type="number"
@@ -69,7 +77,7 @@ export function ProgressChart({ points, metric, metricLabel, unit }: ProgressCha
             tickFormatter={(t: number) => dayFmt.format(t)}
             tick={tick}
             tickLine={false}
-            axisLine={{ stroke: 'var(--border)' }}
+            axisLine={{ stroke: 'var(--hairline)' }}
             minTickGap={24}
           />
           <YAxis
@@ -81,7 +89,7 @@ export function ProgressChart({ points, metric, metricLabel, unit }: ProgressCha
             axisLine={false}
           />
           <Tooltip
-            cursor={{ stroke: 'var(--border)' }}
+            cursor={{ stroke: 'var(--ink)', strokeWidth: 1, strokeDasharray: '2 3' }}
             content={(p) => (
               <InspectTooltip
                 active={p.active}
@@ -94,10 +102,15 @@ export function ProgressChart({ points, metric, metricLabel, unit }: ProgressCha
           <Line
             type="linear"
             dataKey="value"
-            stroke="var(--accent)"
-            strokeWidth={2}
-            dot={{ r: 3, fill: 'var(--accent)', stroke: 'var(--surface)', strokeWidth: 1 }}
-            activeDot={{ r: 6, fill: 'var(--accent)', stroke: 'var(--surface)', strokeWidth: 2 }}
+            stroke="var(--accent-ink)"
+            strokeWidth={1.5}
+            dot={{ r: 3, fill: 'var(--raised)', stroke: 'var(--accent-ink)', strokeWidth: 1.5 }}
+            activeDot={{
+              r: 5,
+              fill: 'var(--accent)',
+              stroke: 'var(--accent-ink)',
+              strokeWidth: 1.5,
+            }}
             isAnimationActive={false}
           />
         </LineChart>

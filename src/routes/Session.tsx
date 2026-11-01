@@ -70,7 +70,10 @@ export default function Session() {
           title="Session not found"
           description="It may have been deleted."
           action={
-            <Link to="/" className="text-sm font-semibold text-accent">
+            <Link
+              to="/"
+              className="font-mono text-xs font-semibold uppercase tracking-micro text-accent"
+            >
               Back to Today
             </Link>
           }
@@ -85,7 +88,7 @@ export default function Session() {
         action={
           <Link
             to={session.status === 'completed' ? `/history/session/${session.id}` : '/'}
-            className="text-sm font-semibold text-accent"
+            className="font-mono text-xs font-semibold uppercase tracking-micro text-accent"
           >
             {session.status === 'completed' ? 'View summary' : 'Back to Today'}
           </Link>
@@ -116,16 +119,22 @@ export default function Session() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex min-h-touch items-center gap-2 border-b border-border bg-bg px-gutter py-2">
+      <header className="sticky top-0 z-30 flex min-h-touch items-center gap-2 border-b border-hairline bg-surface px-gutter py-2">
         <Link
           to="/"
           aria-label="Back to Today"
-          className="-ml-2 inline-flex h-12 w-10 shrink-0 items-center justify-center text-muted"
+          className="-ml-3 inline-flex h-12 w-12 shrink-0 items-center justify-center text-muted"
         >
           <ChevronLeft size={22} aria-hidden="true" />
         </Link>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-semibold text-text">{session.workoutName}</h1>
+          <p className="micro flex items-center gap-1.5">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-[1px] bg-accent" />
+            Session{' '}
+          </p>{' '}
+          <h1 className="truncate text-base font-semibold leading-5 tracking-tight text-ink">
+            {session.workoutName}{' '}
+          </h1>
         </div>
         <Button
           onClick={() => {
@@ -137,7 +146,7 @@ export default function Session() {
         </Button>
       </header>
 
-      <ul className="flex flex-col gap-3 px-gutter pt-3">
+      <ul className="flex flex-col gap-3 px-gutter pb-8 pt-3">
         {session.targets.map((target) => (
           <li key={`${target.slotIndex}-${target.exerciseId}`}>
             <ExerciseCard

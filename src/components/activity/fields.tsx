@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 
 export const inputClass =
-  'tabular min-h-touch w-full rounded-btn border border-border bg-surface px-3 text-base text-text';
+  'min-h-touch w-full rounded-btn border border-hairline bg-raised px-3 text-base text-ink placeholder:text-muted';
+/** Numeric / date / time inputs: mono tabular. */
+export const numInputClass = `num ${inputClass}`;
 
 export function Field({
   label,
@@ -13,8 +15,8 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={htmlFor} className="text-xs font-medium text-muted">
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={htmlFor} className="micro">
         {label}
       </label>
       {children}

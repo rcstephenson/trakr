@@ -7,7 +7,14 @@ import { formatVolume, sessionMinutes, sessionTotals } from '../components/histo
 import { usePrSetIds } from '../components/history/usePrSetIds';
 import { readSlotNotes } from '../components/session/prefill';
 import { useExerciseCatalog } from '../components/session/hooks';
-import { Button, Card, ConfirmDialog, EmptyState, PageHeader } from '../components/ui';
+import {
+  Button,
+  Card,
+  ConfirmDialog,
+  EmptyState,
+  PageHeader,
+  SectionLabel,
+} from '../components/ui';
 import * as sessionsRepo from '../db/repositories/sessions';
 import { formatDuration } from '../domain/activity';
 import { useSession } from '../hooks/useSession';
@@ -18,7 +25,7 @@ function BackLink() {
   return (
     <Link
       to="/history"
-      className="ml-gutter mt-2 inline-flex min-h-touch items-center gap-1 text-sm font-medium text-accent"
+      className="ml-gutter mt-2 inline-flex min-h-touch items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-micro text-accent"
     >
       <ArrowLeft size={16} aria-hidden="true" />
       History
@@ -102,14 +109,15 @@ export default function SessionDetail() {
         }
       />
       <div className="flex flex-col gap-3 px-gutter pb-8">
-        <p className="tabular text-sm text-muted" data-testid="detail-totals">
+        <p className="num flex items-center gap-2 text-xs text-ink" data-testid="detail-totals">
+          <span aria-hidden="true" className="h-2 w-2 rounded-[2px] bg-accent" />
           {totals.setCount} {totals.setCount === 1 ? 'set' : 'sets'}
           {totals.volume > 0 ? ` · ${formatVolume(totals.volume, settings.unit)} volume` : ''}
         </p>
 
         {groups.length === 0 ? (
           <Card>
-            <p className="text-sm text-muted">No sets were logged in this session.</p>
+            <p className="micro">No sets were logged in this session.</p>
           </Card>
         ) : null}
 
@@ -132,9 +140,9 @@ export default function SessionDetail() {
 
         {notes.length > 0 ? (
           <Card>
-            <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Notes</h2>
+            <SectionLabel className="mb-2">Notes</SectionLabel>
             {notes.map((n, i) => (
-              <p key={i} className="text-sm text-text">
+              <p key={i} className="text-sm text-ink">
                 {n}
               </p>
             ))}

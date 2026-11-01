@@ -1,45 +1,8 @@
-import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { Button, Chip, ConfirmDialog, Sheet, Stepper, TabBar } from '../../../src/components/ui';
-
-describe('Stepper', () => {
-  function Harness({ min = 0 }: { min?: number }) {
-    const [v, setV] = useState(100);
-    return <Stepper label="Weight" value={v} step={2.5} min={min} unit="lb" onChange={setV} />;
-  }
-
-  it('increments and decrements by the step', async () => {
-    const user = userEvent.setup();
-    render(<Harness />);
-    await user.click(screen.getByRole('button', { name: 'Increase Weight' }));
-    expect(screen.getByRole('textbox', { name: 'Weight' })).toHaveValue('102.5');
-    await user.click(screen.getByRole('button', { name: 'Decrease Weight' }));
-    await user.click(screen.getByRole('button', { name: 'Decrease Weight' }));
-    expect(screen.getByRole('textbox', { name: 'Weight' })).toHaveValue('97.5');
-  });
-
-  it('uses a decimal numeric keypad and commits typed values on blur', async () => {
-    const user = userEvent.setup();
-    render(<Harness />);
-    const input = screen.getByRole('textbox', { name: 'Weight' });
-    expect(input).toHaveAttribute('inputmode', 'decimal');
-    await user.clear(input);
-    await user.type(input, '137.5');
-    await user.tab();
-    expect(input).toHaveValue('137.5');
-  });
-
-  it('does not go below min', async () => {
-    const user = userEvent.setup();
-    render(<Harness min={100} />);
-    expect(screen.getByRole('button', { name: 'Decrease Weight' })).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'Increase Weight' }));
-    expect(screen.getByRole('textbox', { name: 'Weight' })).toHaveValue('102.5');
-  });
-});
+import { Button, Chip, ConfirmDialog, Sheet, TabBar } from '../../../src/components/ui';
 
 describe('Chip', () => {
   it('reflects selection with aria-pressed', () => {
