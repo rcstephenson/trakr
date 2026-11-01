@@ -59,7 +59,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div
-        className="absolute inset-0 bg-text opacity-40"
+        className="absolute inset-0 bg-scrim"
         data-testid="sheet-backdrop"
         onClick={onClose}
       />
@@ -69,10 +69,10 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="pb-safe relative max-h-[85vh] w-full max-w-app overflow-y-auto rounded-t-card bg-surface p-gutter shadow-card"
+        className="pb-safe relative max-h-[85vh] w-full max-w-app overflow-y-auto rounded-t-card border border-b-0 border-hairline bg-raised p-gutter"
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
-        <h2 className="mb-3 text-xl font-semibold text-text">{title}</h2>
+        <div className="mx-auto mb-3 h-1 w-10 rounded-[2px] bg-hairline" aria-hidden="true" />
+        <h2 className="mb-3 text-xl font-semibold tracking-tight text-ink">{title}</h2>
         {children}
       </div>
     </div>,

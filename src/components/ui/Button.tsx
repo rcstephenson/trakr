@@ -8,11 +8,24 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-on-accent',
-  secondary: 'border border-border bg-surface text-text',
-  ghost: 'bg-transparent text-accent',
-  danger: 'bg-danger text-on-accent',
+  primary: 'border border-primary bg-primary text-on-primary',
+  secondary: 'border border-hairline bg-raised text-ink',
+  ghost: 'border border-transparent bg-transparent text-accent',
+  danger: 'border border-danger bg-raised text-danger',
 };
+
+/** Class string shared with links styled as buttons. */
+export function buttonClass(variant: ButtonVariant = 'primary', fullWidth = false): string {
+  return [
+    'inline-flex min-h-touch min-w-touch select-none items-center justify-center gap-2 rounded-btn px-4',
+    'text-sm font-semibold tracking-tight transition-[opacity,transform] active:translate-y-px active:opacity-80',
+    'disabled:opacity-40',
+    variants[variant],
+    fullWidth ? 'w-full' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
 
 export function Button({
   variant = 'primary',
@@ -22,16 +35,6 @@ export function Button({
   ...rest
 }: ButtonProps) {
   return (
-    <button
-      type={type}
-      className={[
-        'inline-flex min-h-touch min-w-touch items-center justify-center gap-2 rounded-btn px-4',
-        'text-sm font-semibold transition-opacity active:opacity-80 disabled:opacity-40',
-        variants[variant],
-        fullWidth ? 'w-full' : '',
-        className,
-      ].join(' ')}
-      {...rest}
-    />
+    <button type={type} className={`${buttonClass(variant, fullWidth)} ${className}`} {...rest} />
   );
 }

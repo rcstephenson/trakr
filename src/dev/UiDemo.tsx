@@ -6,57 +6,84 @@ import {
   Chip,
   ConfirmDialog,
   EmptyState,
+  Mono,
   PageHeader,
+  SectionLabel,
+  SegmentedBar,
   Sheet,
   Stepper,
 } from '../components/ui';
 import { applyTheme } from '../lib/theme';
 
-export default function UiDemo() {
-  const [dark, setDark] = useState(
-    () => document.documentElement.getAttribute('data-theme') === 'dark',
-  );
+const SWATCHES = [
+  ['bg', 'bg-bg'],
+  ['surface', 'bg-surface'],
+  ['raised', 'bg-raised'],
+  ['ink', 'bg-ink'],
+  ['muted', 'bg-muted'],
+  ['hair', 'bg-hairline'],
+  ['accent', 'bg-accent'],
+  ['accent-ink', 'bg-accent-ink'],
+  ['pr', 'bg-pr'],
+  ['danger', 'bg-danger'],
+] as const;
+
+function Showcase() {
   const [weight, setWeight] = useState(135);
   const [reps, setReps] = useState(8);
   const [chip, setChip] = useState('All');
   const [sheet, setSheet] = useState(false);
   const [confirm, setConfirm] = useState(false);
 
-  const toggle = () => {
-    const next = !dark;
-    setDark(next);
-    applyTheme(next ? 'dark' : 'light');
-  };
-
   return (
-    <>
-      <PageHeader
-        title="UI primitives"
-        action={
-          <Button variant="secondary" onClick={toggle} aria-pressed={dark}>
-            {dark ? 'Dark' : 'Light'}
-          </Button>
-        }
-      />
-      <div className="flex flex-col gap-3 px-gutter pb-8">
-        <Card>
-          <h2 className="mb-3 text-base font-semibold">Button</h2>
+    <div className="flex flex-col gap-5 px-gutter pb-8">
+      <section>
+        <SectionLabel index={1}>Tokens</SectionLabel>
+        <Card className="mt-2">
+          <ul className="grid grid-cols-5 gap-2">
+            {SWATCHES.map(([name, cls]) => (
+              <li key={name} className="flex flex-col items-start gap-1">
+                <span className={`h-8 w-full rounded-chip border border-hairline ${cls}`} />
+                <span className="micro w-full break-all text-[10px] leading-3">{name}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </section>
+
+      <section>
+        <SectionLabel index={2}>Type</SectionLabel>
+        <Card className="mt-2 flex flex-col gap-1">
+          <p className="text-display font-semibold tracking-tighter">Upper B</p>
+          <p className="text-xl font-semibold tracking-tight">Geist 24 / 600</p>
+          <p className="text-base">Geist 18, body copy and titles</p>
+          <p className="text-sm text-muted">Geist 15 muted, secondary copy</p>
+          <p className="micro">Micro label · mono 11</p>
+          <p>
+            <Mono className="text-base">102.5 × 8 · 12,480 lb</Mono>
+          </p>
+          <p className="text-pr">
+            <Mono>🏆 PR 315 lb</Mono>
+          </p>
+        </Card>
+      </section>
+
+      <section>
+        <SectionLabel index={3}>Button</SectionLabel>
+        <Card className="mt-2">
           <div className="flex flex-wrap gap-2">
             <Button>Primary</Button>
             <Button variant="secondary">Secondary</Button>
             <Button variant="ghost">Ghost</Button>
             <Button variant="danger">Danger</Button>
+            <Button disabled>Disabled</Button>
           </div>
         </Card>
-        <Card>
-          <h2 className="mb-3 text-base font-semibold">Stepper</h2>
-          <div className="flex flex-col gap-2">
-            <Stepper label="Weight" value={weight} step={5} unit="lb" onChange={setWeight} />
-            <Stepper label="Reps" value={reps} step={1} min={0} onChange={setReps} />
-          </div>
-        </Card>
-        <Card>
-          <h2 className="mb-3 text-base font-semibold">Chip</h2>
+      </section>
+
+      <section>
+        <SectionLabel index={4}>Chip</SectionLabel>
+        <Card className="mt-2">
           <div className="flex flex-wrap gap-2">
             {['All', 'Workouts', 'Activities'].map((c) => (
               <Chip key={c} selected={chip === c} onClick={() => setChip(c)}>
@@ -65,8 +92,39 @@ export default function UiDemo() {
             ))}
           </div>
         </Card>
-        <Card>
-          <h2 className="mb-3 text-base font-semibold">Sheet and ConfirmDialog</h2>
+      </section>
+
+      <section>
+        <SectionLabel
+          index={5}
+          action={
+            <>
+              <Mono className="text-ink">3</Mono>/<Mono>5</Mono> sets
+            </>
+          }
+        >
+          Segmented bar
+        </SectionLabel>
+        <Card className="mt-2 flex flex-col gap-4">
+          <SegmentedBar value={3} total={5} label="3 of 5 sets logged" />
+          <SegmentedBar
+            states={['done', 'done', 'rest', 'current', 'off', 'rest', 'off']}
+            label="Seven day schedule"
+          />
+        </Card>
+      </section>
+
+      <section>
+        <SectionLabel index={6}>Stepper</SectionLabel>
+        <Card className="mt-2 flex flex-col gap-2">
+          <Stepper label="Weight" value={weight} step={5} unit="lb" onChange={setWeight} />
+          <Stepper label="Reps" value={reps} step={1} min={0} onChange={setReps} />
+        </Card>
+      </section>
+
+      <section>
+        <SectionLabel index={7}>Sheet and confirm</SectionLabel>
+        <Card className="mt-2">
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setSheet(true)}>
               Open sheet
@@ -76,15 +134,19 @@ export default function UiDemo() {
             </Button>
           </div>
         </Card>
-        <Card>
-          <h2 className="text-base font-semibold">EmptyState</h2>
+      </section>
+
+      <section>
+        <SectionLabel index={8}>Empty state</SectionLabel>
+        <div className="mt-2">
           <EmptyState
-            icon={<Dumbbell size={32} aria-hidden="true" />}
+            icon={<Dumbbell size={24} aria-hidden="true" />}
             title="Nothing here yet"
             description="Example empty state."
           />
-        </Card>
-      </div>
+        </div>
+      </section>
+
       <Sheet open={sheet} onClose={() => setSheet(false)} title="Example sheet">
         <p className="mb-4 text-sm text-muted">Press Escape or tap the backdrop to close.</p>
         <Button fullWidth onClick={() => setSheet(false)}>
@@ -100,6 +162,50 @@ export default function UiDemo() {
         onConfirm={() => setConfirm(false)}
         onCancel={() => setConfirm(false)}
       />
+    </div>
+  );
+}
+
+export default function UiDemo() {
+  const [dark, setDark] = useState(
+    () => document.documentElement.getAttribute('data-theme') === 'dark',
+  );
+  const [both, setBoth] = useState(false);
+
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    applyTheme(next ? 'dark' : 'light');
+  };
+
+  return (
+    <>
+      <PageHeader
+        title="UI primitives"
+        subtitle="Signal / dev"
+        action={
+          <Button variant="secondary" onClick={toggle} aria-pressed={dark}>
+            {dark ? 'Graphite' : 'Paper'}
+          </Button>
+        }
+      />
+      <div className="flex gap-2 px-gutter pb-4">
+        <Chip selected={both} onClick={() => setBoth((b) => !b)}>
+          Compare both themes
+        </Chip>
+      </div>
+      {both ? (
+        <>
+          {(['light', 'dark'] as const).map((t) => (
+            <div key={t} data-theme={t} className="bg-bg pt-4 text-ink">
+              <p className="micro px-gutter pb-3">{t === 'light' ? 'Paper' : 'Graphite'}</p>
+              <Showcase />
+            </div>
+          ))}
+        </>
+      ) : (
+        <Showcase />
+      )}
     </>
   );
 }

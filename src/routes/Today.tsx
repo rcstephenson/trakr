@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { NextUpHero, ResumeHero } from '../components/today/Hero';
+import { NextUpHero, ResumeHero, slotLabel } from '../components/today/Hero';
 import { buildRecent, RecentList } from '../components/today/RecentList';
 import { TodaySkeleton } from '../components/today/TodaySkeleton';
 import { useStartWorkout } from '../components/today/useStartWorkout';
 import { WeekStrip } from '../components/today/WeekStrip';
 import { WorkoutPicker } from '../components/today/WorkoutPicker';
-import { EmptyState, PageHeader } from '../components/ui';
+import { buttonClass, EmptyState, PageHeader } from '../components/ui';
 import { nextWorkoutId } from '../domain/rotation';
 import { useActiveProgram } from '../hooks/useActiveProgram';
 import { useActiveSession } from '../hooks/useActiveSession';
@@ -56,6 +56,12 @@ export default function Today() {
   }
   const next = program?.workouts.find((w) => w.id === nextId);
 
+  const cycle = program?.schedule.map((id) => ({
+    id,
+    label: slotLabel(id, program.workouts.find((w) => w.id === id)?.name),
+  }));
+  const target = program?.schedule.filter((id) => id !== 'rest').length;
+
   let hero;
   if (active) {
     hero = <ResumeHero session={active} />;
@@ -67,6 +73,8 @@ export default function Today() {
         starting={starting}
         onStart={() => void start(program.id, next.id)}
         onChoose={() => setPickerOpen(true)}
+        cycle={cycle}
+        nextIndex={program.schedule.indexOf(next.id)}
       />
     );
   } else {
@@ -85,21 +93,25 @@ export default function Today() {
 
   return (
     <>
-      <PageHeader title="Today" />
-      <div className="flex flex-col gap-3 px-gutter pb-6">
+      <PageHeader
+        title="Today"
+        subtitle={today
+          .toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+          .replace(',', '')}
+      />
+      <div className="flex flex-col gap-5 px-gutter pb-6">
         {hero}
-        <Link
-          to="/activity/new"
-          className="inline-flex min-h-touch w-full items-center justify-center rounded-btn border border-border bg-surface px-4 text-sm font-semibold text-text active:opacity-80"
-        >
+        <Link to="/activity/new" className={buttonClass('secondary', true)}>
           + Log activity
         </Link>
         <WeekStrip
+          index={1}
+          target={target}
           today={today}
           sessions={completed.filter((s) => inWeek(s.startedAt))}
           activities={activities.filter((a) => inWeek(a.startedAt))}
         />
-        <RecentList entries={buildRecent(completed, activities)} />
+        <RecentList index={2} entries={buildRecent(completed, activities)} />
       </div>
       {program && !active ? (
         <WorkoutPicker

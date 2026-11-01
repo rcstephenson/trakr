@@ -31,7 +31,7 @@ export function Stepper({ value, step, min = 0, unit, label, onChange }: Stepper
   };
 
   const btn =
-    'inline-flex min-h-touch min-w-touch items-center justify-center rounded-btn border border-border bg-surface text-text active:bg-accent-soft disabled:opacity-40';
+    'inline-flex min-h-touch min-w-touch items-center justify-center rounded-btn border border-hairline bg-raised text-ink active:bg-accent-soft disabled:opacity-40';
 
   return (
     <div className="inline-flex items-center gap-1" role="group" aria-label={label}>
@@ -58,7 +58,7 @@ export function Stepper({ value, step, min = 0, unit, label, onChange }: Stepper
           onKeyDown={(e) => {
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
-          className="tabular w-14 rounded-btn bg-transparent py-2 text-center text-base font-semibold text-text"
+          className="num w-14 rounded-btn bg-transparent py-2 text-center text-base font-semibold text-ink"
         />
         {unit ? <span className="text-xs text-muted">{unit}</span> : null}
       </div>

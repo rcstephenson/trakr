@@ -12,7 +12,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Primary"
-      className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface"
+      className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface"
     >
       <ul className="mx-auto flex max-w-app">
         {tabs.map(({ to, label, Icon, end }) => (
@@ -22,13 +22,25 @@ export function TabBar() {
               end={end}
               className={({ isActive }) =>
                 [
-                  'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-xs font-medium',
-                  isActive ? 'text-accent' : 'text-muted',
+                  'relative flex min-h-[56px] flex-col items-center justify-center gap-1',
+                  'font-mono text-micro font-medium uppercase tracking-micro',
+                  isActive ? 'text-ink' : 'text-muted',
                 ].join(' ')
               }
             >
-              <Icon size={22} aria-hidden="true" />
-              <span>{label}</span>
+              {({ isActive }) => (
+                <>
+                  {isActive ? (
+                    <span
+                      aria-hidden="true"
+                      data-testid="tab-tick"
+                      className="absolute inset-x-5 -top-px h-0.5 bg-accent"
+                    />
+                  ) : null}
+                  <Icon size={20} strokeWidth={isActive ? 2.25 : 1.75} aria-hidden="true" />
+                  <span>{label}</span>
+                </>
+              )}
             </NavLink>
           </li>
         ))}

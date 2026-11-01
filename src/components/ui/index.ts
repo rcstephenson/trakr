@@ -1,9 +1,12 @@
-export { Button, type ButtonProps, type ButtonVariant } from './Button';
-export { Card } from './Card';
+export { Button, buttonClass, type ButtonProps, type ButtonVariant } from './Button';
+export { Card, type CardProps } from './Card';
 export { Chip, type ChipProps } from './Chip';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
+export { Mono } from './Mono';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
+export { SectionLabel, type SectionLabelProps } from './SectionLabel';
+export { SegmentedBar, type SegmentedBarProps, type SegmentState } from './SegmentedBar';
 export { Sheet, type SheetProps } from './Sheet';
 export { Stepper, type StepperProps } from './Stepper';
 export { TabBar } from './TabBar';

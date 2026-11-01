@@ -25,7 +25,7 @@ function Layout() {
   const inSession = pathname.startsWith('/session/');
   return (
     <div className="mx-auto min-h-screen max-w-app">
-      <main className={inSession ? 'pb-8' : 'pb-24'}>
+      <main className={inSession ? 'pb-8' : 'pb-28'}>
         <Suspense fallback={null}>
           <Outlet />
         </Suspense>
