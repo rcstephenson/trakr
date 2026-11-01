@@ -31,13 +31,20 @@ export function Sparkline({ values, label, width = 64, height = 24 }: SparklineP
         <polyline
           points={points}
           fill="none"
-          stroke="var(--accent)"
+          stroke="var(--accent-ink)"
           strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       ) : null}
-      <circle cx={x(last)} cy={y(values[last])} r={2} fill="var(--accent)" />
+      <circle
+        cx={x(last)}
+        cy={y(values[last])}
+        r={2.25}
+        fill="var(--surface)"
+        stroke="var(--accent-ink)"
+        strokeWidth={1.5}
+      />
     </svg>
   );
 }

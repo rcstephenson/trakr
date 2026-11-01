@@ -57,13 +57,22 @@ export function ExerciseSets({
   }
 
   return (
-    <Card className="!px-3" data-testid="detail-exercise">
-      <h3 className="px-1 text-base font-semibold text-text">{name}</h3>
-      {note ? <p className="mt-1 px-1 text-xs text-text">{note}</p> : null}
+    <Card className="!p-0 overflow-hidden" data-testid="detail-exercise">
+      <div className="px-3 pt-3">
+        <h3 className="font-mono text-xs font-semibold uppercase leading-5 tracking-wide text-ink">
+          <span className="mr-1.5 text-accent" aria-hidden="true">
+            {String(group.slotIndex + 1).padStart(2, '0')} ·
+          </span>
+          {name}
+        </h3>
+        {note ? (
+          <p className="mt-1.5 border-l-2 border-hairline pl-2 text-xs text-ink">{note}</p>
+        ) : null}
+      </div>
 
       {editing ? (
         <>
-          <ul className="mt-2 flex flex-col gap-1">
+          <ul className="mt-2 border-t border-hairline">
             {group.sets.map((s, i) => (
               <SetRow
                 key={s.id}
@@ -82,11 +91,15 @@ export function ExerciseSets({
               />
             ))}
           </ul>
-          <div className="mt-2 border-t border-border pt-2">
-            <Button variant="ghost" onClick={() => void addSet()}>
-              <Plus size={16} aria-hidden="true" />
+          <div className="border-t border-hairline">
+            <button
+              type="button"
+              onClick={() => void addSet()}
+              className="inline-flex min-h-touch w-full items-center justify-center gap-1.5 font-mono text-micro font-medium uppercase tracking-micro text-ink active:bg-bg"
+            >
+              <Plus size={14} aria-hidden="true" />
               Add set
-            </Button>
+            </button>
           </div>
           <Sheet
             open={optionsId !== null && !!optionSet}
@@ -123,25 +136,31 @@ export function ExerciseSets({
           </Sheet>
         </>
       ) : (
-        <ul className="mt-2 flex flex-col">
+        <ul className="mt-2 border-t border-hairline">
           {group.sets.map((s, i) => {
             const pr = prSetIds.has(s.id);
             return (
               <li
                 key={s.id}
                 data-testid="detail-set"
-                className={`tabular flex min-h-[40px] items-center gap-3 px-1 text-base ${
-                  s.isWarmup ? 'text-muted opacity-70' : 'text-text'
+                className={`num relative flex min-h-[44px] items-center gap-3 border-t border-hairline pr-3 text-base first:border-t-0 ${
+                  s.isWarmup ? 'text-muted' : 'text-ink'
                 }`}
               >
-                <span className="w-6 text-sm text-muted">{s.isWarmup ? 'W' : i + 1}</span>
+                <span className="w-10 text-center text-xs text-muted">
+                  {s.isWarmup ? (
+                    <span className="rounded-chip border border-pr px-1 font-semibold text-ink">
+                      W
+                    </span>
+                  ) : (
+                    String(i + 1).padStart(2, '0')
+                  )}
+                </span>
                 <span className="font-medium">{setText(s, exercise, settings)}</span>
-                {s.rir !== undefined ? (
-                  <span className="text-xs text-muted">RIR {s.rir}</span>
-                ) : null}
+                {s.rir !== undefined ? <span className="micro">RIR {s.rir}</span> : null}
                 {pr ? (
-                  <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-pr">
-                    <Trophy size={14} aria-hidden="true" />
+                  <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-ink">
+                    <Trophy size={14} className="text-pr" aria-hidden="true" />
                     PR
                   </span>
                 ) : null}

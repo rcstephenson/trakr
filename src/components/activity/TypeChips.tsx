@@ -11,9 +11,9 @@ export function TypeChips({
   onChange: (type: ActivityType) => void;
 }) {
   return (
-    <div role="group" aria-label="Activity type" className="flex flex-wrap gap-2">
+    <div role="group" aria-label="Activity type" className="flex flex-wrap gap-1.5">
       {ACTIVITY_TYPES.map((t) => (
-        <Chip key={t} selected={value === t} onClick={() => onChange(t)} className="gap-2">
+        <Chip key={t} selected={value === t} onClick={() => onChange(t)} className="gap-2 !px-3">
           <ActivityTypeIcon type={t} />
           {ACTIVITY_LABELS[t]}
         </Chip>

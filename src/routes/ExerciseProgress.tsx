@@ -16,7 +16,7 @@ import {
   type RangeKey,
   type RecordSet,
 } from '../components/charts/chartData';
-import { Card, Chip, EmptyState, PageHeader } from '../components/ui';
+import { Card, Chip, EmptyState, PageHeader, SectionLabel } from '../components/ui';
 import { formatWeight, roundForDisplay } from '../domain/units';
 import type { Unit } from '../domain/types';
 import { useExerciseHistory } from '../hooks/useExerciseHistory';
@@ -48,21 +48,21 @@ function RecordCard({
       )
     : null;
   return (
-    <Card className="flex-1">
-      <p className="flex items-center gap-1 text-xs text-muted">
+    <Card tone="raised" className="flex-1 !p-3">
+      <p className="micro flex items-center gap-1.5">
         <Trophy size={14} className="text-pr" aria-hidden />
         {title}
       </p>
       {record ? (
         <>
-          <p className="mt-1 text-xl font-semibold text-text">{value}</p>
-          <p className="text-xs text-muted">
+          <p className="num mt-2 text-xl font-semibold tracking-tight text-ink">{value}</p>
+          <p className="num mt-0.5 text-xs text-muted">
             {exact ? `× ${record.reps} · ` : `from ${record.reps} reps · `}
             {dateFmt.format(new Date(record.startedAt))}
           </p>
         </>
       ) : (
-        <p className="mt-1 text-sm text-muted">No data</p>
+        <p className="micro mt-2">No data</p>
       )}
     </Card>
   );
@@ -93,7 +93,7 @@ export default function ExerciseProgress() {
   const back = (
     <Link
       to="/progress"
-      className="inline-flex min-h-touch items-center gap-1 px-gutter text-sm font-medium text-accent"
+      className="inline-flex min-h-touch items-center gap-1 px-gutter font-mono text-xs font-medium uppercase tracking-micro text-accent"
     >
       <ChevronLeft size={18} aria-hidden />
       Progress
@@ -127,11 +127,11 @@ export default function ExerciseProgress() {
         title={title}
         subtitle={`${rows.length} ${rows.length === 1 ? 'session' : 'sessions'} logged`}
       />
-      <div className="flex flex-col gap-4 px-gutter pb-6">
+      <div className="flex flex-col gap-5 px-gutter pb-6">
         <div
           role="radiogroup"
           aria-label="Metric"
-          className="grid grid-cols-3 gap-1 rounded-btn border border-border bg-surface p-1"
+          className="grid grid-cols-3 rounded-btn border border-hairline bg-surface"
         >
           {METRICS.map((m) => (
             <button
@@ -141,16 +141,19 @@ export default function ExerciseProgress() {
               aria-checked={metric === m.key}
               onClick={() => setMetric(m.key)}
               className={[
-                'min-h-touch rounded-[8px] text-sm font-medium transition-colors',
-                metric === m.key ? 'bg-accent-soft text-accent' : 'text-muted',
+                'relative min-h-touch border-l border-hairline font-mono text-xs font-medium uppercase tracking-micro transition-colors first:border-l-0',
+                metric === m.key ? 'bg-raised text-ink' : 'text-muted',
               ].join(' ')}
             >
               {m.label}
+              {metric === m.key ? (
+                <span aria-hidden="true" className="absolute inset-x-3 bottom-0 h-0.5 bg-accent" />
+              ) : null}
             </button>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Range">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Range">
           {RANGES.map((r) => (
             <Chip key={r} selected={range === r} onClick={() => setRange(r)}>
               {r}
@@ -158,10 +161,10 @@ export default function ExerciseProgress() {
           ))}
         </div>
 
-        <Card className="px-2">
+        <Card tone="raised" className="!px-2 !pt-3">
           {points.length > 0 ? (
             <>
-              <p className="px-2 pb-2 text-xs text-muted" data-testid="chart-summary">
+              <p className="num px-2 pb-2 text-xs text-muted" data-testid="chart-summary">
                 {`${metricLabel} · ${points.length} ${points.length === 1 ? 'session' : 'sessions'}`}
                 {latest ? ` · latest ${formatMetricValue(metric, latest, unit)}` : ''}
               </p>
@@ -173,7 +176,7 @@ export default function ExerciseProgress() {
               />
             </>
           ) : (
-            <p className="px-2 py-10 text-center text-sm text-muted" data-testid="chart-empty">
+            <p className="micro px-2 py-10 text-center" data-testid="chart-empty">
               No sessions in this range.
             </p>
           )}
@@ -185,26 +188,26 @@ export default function ExerciseProgress() {
         </div>
 
         <section aria-labelledby="past-sessions">
-          <h2 id="past-sessions" className="pb-2 text-base font-semibold text-text">
-            Past sessions
-          </h2>
-          <div className="grid grid-cols-[72px_1fr_auto] gap-x-3 px-4 pb-1 text-xs text-muted">
+          <SectionLabel index={1} className="pb-2">
+            <span id="past-sessions">Past sessions</span>
+          </SectionLabel>
+          <div className="micro grid grid-cols-[56px_1fr_auto] gap-x-3 px-3 pb-1">
             <span>Date</span>
             <span>Sets</span>
             <span>Volume</span>
           </div>
-          <ul className="flex flex-col gap-2">
+          <ul className="divide-y divide-hairline overflow-hidden rounded-card border border-hairline bg-surface">
             {rows.map((row) => (
               <li key={row.sessionId}>
                 <Link
                   to={`/history/session/${row.sessionId}`}
-                  className="grid min-h-touch grid-cols-[72px_1fr_auto] items-center gap-x-3 rounded-card border border-border bg-surface px-4 py-2 text-sm"
+                  className="num grid min-h-touch grid-cols-[56px_1fr_auto] items-center gap-x-3 px-3 py-2 text-xs active:bg-bg"
                 >
-                  <span className="text-text">{shortFmt.format(new Date(row.startedAt))}</span>
+                  <span className="text-ink">{shortFmt.format(new Date(row.startedAt))}</span>
                   <span className="text-muted">
                     {row.sets.map((s) => formatSet(s, unit)).join(', ')}
                   </span>
-                  <span className="flex items-center gap-1 text-text">
+                  <span className="flex items-center gap-1 font-medium text-ink">
                     {formatWeight(roundForDisplay(row.volume, unit), unit, unit)}
                     <ChevronRight size={16} className="text-muted" aria-hidden />
                   </span>

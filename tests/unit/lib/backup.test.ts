@@ -118,7 +118,10 @@ describe('backup', () => {
         restTimerEnabled: true,
         restTimerSound: false,
       },
-      programs: backup.programs.map((p) => ({ ...p, restSeconds: { compound: 150, isolation: 75 } })),
+      programs: backup.programs.map((p) => ({
+        ...p,
+        restSeconds: { compound: 150, isolation: 75 },
+      })),
     };
     const parsed = parseBackup(JSON.stringify(old));
     expect(parsed.ok).toBe(true);

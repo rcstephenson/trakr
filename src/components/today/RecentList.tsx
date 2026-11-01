@@ -51,9 +51,11 @@ export function RecentList({ entries, index }: { entries: RecentEntry[]; index?:
             <li key={e.key}>
               <Link
                 to={e.to}
-                className="flex min-h-touch items-center gap-3 px-3 py-2 active:bg-accent-soft"
+                className="flex min-h-touch items-center gap-3 px-3 py-2 active:bg-bg"
               >
-                <Mono className="w-5 shrink-0 text-xs text-muted">{String(i + 1).padStart(2, '0')}</Mono>
+                <Mono className="w-5 shrink-0 text-xs text-muted">
+                  {String(i + 1).padStart(2, '0')}
+                </Mono>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{e.title}</p>
                   <p className="micro">{e.detail}</p>

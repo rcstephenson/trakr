@@ -17,7 +17,7 @@ export function WorkoutPicker({ open, onClose, workouts, onPick }: WorkoutPicker
             <button
               type="button"
               onClick={() => onPick(w.id)}
-              className="flex min-h-touch w-full items-center justify-between rounded-btn border border-hairline bg-surface px-4 py-2 text-left active:bg-accent-soft"
+              className="flex min-h-touch w-full items-center justify-between rounded-btn border border-hairline bg-surface px-4 py-2 text-left active:bg-bg"
             >
               <span className="text-base font-medium tracking-tight text-ink">{w.name}</span>
               <span className="micro">{w.items.length} exercises</span>

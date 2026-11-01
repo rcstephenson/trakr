@@ -44,19 +44,6 @@
   color-scheme: dark;
 }
 
-/* Legacy aliases so screens not yet restyled (R1c) keep rendering sensibly. */
-:root,
-[data-theme='light'],
-[data-theme='dark'] {
-  --text: var(--ink);
-  --text-muted: var(--muted);
-  --border: var(--hairline);
-  --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
-  --success: var(--accent-ink);
-  --success-soft: color-mix(in srgb, var(--accent) 14%, var(--surface));
-  --warning: var(--pr);
-}
-
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

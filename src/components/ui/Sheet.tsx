@@ -58,11 +58,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div
-        className="absolute inset-0 bg-scrim"
-        data-testid="sheet-backdrop"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-scrim" data-testid="sheet-backdrop" onClick={onClose} />
       <div
         ref={panelRef}
         role="dialog"

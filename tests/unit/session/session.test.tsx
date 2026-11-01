@@ -34,7 +34,10 @@ describe('Session screen', () => {
   it('logs a set by typing weight x reps and pressing Enter, and carries it to the next row', async () => {
     const s = await sessions.start('v-taper-upper-lower', 'upper-a');
     const card = await renderSession(s.id);
-    expect(within(card).getByLabelText('Set 1 entry')).toHaveAttribute('placeholder', 'weight x reps');
+    expect(within(card).getByLabelText('Set 1 entry')).toHaveAttribute(
+      'placeholder',
+      'weight x reps',
+    );
     const input = type(card, 'Set 1 entry', '100x8');
     expect(await within(card).findByText('100 lb × 8')).toBeInTheDocument();
     fireEvent.keyDown(input, { key: 'Enter' });
@@ -44,7 +47,11 @@ describe('Session screen', () => {
     expect(within(card).getByLabelText('Set 1 entry')).toHaveValue('100 x 8');
     expect(within(card).getByLabelText('Set 2 entry')).toHaveValue('100 x 8');
     expect(within(card).getByLabelText('Set 2 entry')).toHaveFocus();
-    expect((await setsRepo.listBySession(s.id))[0]).toMatchObject({ weight: 100, reps: 8, unit: 'lb' });
+    expect((await setsRepo.listBySession(s.id))[0]).toMatchObject({
+      weight: 100,
+      reps: 8,
+      unit: 'lb',
+    });
   });
 
   it('shows a hint for invalid text and does not log', async () => {
@@ -61,7 +68,9 @@ describe('Session screen', () => {
     const s = await sessions.start('v-taper-upper-lower', 'upper-a');
     const card = await renderSession(s.id);
     fireEvent.keyDown(type(card, 'Set 1 entry', '100 x 8'), { key: 'Enter' });
-    await waitFor(() => expect(within(card).getByRole('button', { name: 'Un-log set 1' })).toBeVisible());
+    await waitFor(() =>
+      expect(within(card).getByRole('button', { name: 'Un-log set 1' })).toBeVisible(),
+    );
     const [first] = await setsRepo.listBySession(s.id);
 
     fireEvent.keyDown(type(card, 'Set 1 entry', '105 x 7'), { key: 'Enter' });

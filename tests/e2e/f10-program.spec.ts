@@ -113,7 +113,9 @@ test('importing an invalid JSON file shows readable errors and saves nothing', a
       {
         id: 'day-one',
         name: 'Day one',
-        items: [{ exerciseId: 'ghost', sets: 0, repMin: 12, repMax: 8, notes: '', alternatives: [] }],
+        items: [
+          { exerciseId: 'ghost', sets: 0, repMin: 12, repMax: 8, notes: '', alternatives: [] },
+        ],
       },
     ],
   };

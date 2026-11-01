@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { hasDistance, pace } from '../../domain/activity';
 import type { Activity, ActivityType, DistanceUnit, Unit } from '../../domain/types';
 import { toDateKey } from '../../lib/dates';
-import { Button, Card, Chip, ConfirmDialog } from '../ui';
+import { Button, Card, Chip, ConfirmDialog, SectionLabel } from '../ui';
 import { IntensityDots } from './IntensityDots';
 import { TypeChips } from './TypeChips';
-import { Field, inputClass } from './fields';
+import { Field, inputClass, numInputClass } from './fields';
 
 export type ActivityInput = Omit<Activity, 'id'>;
 
@@ -102,8 +102,14 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
         void handleSave();
       }}
     >
+      <SectionLabel index={1} className="-mb-2">
+        Type
+      </SectionLabel>
       <TypeChips value={type} onChange={setType} />
 
+      <SectionLabel index={2} className="-mb-2">
+        When
+      </SectionLabel>
       <Field label="Title (optional)" htmlFor="activity-title">
         <input
           id="activity-title"
@@ -121,7 +127,7 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className={inputClass}
+            className={numInputClass}
           />
         </Field>
         <Field label="Time" htmlFor="activity-time">
@@ -130,11 +136,14 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className={inputClass}
+            className={numInputClass}
           />
         </Field>
       </div>
 
+      <SectionLabel index={3} className="-mb-2">
+        Effort
+      </SectionLabel>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Hours" htmlFor="activity-hours">
           <input
@@ -144,7 +153,7 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
             placeholder="0"
             value={hours}
             onChange={(e) => setHours(e.target.value.replace(/\D/g, ''))}
-            className={inputClass}
+            className={numInputClass}
           />
         </Field>
         <Field label="Minutes" htmlFor="activity-minutes">
@@ -155,7 +164,7 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
             placeholder="0"
             value={minutes}
             onChange={(e) => setMinutes(e.target.value.replace(/\D/g, ''))}
-            className={inputClass}
+            className={numInputClass}
           />
         </Field>
       </div>
@@ -171,9 +180,9 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
                 placeholder="0"
                 value={distance}
                 onChange={(e) => setDistance(e.target.value)}
-                className={inputClass}
+                className={numInputClass}
               />
-              <div role="group" aria-label="Distance unit" className="flex gap-2">
+              <div role="group" aria-label="Distance unit" className="flex gap-1.5">
                 {(['km', 'mi'] as const).map((u) => (
                   <Chip
                     key={u}
@@ -187,9 +196,9 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
             </div>
           </Field>
           {paceText ? (
-            <Card className="flex items-center justify-between">
-              <span className="text-sm text-muted">Pace</span>
-              <span className="tabular text-base font-semibold text-text" data-testid="pace">
+            <Card tone="raised" className="flex items-center justify-between !py-3">
+              <span className="micro">Pace</span>
+              <span className="num text-base font-semibold text-ink" data-testid="pace">
                 {paceText}
               </span>
             </Card>
@@ -201,6 +210,9 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
         <IntensityDots value={intensity} onChange={setIntensity} />
       </Field>
 
+      <SectionLabel index={4} className="-mb-2">
+        Notes
+      </SectionLabel>
       <Field label="Notes" htmlFor="activity-notes">
         <textarea
           id="activity-notes"

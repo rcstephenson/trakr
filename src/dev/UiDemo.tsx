@@ -11,7 +11,6 @@ import {
   SectionLabel,
   SegmentedBar,
   Sheet,
-  Stepper,
 } from '../components/ui';
 import { applyTheme } from '../lib/theme';
 
@@ -29,8 +28,6 @@ const SWATCHES = [
 ] as const;
 
 function Showcase() {
-  const [weight, setWeight] = useState(135);
-  const [reps, setReps] = useState(8);
   const [chip, setChip] = useState('All');
   const [sheet, setSheet] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -115,15 +112,7 @@ function Showcase() {
       </section>
 
       <section>
-        <SectionLabel index={6}>Stepper</SectionLabel>
-        <Card className="mt-2 flex flex-col gap-2">
-          <Stepper label="Weight" value={weight} step={5} unit="lb" onChange={setWeight} />
-          <Stepper label="Reps" value={reps} step={1} min={0} onChange={setReps} />
-        </Card>
-      </section>
-
-      <section>
-        <SectionLabel index={7}>Sheet and confirm</SectionLabel>
+        <SectionLabel index={6}>Sheet and confirm</SectionLabel>
         <Card className="mt-2">
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setSheet(true)}>
@@ -137,7 +126,7 @@ function Showcase() {
       </section>
 
       <section>
-        <SectionLabel index={8}>Empty state</SectionLabel>
+        <SectionLabel index={7}>Empty state</SectionLabel>
         <div className="mt-2">
           <EmptyState
             icon={<Dumbbell size={24} aria-hidden="true" />}

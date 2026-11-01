@@ -57,20 +57,31 @@ export function SetRow(props: SetRowProps) {
   }
 
   const showLogButton = !completed || dirty;
+  const invalid = showFeedback && !parsed.ok;
 
   return (
     <li
-      className={`flex min-h-12 items-start gap-1 rounded-btn ${completed ? 'bg-success-soft' : ''}`}
+      className={`group relative flex min-h-12 items-start border-t border-hairline first:border-t-0 ${
+        invalid ? 'bg-raised' : ''
+      }`}
       data-testid="set-row"
       data-completed={completed}
     >
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-0 left-0 hidden w-0.5 bg-accent group-focus-within:block"
+      />
       <button
         type="button"
         onClick={props.onOptions}
         aria-label={`Set ${n} options`}
-        className="tabular flex h-12 w-7 shrink-0 flex-col items-center justify-center text-sm font-semibold text-muted"
+        className="num flex h-12 w-10 shrink-0 flex-col items-center justify-center text-xs font-medium text-muted"
       >
-        <span className={isWarmup ? 'text-warning' : ''}>{isWarmup ? 'W' : n}</span>
+        {isWarmup ? (
+          <span className="rounded-chip border border-pr px-1 font-semibold text-ink">W</span>
+        ) : (
+          <span>{String(n).padStart(2, '0')}</span>
+        )}
         {rir !== undefined ? <span className="text-[10px] leading-none">R{rir}</span> : null}
       </button>
       <div className="min-w-0 flex-1">
@@ -89,6 +100,7 @@ export function SetRow(props: SetRowProps) {
           autoComplete="off"
           spellCheck={false}
           aria-label={`Set ${n} entry`}
+          aria-invalid={invalid || undefined}
           placeholder={load === 'none' ? 'reps' : 'weight x reps'}
           value={value}
           onChange={(e) => setEdited(e.target.value)}
@@ -99,13 +111,13 @@ export function SetRow(props: SetRowProps) {
               submit();
             }
           }}
-          className={`tabular h-12 w-full rounded-btn bg-transparent px-2 font-mono text-base placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-            muted ? 'text-muted' : 'text-text'
+          className={`num h-12 w-full bg-transparent px-1 text-base font-medium placeholder:font-normal placeholder:text-muted focus:outline-none ${
+            muted ? 'text-muted' : invalid ? 'text-danger' : 'text-ink'
           }`}
         />
         {showFeedback ? (
           <p
-            className={`tabular -mt-1 px-2 pb-1 font-mono text-xs ${
+            className={`num -mt-2 px-1 pb-1.5 text-micro uppercase tracking-micro ${
               parsed.ok ? 'text-muted' : 'text-danger'
             }`}
             data-testid="set-feedback"
@@ -120,9 +132,9 @@ export function SetRow(props: SetRowProps) {
           onClick={submit}
           disabled={!parsed.ok}
           aria-label={completed ? `Update set ${n}` : `Log set ${n}`}
-          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-btn border border-border text-muted disabled:opacity-40"
+          className="inline-flex h-12 w-12 shrink-0 items-center justify-center border-l border-hairline text-muted disabled:opacity-30"
         >
-          <CornerDownLeft size={22} aria-hidden="true" />
+          <CornerDownLeft size={20} aria-hidden="true" />
         </button>
       ) : (
         <button
@@ -130,9 +142,9 @@ export function SetRow(props: SetRowProps) {
           onClick={props.onUnlog}
           aria-label={`Un-log set ${n}`}
           aria-pressed
-          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-success text-on-accent"
+          className="inline-flex h-12 w-12 shrink-0 items-center justify-center text-accent"
         >
-          <Check size={22} aria-hidden="true" />
+          <Check size={22} strokeWidth={3} aria-hidden="true" />
         </button>
       )}
     </li>

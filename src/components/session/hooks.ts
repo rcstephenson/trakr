@@ -31,20 +31,17 @@ export function usePriorSets(
   enabled: boolean,
 ): Record<string, PriorSet[]> | undefined {
   const key = exerciseIds.join('|');
-  return useLiveQuery(
-    async () => {
-      if (!enabled) return {};
-      const result: Record<string, PriorSet[]> = {};
-      for (const id of key ? key.split('|') : []) {
-        const perfs = await history.forExercise(id);
-        result[id] = perfs.flatMap((p) =>
-          p.sets
-            .filter((s) => !s.isWarmup)
-            .map((s) => ({ weight: weightInUnit(s, unit), reps: s.reps, isWarmup: false })),
-        );
-      }
-      return result;
-    },
-    [key, unit, enabled],
-  );
+  return useLiveQuery(async () => {
+    if (!enabled) return {};
+    const result: Record<string, PriorSet[]> = {};
+    for (const id of key ? key.split('|') : []) {
+      const perfs = await history.forExercise(id);
+      result[id] = perfs.flatMap((p) =>
+        p.sets
+          .filter((s) => !s.isWarmup)
+          .map((s) => ({ weight: weightInUnit(s, unit), reps: s.reps, isWarmup: false })),
+      );
+    }
+    return result;
+  }, [key, unit, enabled]);
 }

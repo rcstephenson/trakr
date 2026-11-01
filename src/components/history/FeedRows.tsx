@@ -1,16 +1,15 @@
-import { Dumbbell } from 'lucide-react';
+import { ChevronRight, Dumbbell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDuration } from '../../domain/activity';
 import { ACTIVITY_LABELS } from '../../domain/activity';
 import type { Activity, Session, Unit } from '../../domain/types';
 import { useSessionSets } from '../../hooks/useSessionSets';
 import { ActivityTypeIcon } from '../activity/ActivityTypeIcon';
-import { Card } from '../ui';
 import { formatVolume, sessionMinutes, sessionTotals } from './feed';
 
-const rowCard = 'flex min-h-touch items-center gap-3 active:opacity-80';
+const rowCard = 'flex min-h-touch items-center gap-3 px-3 py-2 active:bg-bg';
 const iconBox =
-  'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent';
+  'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-btn border border-hairline bg-raised text-ink';
 
 function dayLabel(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -32,15 +31,16 @@ export function SessionRow({ session, unit }: { session: Session; unit: Unit }) 
   ].filter((p): p is string => p !== null);
   return (
     <Link to={`/history/session/${session.id}`} className="block" data-testid="feed-session">
-      <Card className={rowCard}>
+      <div className={rowCard}>
         <span className={iconBox}>
           <Dumbbell size={18} aria-hidden="true" />
         </span>
-        <div className="min-w-0">
-          <p className="truncate text-base font-medium text-text">{session.workoutName}</p>
-          <p className="tabular text-sm text-muted">{parts.join(' · ')}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-ink">{session.workoutName}</p>
+          <p className="num truncate text-xs text-muted">{parts.join(' · ')}</p>
         </div>
-      </Card>
+        <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
+      </div>
     </Link>
   );
 }
@@ -54,15 +54,16 @@ export function ActivityRow({ activity }: { activity: Activity }) {
   ].filter((p): p is string => p !== null);
   return (
     <Link to={`/activity/${activity.id}`} className="block" data-testid="feed-activity">
-      <Card className={rowCard}>
+      <div className={rowCard}>
         <span className={iconBox}>
           <ActivityTypeIcon type={activity.type} />
         </span>
-        <div className="min-w-0">
-          <p className="truncate text-base font-medium text-text">{title}</p>
-          <p className="tabular text-sm text-muted">{parts.join(' · ')}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-ink">{title}</p>
+          <p className="num truncate text-xs text-muted">{parts.join(' · ')}</p>
         </div>
-      </Card>
+        <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
+      </div>
     </Link>
   );
 }

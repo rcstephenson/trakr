@@ -68,9 +68,7 @@ export function splitExerciseNames(cell: string): string[] {
   let parts = name.split(/\s+or\s+/i);
   if (parts.length === 1 && / \/ /.test(name)) {
     const slashParts = name.split(/\s+\/\s+/);
-    const hasEquipment = slashParts.some((p) =>
-      p.split(/\s+/).some((w) => isEquipmentWord(w)),
-    );
+    const hasEquipment = slashParts.some((p) => p.split(/\s+/).some((w) => isEquipmentWord(w)));
     if (hasEquipment) parts = slashParts;
   }
   parts = parts.map((p) => p.trim()).filter(Boolean);
@@ -132,7 +130,10 @@ export function markdownImport(md: string): ParseResult {
     if (/^#\s+/.test(line)) continue;
     const layout = /^\W*weekly layout\W*:?\W*(.*)$/i.exec(line.trim());
     if (layout && /weekly layout/i.test(line)) {
-      scheduleNames = layout[1].split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
+      scheduleNames = layout[1]
+        .split(/\s*\/\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean);
       continue;
     }
     preambleNotes.push(line);
@@ -182,12 +183,16 @@ export function markdownImport(md: string): ParseResult {
       }
       const sets = Number(cells[col('sets')]);
       if (!Number.isInteger(sets) || sets < 1) {
-        errors.push(`${rowLabel} (${exCell}): sets must be a whole number, got "${cells[col('sets')] ?? ''}".`);
+        errors.push(
+          `${rowLabel} (${exCell}): sets must be a whole number, got "${cells[col('sets')] ?? ''}".`,
+        );
         continue;
       }
       const reps = parseReps(cells[col('reps')] ?? '');
       if (!reps) {
-        errors.push(`${rowLabel} (${exCell}): could not read reps "${cells[col('reps')] ?? ''}" (use 6–10 or 8).`);
+        errors.push(
+          `${rowLabel} (${exCell}): could not read reps "${cells[col('reps')] ?? ''}" (use 6–10 or 8).`,
+        );
         continue;
       }
       const notes = col('notes') >= 0 ? (cells[col('notes')] ?? '') : '';
@@ -212,14 +217,18 @@ export function markdownImport(md: string): ParseResult {
         repMin: reps.min,
         repMax: reps.max,
         notes,
-        alternatives: alternatives.filter((a, i) => a !== exerciseId && alternatives.indexOf(a) === i),
+        alternatives: alternatives.filter(
+          (a, i) => a !== exerciseId && alternatives.indexOf(a) === i,
+        ),
       });
     }
     workouts.push({ id, name, items });
   }
 
   if (workouts.length === 0 && errors.length === 0) {
-    errors.push('No workout tables found. Expected "## NAME" headings followed by a "| # | Exercise | Sets | Reps | Notes |" table.');
+    errors.push(
+      'No workout tables found. Expected "## NAME" headings followed by a "| # | Exercise | Sets | Reps | Notes |" table.',
+    );
   }
 
   if (scheduleNames) {
@@ -236,7 +245,12 @@ export function markdownImport(md: string): ParseResult {
   if (errors.length > 0) return { ok: false, errors };
 
   const notes = noteBlocks
-    .map((b) => b.replace(/^\s*-{3,}\s*$/gm, '').replace(/\n{3,}/g, '\n\n').trim())
+    .map((b) =>
+      b
+        .replace(/^\s*-{3,}\s*$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim(),
+    )
     .filter(Boolean)
     .join('\n\n');
 

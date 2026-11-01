@@ -6,7 +6,7 @@ import { exercises as exerciseRepo, history as historyRepo } from '../db/reposit
 import type { Performance } from '../db/repositories/history';
 import { Sparkline } from '../components/charts/Sparkline';
 import { buildChartPoints, topSetOf } from '../components/charts/chartData';
-import { EmptyState, PageHeader } from '../components/ui';
+import { EmptyState, Mono, PageHeader, SectionLabel } from '../components/ui';
 import type { Exercise, Unit } from '../domain/types';
 import { formatWeight } from '../domain/units';
 import { formatRelativeDay } from '../lib/dates';
@@ -57,19 +57,19 @@ function ExerciseRow({ row, unit }: { row: Row; unit: Unit }) {
     <li>
       <Link
         to={`/progress/${row.exercise.id}`}
-        className="flex min-h-[64px] items-center gap-3 rounded-card border border-border bg-surface px-4 py-2 shadow-card"
+        className="flex min-h-[60px] items-center gap-3 px-3 py-2 active:bg-bg"
       >
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-text">{row.exercise.name}</p>
-          <p className="truncate text-xs text-muted">
+          <p className="truncate text-sm font-semibold text-ink">{row.exercise.name}</p>
+          <Mono className="block truncate text-xs text-muted">
             {row.lastAt ? formatRelativeDay(row.lastAt) : row.exercise.equipment}
             {top ? ` · ${formatWeight(top.weight, top.unit, unit)} × ${top.reps}` : ''}
-          </p>
+          </Mono>
         </div>
         {sparkValues.length > 0 ? (
           <Sparkline values={sparkValues} label={`${row.exercise.name} top weight trend`} />
         ) : null}
-        <ChevronRight size={18} className="shrink-0 text-muted" aria-hidden />
+        <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden />
       </Link>
     </li>
   );
@@ -93,7 +93,7 @@ export default function Exercises() {
   return (
     <>
       <PageHeader title="Progress" />
-      <div className="flex flex-col gap-3 px-gutter pb-6">
+      <div className="flex flex-col gap-4 px-gutter pb-6">
         <label className="block">
           <span className="sr-only">Search exercises</span>
           <input
@@ -101,16 +101,21 @@ export default function Exercises() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search exercises"
-            className="min-h-touch w-full rounded-btn border border-border bg-surface px-4 text-sm text-text placeholder:text-muted"
+            className="min-h-touch w-full rounded-btn border border-hairline bg-raised px-4 text-sm text-ink placeholder:text-muted"
           />
         </label>
 
         {logged.length > 0 ? (
-          <ul className="flex flex-col gap-3">
-            {logged.map((r) => (
-              <ExerciseRow key={r.exercise.id} row={r} unit={unit} />
-            ))}
-          </ul>
+          <section aria-label="Logged exercises">
+            <SectionLabel index={1} action={<Mono>{String(logged.length).padStart(2, '0')}</Mono>}>
+              Logged
+            </SectionLabel>
+            <ul className="mt-2 divide-y divide-hairline overflow-hidden rounded-card border border-hairline bg-surface">
+              {logged.map((r) => (
+                <ExerciseRow key={r.exercise.id} row={r} unit={unit} />
+              ))}
+            </ul>
+          </section>
         ) : (
           <EmptyState
             title={q ? 'No matching exercises' : 'No history yet'}
@@ -122,10 +127,10 @@ export default function Exercises() {
 
         {notLogged.length > 0 ? (
           <details className="group" open={q.length > 0 && logged.length === 0}>
-            <summary className="flex min-h-touch cursor-pointer items-center text-sm font-medium text-muted">
+            <summary className="micro flex min-h-touch cursor-pointer items-center">
               Not logged yet ({notLogged.length})
             </summary>
-            <ul className="mt-2 flex flex-col gap-3">
+            <ul className="mt-1 divide-y divide-hairline overflow-hidden rounded-card border border-hairline bg-surface">
               {notLogged.map((r) => (
                 <ExerciseRow key={r.exercise.id} row={r} unit={unit} />
               ))}
