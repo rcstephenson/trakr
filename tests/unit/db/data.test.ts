@@ -18,7 +18,6 @@ function makeProgram(id = 'p1'): Program {
     id,
     name: 'Test',
     schedule: ['a', 'rest', 'b'],
-    restSeconds: { compound: 150, isolation: 75 },
     exercises: [
       {
         id: 'bench',
@@ -335,21 +334,24 @@ describe('settings', () => {
     expect(await settings.get()).toEqual(DEFAULT_SETTINGS);
   });
 
-  it('persists updates and deep-merges increments over defaults', async () => {
-    await settings.update({ unit: 'kg', increments: { barbell: 2.5 } });
-    const s = await settings.get();
-    expect(s.unit).toBe('kg');
-    expect(s.increments.barbell).toBe(2.5);
-    expect(s.increments.cable).toBe(DEFAULT_SETTINGS.increments.cable);
+  it('persists updates and merges them over defaults', async () => {
+    await settings.update({ unit: 'kg' });
+    expect((await settings.get()).unit).toBe('kg');
     await settings.update({ theme: 'dark' });
     expect(await settings.get()).toMatchObject({ unit: 'kg', theme: 'dark' });
   });
 
-  it('fills defaults for fields missing from an older stored row', async () => {
-    await db.settings.put({ key: 'app', unit: 'kg', increments: { barbell: 10 } as never });
+  it('fills defaults for missing fields and drops keys from older versions', async () => {
+    await db.settings.put({
+      key: 'app',
+      unit: 'kg',
+      increments: { barbell: 10 },
+      restTimerEnabled: false,
+    } as never);
     const s = await settings.get();
-    expect(s.restTimerEnabled).toBe(true);
-    expect(s.increments).toEqual({ ...DEFAULT_SETTINGS.increments, barbell: 10 });
+    expect(s).toEqual({ ...DEFAULT_SETTINGS, unit: 'kg' });
+    expect(s).not.toHaveProperty('increments');
+    expect(s).not.toHaveProperty('restTimerEnabled');
   });
 });
 

@@ -25,14 +25,13 @@ test('works offline after the first load: reload, start a workout, log a set', a
 
   const card = page.getByTestId('exercise-card').first();
   await expect(card.getByTestId('set-row').first()).toBeVisible();
-  await card.getByLabel('Set 1 weight', { exact: true }).fill('100');
-  await card.getByLabel('Set 1 reps', { exact: true }).fill('8');
-  await card.getByRole('button', { name: 'Complete set 1' }).click();
+  await card.getByLabel('Set 1 entry', { exact: true }).fill('100 x 8');
+  await card.getByLabel('Set 1 entry', { exact: true }).press('Enter');
   await expect(card.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
 
   // Still offline: a deep-link reload serves the app shell and the logged set persisted.
   await page.reload();
   const reloaded = page.getByTestId('exercise-card').first();
   await expect(reloaded.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
-  await expect(reloaded.getByLabel('Set 1 weight', { exact: true })).toHaveValue('100');
+  await expect(reloaded.getByLabel('Set 1 entry', { exact: true })).toHaveValue('100 x 8');
 });

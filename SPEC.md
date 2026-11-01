@@ -229,7 +229,7 @@ Implementation notes (as built by F02; authoritative over the table above where 
 - `history.forExercise(exerciseId)` (wrapped by `useExerciseHistory`) returns completed sessions containing the exercise, oldest first, each with all its sets for that exercise **including warm-ups**; filter on `isWarmup` where needed.
 - `sessions.list({from, to, status})` and `activities.list({from, to})` take inclusive ISO bounds on `startedAt` and return newest first. `sets.listBySession` sorts by slot then set index; `sets.listByExercise` is oldest first and includes warm-ups.
 - `sets.add` takes the set fields minus `id` (`isWarmup` defaults to false, `completedAt` to now); `activities.add` takes the fields minus `id`.
-- `settings.update` accepts a partial `increments` and merges it per equipment.
+- `settings.update` accepts a partial `Settings` and merges it over the defaults; keys from older versions (`increments`, `restTimerEnabled`, `restTimerSound`) are dropped on read and on backup import.
 - `sessions.swapExercise` rewrites the target's `exerciseId` and `kind` but leaves already-logged sets alone. `programs.save` keeps the existing active flag unless `activate` is true. `programs.remove` leaves past sessions alone.
 - `useSession`, `useSessionSets`, `useLastPerformance` and `useExerciseHistory` accept an `undefined` id.
 - `lastPerformance` picks the most recent completed session by `startedAt`.

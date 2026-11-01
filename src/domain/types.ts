@@ -44,7 +44,6 @@ export interface Program {
   description?: string;
   /** Workout template ids in weekly order; `rest` marks a rest day. */
   schedule: string[];
-  restSeconds: { compound: number; isolation: number };
   exercises: Exercise[];
   workouts: WorkoutTemplate[];
   /** Markdown, display only. */
@@ -118,26 +117,12 @@ export interface Activity {
 
 export interface Settings {
   unit: Unit;
-  /** Stepper increment per equipment, in the display unit. */
-  increments: Record<Equipment, number>;
-  restTimerEnabled: boolean;
-  restTimerSound: boolean;
   theme: ThemePreference;
   rotationPointer?: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   unit: 'lb',
-  increments: {
-    barbell: 5,
-    dumbbell: 5,
-    cable: 2.5,
-    machine: 5,
-    bodyweight: 5,
-    other: 5,
-  },
-  restTimerEnabled: true,
-  restTimerSound: false,
   theme: 'system',
 };
 

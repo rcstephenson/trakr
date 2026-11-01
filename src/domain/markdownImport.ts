@@ -101,17 +101,6 @@ function parseReps(text: string): { min: number; max: number } | null {
   return { min, max: m[2] ? Number(m[2]) : min };
 }
 
-function midpointSeconds(text: string, label: RegExp): number | null {
-  const m = new RegExp(
-    `(\\d+(?:\\.\\d+)?)(?:\\s*[–—-]\\s*(\\d+(?:\\.\\d+)?))?\\s*(min|sec)\\w*\\s*(?:on\\s+)?(?:the\\s+)?${label.source}`,
-    'i',
-  ).exec(text);
-  if (!m) return null;
-  const lo = Number(m[1]);
-  const hi = m[2] ? Number(m[2]) : lo;
-  return Math.round(((lo + hi) / 2) * (m[3].toLowerCase() === 'min' ? 60 : 1));
-}
-
 interface Section {
   heading: string;
   lines: string[];
@@ -244,12 +233,6 @@ export function markdownImport(md: string): ParseResult {
     schedule = workouts.map((w) => w.id);
   }
 
-  const restText = md.split('\n').find((l) => /\brest\b\s*:/i.test(l) && /(min|sec)/i.test(l)) ?? '';
-  const restSeconds = {
-    compound: midpointSeconds(restText, /compound/) ?? 150,
-    isolation: midpointSeconds(restText, /isolation/) ?? 75,
-  };
-
   if (errors.length > 0) return { ok: false, errors };
 
   const notes = noteBlocks
@@ -262,7 +245,6 @@ export function markdownImport(md: string): ParseResult {
     id: slugify(title),
     name: title,
     schedule,
-    restSeconds,
     exercises: [...exercises.values()],
     workouts,
     ...(notes ? { notes } : {}),

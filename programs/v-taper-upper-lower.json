@@ -12,10 +12,6 @@
     "rest",
     "rest"
   ],
-  "restSeconds": {
-    "compound": 150,
-    "isolation": 75
-  },
   "exercises": [
     {
       "id": "barbell-bench-press",

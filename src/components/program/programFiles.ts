@@ -8,7 +8,6 @@ export function toProgram(stored: StoredProgram | Program): Program {
     name: stored.name,
     description: stored.description,
     schedule: stored.schedule,
-    restSeconds: stored.restSeconds,
     exercises: stored.exercises,
     workouts: stored.workouts,
     notes: stored.notes,
