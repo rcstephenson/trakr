@@ -1,7 +1,6 @@
 import { ChevronRight, Dumbbell } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { formatDuration } from '../../domain/activity';
-import { ACTIVITY_LABELS } from '../../domain/activity';
+import { ACTIVITY_LABELS, formatDuration, pace } from '../../domain/activity';
 import type { Activity, Session, Unit } from '../../domain/types';
 import { useSessionSets } from '../../hooks/useSessionSets';
 import { ActivityTypeIcon } from '../activity/ActivityTypeIcon';
@@ -51,6 +50,9 @@ export function ActivityRow({ activity }: { activity: Activity }) {
     dayLabel(activity.startedAt),
     activity.durationMin ? formatDuration(activity.durationMin) : null,
     activity.distance ? `${activity.distance} ${activity.distanceUnit ?? ''}`.trim() : null,
+    activity.distanceUnit
+      ? pace(activity.durationMin, activity.distance, activity.distanceUnit)
+      : null,
   ].filter((p): p is string => p !== null);
   return (
     <Link to={`/activity/${activity.id}`} className="block" data-testid="feed-activity">
