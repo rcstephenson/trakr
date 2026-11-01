@@ -64,7 +64,7 @@ describe('types and stub program', () => {
   it('imports the stub as a Program', () => {
     const program: Program = stub as Program;
     expect(program.id).toBe('v-taper-upper-lower');
-    expect(program.workouts[0].items).toHaveLength(2);
+    expect(program.workouts[0].items).toHaveLength(8);
   });
 
   it('has default settings per spec', () => {

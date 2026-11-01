@@ -2,9 +2,20 @@
   "schemaVersion": 1,
   "id": "v-taper-upper-lower",
   "name": "V-Taper Hypertrophy — Upper/Lower",
-  "description": "Lean muscle, V-taper emphasis. (Stub: F01 replaces this with the full program.)",
-  "schedule": ["upper-a", "lower-a", "rest", "upper-b", "lower-b", "rest", "rest"],
-  "restSeconds": { "compound": 150, "isolation": 75 },
+  "description": "Lean muscle, V-taper/hourglass emphasis.",
+  "schedule": [
+    "upper-a",
+    "lower-a",
+    "rest",
+    "upper-b",
+    "lower-b",
+    "rest",
+    "rest"
+  ],
+  "restSeconds": {
+    "compound": 150,
+    "isolation": 75
+  },
   "exercises": [
     {
       "id": "barbell-bench-press",
@@ -12,7 +23,11 @@
       "equipment": "barbell",
       "kind": "compound",
       "load": "total",
-      "muscles": ["chest", "triceps", "front-delts"]
+      "muscles": [
+        "chest",
+        "triceps",
+        "front-delts"
+      ]
     },
     {
       "id": "chest-supported-row",
@@ -20,7 +35,321 @@
       "equipment": "machine",
       "kind": "compound",
       "load": "total",
-      "muscles": ["lats", "upper-back", "rear-delts", "biceps"]
+      "muscles": [
+        "lats",
+        "upper-back",
+        "rear-delts",
+        "biceps"
+      ]
+    },
+    {
+      "id": "incline-dumbbell-press",
+      "name": "Incline Dumbbell Press",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": [
+        "chest",
+        "front-delts",
+        "triceps"
+      ]
+    },
+    {
+      "id": "incline-barbell-press",
+      "name": "Incline Barbell Press",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "chest",
+        "front-delts",
+        "triceps"
+      ]
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "equipment": "cable",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "lats",
+        "upper-back",
+        "biceps"
+      ]
+    },
+    {
+      "id": "neutral-grip-lat-pulldown",
+      "name": "Neutral-Grip Lat Pulldown",
+      "equipment": "cable",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "lats",
+        "upper-back",
+        "biceps"
+      ]
+    },
+    {
+      "id": "pull-up",
+      "name": "Pull-Up",
+      "equipment": "bodyweight",
+      "kind": "compound",
+      "load": "bodyweight-plus",
+      "muscles": [
+        "lats",
+        "upper-back",
+        "biceps"
+      ]
+    },
+    {
+      "id": "dips",
+      "name": "Dips",
+      "equipment": "bodyweight",
+      "kind": "compound",
+      "load": "bodyweight-plus",
+      "muscles": [
+        "chest",
+        "triceps",
+        "front-delts"
+      ]
+    },
+    {
+      "id": "machine-chest-press",
+      "name": "Machine Chest Press",
+      "equipment": "machine",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "chest",
+        "triceps",
+        "front-delts"
+      ]
+    },
+    {
+      "id": "seated-db-overhead-press",
+      "name": "Seated Dumbbell Overhead Press",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": [
+        "front-delts",
+        "lateral-delts",
+        "triceps"
+      ]
+    },
+    {
+      "id": "single-arm-cable-pulldown",
+      "name": "Single-Arm Cable Pulldown",
+      "equipment": "cable",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "lats",
+        "upper-back"
+      ]
+    },
+    {
+      "id": "seated-cable-row",
+      "name": "Seated Cable Row",
+      "equipment": "cable",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "lats",
+        "upper-back",
+        "rear-delts",
+        "biceps"
+      ]
+    },
+    {
+      "id": "cable-lateral-raise",
+      "name": "Cable Lateral Raise",
+      "equipment": "cable",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "lateral-delts"
+      ]
+    },
+    {
+      "id": "machine-lateral-raise",
+      "name": "Machine Lateral Raise",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "lateral-delts"
+      ]
+    },
+    {
+      "id": "dumbbell-lateral-raise",
+      "name": "Dumbbell Lateral Raise",
+      "equipment": "dumbbell",
+      "kind": "isolation",
+      "load": "per-hand",
+      "muscles": [
+        "lateral-delts"
+      ]
+    },
+    {
+      "id": "rear-delt-fly",
+      "name": "Rear-Delt Fly",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "rear-delts",
+        "upper-back"
+      ]
+    },
+    {
+      "id": "triceps-pressdown",
+      "name": "Triceps Pressdown",
+      "equipment": "cable",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "overhead-triceps-extension",
+      "name": "Overhead Triceps Extension",
+      "equipment": "cable",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "triceps"
+      ]
+    },
+    {
+      "id": "dumbbell-curl",
+      "name": "Dumbbell Curl",
+      "equipment": "dumbbell",
+      "kind": "isolation",
+      "load": "per-hand",
+      "muscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "preacher-curl",
+      "name": "Preacher Curl",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "biceps"
+      ]
+    },
+    {
+      "id": "hip-thrust",
+      "name": "Hip Thrust",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "glute-max",
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "back-squat",
+      "name": "Back Squat",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "quads",
+        "glute-max",
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": [
+        "hamstrings",
+        "glute-max",
+        "upper-back"
+      ]
+    },
+    {
+      "id": "bulgarian-split-squat",
+      "name": "Bulgarian Split Squat",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": [
+        "quads",
+        "glute-max",
+        "glute-med"
+      ]
+    },
+    {
+      "id": "seated-leg-curl",
+      "name": "Seated Leg Curl",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "hamstrings"
+      ]
+    },
+    {
+      "id": "hip-abduction-machine",
+      "name": "Hip Abduction Machine",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "glute-med",
+        "glute-max"
+      ]
+    },
+    {
+      "id": "leg-extension",
+      "name": "Leg Extension",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "quads"
+      ]
+    },
+    {
+      "id": "standing-calf-raise",
+      "name": "Standing Calf Raise",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "calves"
+      ]
+    },
+    {
+      "id": "seated-calf-raise",
+      "name": "Seated Calf Raise",
+      "equipment": "machine",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": [
+        "calves"
+      ]
+    },
+    {
+      "id": "core-leg-raise",
+      "name": "Core / Leg Raise",
+      "equipment": "bodyweight",
+      "kind": "isolation",
+      "load": "none",
+      "muscles": [
+        "abs"
+      ]
     }
   ],
   "workouts": [
@@ -43,9 +372,284 @@
           "repMax": 10,
           "notes": "",
           "alternatives": []
+        },
+        {
+          "exerciseId": "incline-dumbbell-press",
+          "sets": 2,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "lat-pulldown",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "cable-lateral-raise",
+          "sets": 5,
+          "repMin": 12,
+          "repMax": 20,
+          "notes": "Cable behind body or lean away from stack",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "rear-delt-fly",
+          "sets": 3,
+          "repMin": 12,
+          "repMax": 20,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "triceps-pressdown",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "dumbbell-curl",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "lower-a",
+      "name": "Lower A",
+      "items": [
+        {
+          "exerciseId": "hip-thrust",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "Priority glute work goes first",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "back-squat",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 8,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "romanian-deadlift",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "seated-leg-curl",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "Seated > lying for hamstring growth",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "hip-abduction-machine",
+          "sets": 3,
+          "repMin": 12,
+          "repMax": 20,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "standing-calf-raise",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 15,
+          "notes": "Standing hits gastrocnemius",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "core-leg-raise",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "upper-b",
+      "name": "Upper B",
+      "items": [
+        {
+          "exerciseId": "incline-dumbbell-press",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "",
+          "alternatives": [
+            "incline-barbell-press"
+          ]
+        },
+        {
+          "exerciseId": "pull-up",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "",
+          "alternatives": [
+            "neutral-grip-lat-pulldown"
+          ]
+        },
+        {
+          "exerciseId": "dips",
+          "sets": 2,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "Optional swap: seated DB overhead press",
+          "alternatives": [
+            "machine-chest-press",
+            "seated-db-overhead-press"
+          ]
+        },
+        {
+          "exerciseId": "single-arm-cable-pulldown",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "seated-cable-row",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "machine-lateral-raise",
+          "sets": 5,
+          "repMin": 12,
+          "repMax": 20,
+          "notes": "Different variation than Upper A",
+          "alternatives": [
+            "dumbbell-lateral-raise"
+          ]
+        },
+        {
+          "exerciseId": "rear-delt-fly",
+          "sets": 3,
+          "repMin": 12,
+          "repMax": 20,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "overhead-triceps-extension",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "Beats pressdowns for triceps growth",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "preacher-curl",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "lower-b",
+      "name": "Lower B",
+      "items": [
+        {
+          "exerciseId": "back-squat",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "romanian-deadlift",
+          "sets": 2,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "bulgarian-split-squat",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "seated-leg-curl",
+          "sets": 3,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "hip-thrust",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "hip-abduction-machine",
+          "sets": 3,
+          "repMin": 12,
+          "repMax": 20,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "seated-calf-raise",
+          "sets": 3,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "Seated hits soleus",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "core-leg-raise",
+          "sets": 2,
+          "repMin": 8,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
         }
       ]
     }
   ],
-  "notes": ""
+  "notes": "**Goal:** Lean muscle, V-taper/hourglass emphasis\n**Priority muscles:** Lateral delts, rear delts, lats/upper back, glute max, glute medius\n**Moderate:** Chest, arms, quads, hamstrings, calves, abs\n\n## Weekly Volume\n\n| Muscle | Sets/week | Priority |\n|---|---|---|\n| Lateral delts | 10 | High |\n| Rear delts | 6 (+ indirect from ~9 row sets) | High |\n| Lats / upper back | 14 | High |\n| Glute max | 6 direct (+ squat/RDL/BSS overlap) | High |\n| Glute medius | 6 (+ BSS) | High |\n| Chest | 10 | Moderate |\n| Quads | ~11 | Moderate |\n| Hamstrings | 10 | Moderate |\n| Calves | 3 standing + 3 seated | Moderate |\n| Biceps / triceps | 4 each (+ indirect) | Moderate |\n\n## Execution Rules\n\n- **Proximity to failure:** Most sets end 0–3 reps short of failure. Isolation work (lateral raises, curls, leg extensions) can go closer; heavy squats and RDLs stay further away.\n- **Progression:** Add reps within the listed range first. Once you hit the top of the range on all sets, add weight and drop back to the bottom.\n- **Lateral raise technique:** Lead with the elbows, stop around shoulder height, control the lowering phase. Light enough that there's no torso swing.\n- **Rest:** 2–3 min on compounds, 60–90 sec on isolation.\n\n## Nutrition\n\nLean bulk is the right call here — muscle mass is the limiting factor for a \"ripped\" look, not body fat.\n\n- **Calories:** ~250–350 above maintenance per day\n- **Rate of gain:** 0.25–0.5% of body weight per month (~0.4–0.8 lb)\n- **Protein:** 115–160 g/day (1.6–2.2 g/kg)\n\nIf you're newer to lifting, eating at maintenance can build muscle while losing fat, just more slowly.\n\n## Changes From the Original Draft\n\n1. Lateral delts raised from 7 → 10 sets/week\n2. Rear delts raised from 4 → 6 sets/week\n3. Quads cut from ~15 → ~11 sets/week (dropped leg press and one leg-extension slot)\n4. Lower A calf raise switched from seated to standing\n5. Hip thrusts moved to the first slot on Lower A\n6. Upper B's redundant second lat pulldown replaced with single-arm cable pulldown\n7. Optional: swap Upper B dips/machine press for seated DB overhead press (don't add on top)\n\n## Supporting Research\n\n- Schoenfeld et al. (2017) — dose-response of weekly set volume to hypertrophy\n- Pelland et al. (2024) — volume meta-analysis; compound sets count ~0.5 for secondary muscles\n- Schoenfeld et al. (2016) — training frequency, 2x/week per muscle\n- Maeo et al. (2023) — overhead triceps extension vs. pressdown\n- Maeo et al. (2021) — seated vs. lying leg curl\n- Kinoshita et al. (2023) — standing vs. seated calf raise\n- Simão et al. (2012) — exercise order\n- Morton et al. (2018) — protein intake meta-analysis\n\n*General training guidance, not medical advice. See a professional for injury or medical concerns.*\n"
 }
