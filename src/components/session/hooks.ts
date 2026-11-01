@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import * as exercises from '../../db/repositories/exercises';
 import * as history from '../../db/repositories/history';
@@ -14,16 +13,6 @@ export function useExerciseCatalog(): Exercise[] | undefined {
 /** The program a session was started from. `undefined` while loading, `null` if gone. */
 export function useProgramById(id: string | undefined): StoredProgram | null | undefined {
   return useLiveQuery(() => (id ? programs.get(id) : null), [id]);
-}
-
-/** Ticks once per second so elapsed-time displays stay current. */
-export function useNow(intervalMs = 1000): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(t);
-  }, [intervalMs]);
-  return now;
 }
 
 export interface PriorSet {

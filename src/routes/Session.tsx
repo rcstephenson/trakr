@@ -2,17 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { ExerciseCard } from '../components/session/ExerciseCard';
-import { FinishSheet, formatDuration } from '../components/session/FinishSheet';
-import { useExerciseCatalog, useNow, useProgramById } from '../components/session/hooks';
+import { FinishSheet } from '../components/session/FinishSheet';
+import { useExerciseCatalog, useProgramById } from '../components/session/hooks';
 import { NoteSheet } from '../components/session/NoteSheet';
 import { readSlotNotes, writeSlotNote } from '../components/session/prefill';
-import { RestTimer } from '../components/session/RestTimer';
 import { SwapSheet } from '../components/session/SwapSheet';
 import { Button, EmptyState, PageHeader } from '../components/ui';
 import * as sessionsRepo from '../db/repositories/sessions';
-import type { SessionTarget } from '../domain/types';
 import { useSession } from '../hooks/useSession';
-import { startRestTimer } from '../hooks/useRestTimer';
 import { useSessionSets } from '../hooks/useSessionSets';
 import { useSettings } from '../hooks/useSettings';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -25,11 +22,12 @@ export default function Session() {
   const settings = useSettings();
   const catalog = useExerciseCatalog();
   const program = useProgramById(session?.programId);
-  const now = useNow();
 
   const [swapSlot, setSwapSlot] = useState<number | null>(null);
   const [noteSlot, setNoteSlot] = useState<number | null>(null);
   const [finishOpen, setFinishOpen] = useState(false);
+  // Recorded once when Finish is opened: a plain stat, not a running clock.
+  const [durationMs, setDurationMs] = useState(0);
   const [busy, setBusy] = useState(false);
 
   const active = session?.status === 'active';
@@ -98,15 +96,9 @@ export default function Session() {
 
   const exercises = new Map(catalog.map((e) => [e.id, e]));
   const slotNotes = readSlotNotes(session.notes);
-  const elapsed = now - Date.parse(session.startedAt);
   const swapTarget = session.targets.find((t) => t.slotIndex === noteSlot);
   const swapping = session.targets.find((t) => t.slotIndex === swapSlot);
   const workout = program?.workouts.find((w) => w.id === session.workoutId);
-
-  // F06: rest timer hook-in
-  function onSetCompleted(target: SessionTarget) {
-    if (program) startRestTimer(program.restSeconds[target.kind]);
-  }
 
   async function finish() {
     if (!id || busy) return;
@@ -134,11 +126,15 @@ export default function Session() {
         </Link>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-semibold text-text">{session.workoutName}</h1>
-          <p className="tabular text-xs text-muted" aria-label="Elapsed time">
-            {formatDuration(elapsed)}
-          </p>
         </div>
-        <Button onClick={() => setFinishOpen(true)}>Finish</Button>
+        <Button
+          onClick={() => {
+            setDurationMs(Date.now() - Date.parse(session.startedAt));
+            setFinishOpen(true);
+          }}
+        >
+          Finish
+        </Button>
       </header>
 
       <ul className="flex flex-col gap-3 px-gutter pt-3">
@@ -153,13 +149,11 @@ export default function Session() {
               note={slotNotes[target.slotIndex] ?? ''}
               onSwap={() => setSwapSlot(target.slotIndex)}
               onNote={() => setNoteSlot(target.slotIndex)}
-              onSetCompleted={onSetCompleted}
             />
           </li>
         ))}
       </ul>
 
-      <RestTimer />
       <SwapSheet
         open={swapping !== undefined}
         onClose={() => setSwapSlot(null)}
@@ -189,7 +183,7 @@ export default function Session() {
         sets={sets}
         exercises={exercises}
         unit={settings.unit}
-        durationMs={elapsed}
+        durationMs={durationMs}
         busy={busy}
         onFinish={() => void finish()}
         onDiscard={() => void discard()}

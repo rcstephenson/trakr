@@ -50,10 +50,6 @@ export const ProgramSchema = z
     name: nonEmpty,
     description: z.string().optional(),
     schedule: z.array(slug),
-    restSeconds: z.object({
-      compound: z.number().positive('must be greater than 0'),
-      isolation: z.number().positive('must be greater than 0'),
-    }),
     exercises: z.array(ExerciseSchema),
     workouts: z.array(WorkoutTemplateSchema),
     notes: z.string().optional(),

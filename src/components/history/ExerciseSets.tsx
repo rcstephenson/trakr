@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trophy } from 'lucide-react';
 import * as setsRepo from '../../db/repositories/sets';
+import { formatSetEntry } from '../../domain/setEntry';
 import { formatWeight } from '../../domain/units';
 import type { Exercise, SetEntry, Settings } from '../../domain/types';
 import { weightInUnit } from '../session/prefill';
@@ -39,8 +40,7 @@ export function ExerciseSets({
 }: ExerciseSetsProps) {
   const [optionsId, setOptionsId] = useState<string | null>(null);
   const name = exercise?.name ?? group.exerciseId;
-  const showWeight = exercise?.load !== 'none';
-  const step = settings.increments[exercise?.equipment ?? 'other'];
+  const load = exercise?.load ?? 'total';
   const optionSet = group.sets.find((s) => s.id === optionsId);
 
   async function addSet() {
@@ -71,14 +71,13 @@ export function ExerciseSets({
                 completed
                 isWarmup={s.isWarmup}
                 rir={s.rir}
-                weight={weightInUnit(s, settings.unit)}
-                reps={s.reps}
-                muted={false}
-                showWeight={showWeight}
-                weightStep={step}
-                onWeight={(w) => void setsRepo.update(s.id, { weight: w, unit: settings.unit })}
-                onReps={(r) => void setsRepo.update(s.id, { reps: r })}
-                onToggle={() => void setsRepo.remove(s.id)}
+                load={load}
+                unit={settings.unit}
+                baseText={formatSetEntry(weightInUnit(s, settings.unit), s.reps, load)}
+                onLog={(p) =>
+                  void setsRepo.update(s.id, { weight: p.weight, unit: p.unit, reps: p.reps })
+                }
+                onUnlog={() => void setsRepo.remove(s.id)}
                 onOptions={() => setOptionsId(s.id)}
               />
             ))}

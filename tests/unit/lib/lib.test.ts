@@ -69,6 +69,6 @@ describe('types and stub program', () => {
 
   it('has default settings per spec', () => {
     expect(DEFAULT_SETTINGS.unit).toBe('lb');
-    expect(DEFAULT_SETTINGS.increments.cable).toBe(2.5);
+    expect(DEFAULT_SETTINGS.theme).toBe('system');
   });
 });

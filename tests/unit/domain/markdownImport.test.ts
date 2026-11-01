@@ -23,9 +23,8 @@ const reference: Program = (() => {
 describe('markdownImport(workout_A.md)', () => {
   const program = imported();
 
-  it('matches the bundled schedule, rest times and workout names', () => {
+  it('matches the bundled schedule and workout names', () => {
     expect(program.schedule).toEqual(reference.schedule);
-    expect(program.restSeconds).toEqual(reference.restSeconds);
     expect(program.workouts.map((w) => [w.id, w.name])).toEqual(
       reference.workouts.map((w) => [w.id, w.name]),
     );

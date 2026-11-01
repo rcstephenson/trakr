@@ -62,16 +62,6 @@ const ActivitySchema = z.object({
 
 const SettingsSchema = z.object({
   unit,
-  increments: z.object({
-    barbell: z.number(),
-    dumbbell: z.number(),
-    cable: z.number(),
-    machine: z.number(),
-    bodyweight: z.number(),
-    other: z.number(),
-  }),
-  restTimerEnabled: z.boolean(),
-  restTimerSound: z.boolean(),
   theme: z.enum(['light', 'dark', 'system']),
   rotationPointer: z.string().optional(),
 });
@@ -125,7 +115,6 @@ export async function exportBackup(): Promise<Backup> {
       const settings = {
         ...DEFAULT_SETTINGS,
         ...stored,
-        increments: { ...DEFAULT_SETTINGS.increments, ...(row?.increments ?? {}) },
       };
       return {
         app: 'trakr',

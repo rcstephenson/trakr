@@ -8,7 +8,6 @@ function valid(): Program {
     id: 'p',
     name: 'P',
     schedule: ['a', 'rest'],
-    restSeconds: { compound: 150, isolation: 75 },
     exercises: [
       {
         id: 'x',
@@ -42,6 +41,12 @@ describe('parseProgram', () => {
   it('accepts a valid program', () => {
     const r = parseProgram(valid());
     expect(r.ok).toBe(true);
+  });
+
+  it('still accepts old program files that contain restSeconds', () => {
+    const r = parseProgram({ ...valid(), restSeconds: { compound: 150, isolation: 75 } });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.program).not.toHaveProperty('restSeconds');
   });
 
   it('reports a broken exercise reference readably', () => {

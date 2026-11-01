@@ -20,7 +20,7 @@ async function wipe() {
 
 async function seedVaried() {
   await ensureSeeded();
-  await settings.update({ unit: 'kg', theme: 'dark', increments: { barbell: 2.5 } });
+  await settings.update({ unit: 'kg', theme: 'dark' });
   const s1 = await sessions.start('v-taper-upper-lower', 'upper-a');
   await sets.add({
     sessionId: s1.id,
@@ -105,6 +105,30 @@ describe('backup', () => {
     expect((await settings.get()).unit).toBe('lb');
     expect(await db.programs.where('isActive').equals(1).count()).toBe(1);
     expect(await db.sets.count()).toBe(2);
+  });
+
+  it('accepts old backups with removed settings keys and strips them', async () => {
+    await seedVaried();
+    const backup = await exportBackup();
+    const old = {
+      ...backup,
+      settings: {
+        ...backup.settings,
+        increments: { barbell: 5, dumbbell: 5, cable: 2.5, machine: 5, bodyweight: 5, other: 5 },
+        restTimerEnabled: true,
+        restTimerSound: false,
+      },
+      programs: backup.programs.map((p) => ({ ...p, restSeconds: { compound: 150, isolation: 75 } })),
+    };
+    const parsed = parseBackup(JSON.stringify(old));
+    expect(parsed.ok).toBe(true);
+    await wipe();
+    await importBackup(JSON.stringify(old), 'replace');
+    const stored = await db.settings.get('app');
+    expect(stored).not.toHaveProperty('increments');
+    expect(stored).not.toHaveProperty('restTimerEnabled');
+    expect(stored).not.toHaveProperty('restTimerSound');
+    expect(await settings.get()).toMatchObject({ unit: 'kg', theme: 'dark' });
   });
 
   it('rejects invalid backups without writing anything', async () => {

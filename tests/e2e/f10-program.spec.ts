@@ -108,7 +108,6 @@ test('importing an invalid JSON file shows readable errors and saves nothing', a
     id: 'broken',
     name: 'Broken',
     schedule: ['day-one'],
-    restSeconds: { compound: 150, isolation: 75 },
     exercises: [],
     workouts: [
       {

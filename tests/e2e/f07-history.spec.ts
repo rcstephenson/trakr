@@ -7,10 +7,9 @@ async function logUpperA(page: Page) {
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
   const card = page.getByTestId('exercise-card').first();
   const count = await card.getByTestId('set-row').count();
-  await card.getByLabel('Set 1 weight', { exact: true }).fill('100');
-  await card.getByLabel('Set 1 reps', { exact: true }).fill('8');
+  await card.getByLabel('Set 1 entry', { exact: true }).fill('100 x 8');
   for (let n = 1; n <= count; n++) {
-    await card.getByRole('button', { name: `Complete set ${n}` }).click();
+    await card.getByLabel(`Set ${n} entry`, { exact: true }).press('Enter');
   }
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
   await page.getByRole('button', { name: 'Finish workout' }).click();
@@ -33,9 +32,10 @@ test('edited set weight shows up as Last on the next session', async ({ page }) 
   await expect(page.getByTestId('detail-set').first()).toContainText('100 lb × 8');
 
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
-  const weight = page.getByLabel('Set 1 weight', { exact: true }).first();
-  await weight.fill('120');
-  await weight.blur();
+  const entry = page.getByLabel('Set 1 entry', { exact: true }).first();
+  await expect(entry).toHaveValue('100 x 8');
+  await entry.fill('120 x 8');
+  await entry.press('Enter');
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByTestId('detail-set').first()).toContainText('120 lb × 8');
 

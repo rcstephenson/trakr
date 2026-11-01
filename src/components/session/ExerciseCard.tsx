@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ArrowLeftRight, Check, MessageSquare, Plus } from 'lucide-react';
 import * as setsRepo from '../../db/repositories/sets';
-import type { Exercise, Session, SessionTarget, SetEntry, Settings } from '../../domain/types';
+import { formatSetEntry } from '../../domain/setEntry';
+import type { Exercise, LoadType, Session, SessionTarget, SetEntry, Settings } from '../../domain/types';
 import { useLastPerformance } from '../../hooks/useLastPerformance';
 import { Button, Card, Sheet } from '../ui';
 import { formatSets, prefillForSet, weightInUnit } from './prefill';
-import { SetRow } from './SetRow';
+import { SetRow, type ParsedSet } from './SetRow';
 
 export interface ExerciseCardProps {
   session: Session;
@@ -17,15 +18,13 @@ export interface ExerciseCardProps {
   note: string;
   onSwap: () => void;
   onNote: () => void;
-  onSetCompleted: (target: SessionTarget) => void;
 }
 
-/** A not-yet-logged row the user has touched (or that was auto-filled from the row above). */
+/** A not-yet-logged row's warm-up / RIR flags, and text carried over from a previous action. */
 interface Draft {
-  weight: number | null;
-  reps: number | null;
-  touched: boolean;
-  isWarmup: boolean;
+  /** Text to show in the row (muted) in place of the history prefill. */
+  text?: string;
+  isWarmup?: boolean;
   rir?: number;
 }
 
@@ -36,8 +35,7 @@ function repRange(t: SessionTarget): string {
 export function ExerciseCard(props: ExerciseCardProps) {
   const { session, target, exercise, settings, note } = props;
   const slot = target.slotIndex;
-  const showWeight = exercise?.load !== 'none';
-  const step = settings.increments[exercise?.equipment ?? 'other'];
+  const load: LoadType = exercise?.load ?? 'total';
 
   const last = useLastPerformance(target.exerciseId, session.id);
   const lastSets = last?.sets;
@@ -52,86 +50,80 @@ export function ExerciseCard(props: ExerciseCardProps) {
   const [extra, setExtra] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [optionsRow, setOptionsRow] = useState<number | null>(null);
+  const inputs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const rowCount = Math.max(target.sets + extra, maxEntry + 1);
   const rows = Array.from({ length: rowCount }, (_, i) => i);
   const completedCount = rows.filter((i) => entries.has(i)).length;
   const allDone = rowCount > 0 && completedCount === rowCount;
 
-  function valuesFor(i: number): { weight: number | null; reps: number | null; muted: boolean } {
-    const entry = entries.get(i);
-    if (entry) return { weight: weightInUnit(entry, settings.unit), reps: entry.reps, muted: false };
-    const draft = drafts[i];
-    if (draft) return { weight: draft.weight, reps: draft.reps, muted: !draft.touched };
+  function historyText(i: number): string {
     const pre = prefillForSet(lastSets, i, settings.unit);
-    if (pre) return { ...pre, muted: true };
-    return { weight: null, reps: null, muted: false };
+    return pre ? formatSetEntry(pre.weight, pre.reps, load) : '';
+  }
+
+  function baseTextFor(i: number): string {
+    const entry = entries.get(i);
+    if (entry) return formatSetEntry(weightInUnit(entry, settings.unit), entry.reps, load);
+    return drafts[i]?.text ?? historyText(i);
   }
 
   function patchDraft(i: number, patch: Partial<Draft>) {
-    setDrafts((d) => {
-      const cur = valuesFor(i);
-      const base: Draft = d[i] ?? {
-        weight: cur.weight,
-        reps: cur.reps,
-        touched: false,
-        isWarmup: false,
-      };
-      return { ...d, [i]: { ...base, ...patch } };
-    });
+    setDrafts((d) => ({ ...d, [i]: { ...d[i], ...patch } }));
   }
 
-  function edit(i: number, patch: { weight?: number; reps?: number }) {
-    const entry = entries.get(i);
-    if (entry) {
-      void setsRepo.update(entry.id, {
-        ...(patch.weight !== undefined ? { weight: patch.weight, unit: settings.unit } : {}),
-        ...(patch.reps !== undefined ? { reps: patch.reps } : {}),
-      });
-    } else {
-      patchDraft(i, { ...patch, touched: true });
+  function focusNext(i: number) {
+    for (let j = i + 1; j < rowCount; j++) {
+      if (!entries.has(j)) {
+        inputs.current[j]?.focus();
+        return;
+      }
     }
   }
 
-  async function toggle(i: number) {
+  async function log(i: number, parsed: ParsedSet) {
     const entry = entries.get(i);
     if (entry) {
-      // Un-complete: keep the logged numbers in the row so nothing the user typed is lost.
-      patchDraft(i, {
-        weight: weightInUnit(entry, settings.unit),
-        reps: entry.reps,
-        touched: true,
-        isWarmup: entry.isWarmup,
-        rir: entry.rir,
-      });
-      await setsRepo.remove(entry.id);
+      await setsRepo.update(entry.id, { weight: parsed.weight, unit: parsed.unit, reps: parsed.reps });
       return;
     }
-    const v = valuesFor(i);
-    if (v.reps === null || v.reps <= 0 || (showWeight && v.weight === null)) return;
     const draft = drafts[i];
+    const text = formatSetEntry(parsed.weight, parsed.reps, load);
+    // Move on right away so the keyboard stays up; the next row is prefilled below.
+    focusNext(i);
+    setDrafts((d) => {
+      const next = { ...d };
+      delete next[i];
+      const j = i + 1;
+      // Carry the numbers to the next row, unless history already prefills it.
+      if (j < rowCount && !entries.has(j) && !next[j]?.text && !historyText(j)) {
+        next[j] = { ...next[j], text };
+      }
+      return next;
+    });
     await setsRepo.add({
       sessionId: session.id,
       exerciseId: target.exerciseId,
       slotIndex: slot,
       setIndex: i,
-      weight: showWeight ? (v.weight ?? 0) : 0,
-      unit: settings.unit,
-      reps: v.reps,
+      weight: parsed.weight,
+      unit: parsed.unit,
+      reps: parsed.reps,
       isWarmup: draft?.isWarmup ?? false,
       ...(draft?.rir !== undefined ? { rir: draft.rir } : {}),
     });
-    setDrafts((d) => {
-      const next = { ...d };
-      delete next[i];
-      const j = i + 1;
-      // Auto-fill the next row with the same numbers, unless history already prefills it.
-      if (j < rowCount && !entries.has(j) && !next[j] && !prefillForSet(lastSets, j, settings.unit)) {
-        next[j] = { weight: v.weight, reps: v.reps, touched: false, isWarmup: false };
-      }
-      return next;
+  }
+
+  async function unlog(i: number) {
+    const entry = entries.get(i);
+    if (!entry) return;
+    // Keep the logged numbers in the row so nothing the user typed is lost.
+    patchDraft(i, {
+      text: formatSetEntry(weightInUnit(entry, settings.unit), entry.reps, load),
+      isWarmup: entry.isWarmup,
+      rir: entry.rir,
     });
-    props.onSetCompleted(target);
+    await setsRepo.remove(entry.id);
   }
 
   function setWarmup(i: number, isWarmup: boolean) {
@@ -187,13 +179,6 @@ export function ExerciseCard(props: ExerciseCardProps) {
     );
   }
 
-  const weightLegend =
-    exercise?.load === 'bodyweight-plus'
-      ? `Added ${settings.unit}`
-      : exercise?.load === 'per-hand'
-        ? `${settings.unit} each`
-        : settings.unit;
-
   const optionEntry = optionsRow !== null ? entries.get(optionsRow) : undefined;
   const optionDraft = optionsRow !== null ? drafts[optionsRow] : undefined;
   const optionWarmup = optionEntry?.isWarmup ?? optionDraft?.isWarmup ?? false;
@@ -214,15 +199,8 @@ export function ExerciseCard(props: ExerciseCardProps) {
       ) : null}
       {note ? <p className="mt-1 px-1 text-xs text-text">{note}</p> : null}
 
-      <div className="mt-3 flex items-center justify-between gap-1 px-0 text-[11px] uppercase tracking-wide text-muted">
-        <span className="w-7" aria-hidden="true" />
-        {showWeight ? <span className="w-[124px] text-center">{weightLegend}</span> : null}
-        <span className="w-[124px] text-center">Reps</span>
-        <span className="w-12" aria-hidden="true" />
-      </div>
-      <ul className="mt-1 flex flex-col gap-1">
+      <ul className="mt-3 flex flex-col gap-1">
         {rows.map((i) => {
-          const v = valuesFor(i);
           const entry = entries.get(i);
           const draft = drafts[i];
           return (
@@ -232,14 +210,14 @@ export function ExerciseCard(props: ExerciseCardProps) {
               completed={!!entry}
               isWarmup={entry?.isWarmup ?? draft?.isWarmup ?? false}
               rir={entry ? entry.rir : draft?.rir}
-              weight={v.weight}
-              reps={v.reps}
-              muted={v.muted}
-              showWeight={showWeight}
-              weightStep={step}
-              onWeight={(w) => edit(i, { weight: w })}
-              onReps={(r) => edit(i, { reps: r })}
-              onToggle={() => void toggle(i)}
+              load={load}
+              unit={settings.unit}
+              baseText={baseTextFor(i)}
+              inputRef={(el) => {
+                inputs.current[i] = el;
+              }}
+              onLog={(parsed) => void log(i, parsed)}
+              onUnlog={() => void unlog(i)}
               onOptions={() => setOptionsRow(i)}
             />
           );
