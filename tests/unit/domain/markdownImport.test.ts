@@ -92,7 +92,9 @@ describe('markdownImport errors and edge cases', () => {
   });
 
   it('accepts a single rep number and a hyphen range', () => {
-    const p = imported(`# T\n\n## Day\n\n${HEADER}| 1 | Curl | 3 | 8 | |\n| 2 | Row | 2 | 6-10 | |\n`);
+    const p = imported(
+      `# T\n\n## Day\n\n${HEADER}| 1 | Curl | 3 | 8 | |\n| 2 | Row | 2 | 6-10 | |\n`,
+    );
     expect(p.workouts[0].items.map((i) => [i.repMin, i.repMax])).toEqual([
       [8, 8],
       [6, 10],

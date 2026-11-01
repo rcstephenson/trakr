@@ -10,14 +10,23 @@ function valid(): Program {
     schedule: ['a', 'rest'],
     restSeconds: { compound: 150, isolation: 75 },
     exercises: [
-      { id: 'x', name: 'X', equipment: 'barbell', kind: 'compound', load: 'total', muscles: ['chest'] },
+      {
+        id: 'x',
+        name: 'X',
+        equipment: 'barbell',
+        kind: 'compound',
+        load: 'total',
+        muscles: ['chest'],
+      },
       { id: 'y', name: 'Y', equipment: 'cable', kind: 'isolation', load: 'total', muscles: [] },
     ],
     workouts: [
       {
         id: 'a',
         name: 'A',
-        items: [{ exerciseId: 'x', sets: 3, repMin: 6, repMax: 10, notes: '', alternatives: ['y'] }],
+        items: [
+          { exerciseId: 'x', sets: 3, repMin: 6, repMax: 10, notes: '', alternatives: ['y'] },
+        ],
       },
     ],
   };
@@ -40,7 +49,10 @@ describe('parseProgram', () => {
     p.workouts[0].items[0].exerciseId = 'nope';
     const r = parseProgram(p);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors).toContain('workouts[0].items[0].exerciseId: unknown exercise "nope" (not in the exercises list)');
+    if (!r.ok)
+      expect(r.errors).toContain(
+        'workouts[0].items[0].exerciseId: unknown exercise "nope" (not in the exercises list)',
+      );
   });
 
   it('reports a broken alternative and schedule reference', () => {
@@ -50,8 +62,14 @@ describe('parseProgram', () => {
     const r = parseProgram(p);
     expect(r.ok).toBe(false);
     if (!r.ok) {
-      expect(r.errors.some((e) => e.startsWith('workouts[0].items[0].alternatives[0]: unknown exercise "ghost"'))).toBe(true);
-      expect(r.errors.some((e) => e.startsWith('schedule[1]: unknown workout "missing"'))).toBe(true);
+      expect(
+        r.errors.some((e) =>
+          e.startsWith('workouts[0].items[0].alternatives[0]: unknown exercise "ghost"'),
+        ),
+      ).toBe(true);
+      expect(r.errors.some((e) => e.startsWith('schedule[1]: unknown workout "missing"'))).toBe(
+        true,
+      );
     }
   });
 
@@ -60,7 +78,10 @@ describe('parseProgram', () => {
     p.workouts[0].items[0].repMin = 12;
     const r = parseProgram(p);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors).toContain('workouts[0].items[0].repMin: repMin (12) must not be greater than repMax (10)');
+    if (!r.ok)
+      expect(r.errors).toContain(
+        'workouts[0].items[0].repMin: repMin (12) must not be greater than repMax (10)',
+      );
   });
 
   it('reports a missing field', () => {

@@ -9,6 +9,7 @@ import { Button, Card, Sheet } from '../ui';
 import type { SetGroup } from './detail';
 
 export interface ExerciseSetsProps {
+  sessionId: string;
   group: SetGroup;
   exercise: Exercise | undefined;
   settings: Settings;
@@ -28,6 +29,7 @@ function setText(s: SetEntry, exercise: Exercise | undefined, settings: Settings
 }
 
 export function ExerciseSets({
+  sessionId,
   group,
   exercise,
   settings,
@@ -44,13 +46,13 @@ export function ExerciseSets({
   async function addSet() {
     const last = group.sets[group.sets.length - 1];
     await setsRepo.add({
-      sessionId: last.sessionId,
+      sessionId,
       exerciseId: group.exerciseId,
       slotIndex: group.slotIndex,
-      setIndex: Math.max(...group.sets.map((s) => s.setIndex)) + 1,
-      weight: last.weight,
-      unit: last.unit,
-      reps: last.reps,
+      setIndex: last ? Math.max(...group.sets.map((s) => s.setIndex)) + 1 : 0,
+      weight: last ? last.weight : 0,
+      unit: last ? last.unit : settings.unit,
+      reps: last ? last.reps : (group.repMin ?? 1),
     });
   }
 

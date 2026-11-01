@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { freeNotes, groupSets } from '../components/history/detail';
+import { freeNotes, groupSets, withEmptySlots } from '../components/history/detail';
 import { ExerciseSets } from '../components/history/ExerciseSets';
 import { formatVolume, sessionMinutes, sessionTotals } from '../components/history/feed';
 import { usePrSetIds } from '../components/history/usePrSetIds';
@@ -64,6 +64,7 @@ export default function SessionDetail() {
 
   const exercises = new Map(catalog.map((e) => [e.id, e]));
   const groups = groupSets(sets);
+  const shownGroups = editing ? withEmptySlots(groups, session.targets) : groups;
   const slotNotes = readSlotNotes(session.notes);
   const noteShown = new Set<number>();
   const minutes = sessionMinutes(session);
@@ -112,12 +113,13 @@ export default function SessionDetail() {
           </Card>
         ) : null}
 
-        {groups.map((g) => {
+        {shownGroups.map((g) => {
           const showNote = !noteShown.has(g.slotIndex);
           noteShown.add(g.slotIndex);
           return (
             <ExerciseSets
               key={g.key}
+              sessionId={session.id}
               group={g}
               exercise={exercises.get(g.exerciseId)}
               settings={settings}

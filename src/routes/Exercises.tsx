@@ -20,7 +20,20 @@ interface Row {
 
 function useRows(): Row[] | undefined {
   return useLiveQuery(async () => {
-    const list = await exerciseRepo.list();
+    const catalog = await exerciseRepo.list();
+    // History can reference exercises that are no longer in the catalog; keep them reachable.
+    const known = new Set(catalog.map((e) => e.id));
+    const missing = (await historyRepo.loggedExerciseIds())
+      .filter((id) => !known.has(id))
+      .map<Exercise>((id) => ({
+        id,
+        name: id.replace(/-/g, ' '),
+        equipment: 'other',
+        kind: 'isolation',
+        load: 'total',
+        muscles: [],
+      }));
+    const list = [...catalog, ...missing];
     const rows = await Promise.all(
       list.map(async (exercise) => {
         const history = await historyRepo.forExercise(exercise.id);

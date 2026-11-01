@@ -1,18 +1,20 @@
-﻿import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { TabBar } from './components/ui';
 import UpdatePrompt from './components/UpdatePrompt';
 import { useApplyTheme } from './hooks/useApplyTheme';
 import Today from './routes/Today';
-import Session from './routes/Session';
-import History from './routes/History';
-import SessionDetail from './routes/SessionDetail';
-import Exercises from './routes/Exercises';
-import ExerciseProgress from './routes/ExerciseProgress';
-import ActivityForm from './routes/ActivityForm';
-import Program from './routes/Program';
-import WorkoutEditor from './routes/WorkoutEditor';
-import Settings from './routes/Settings';
+
+// Everything except the landing route is split out so first paint ships less JS (charts, markdown, dnd).
+const Session = lazy(() => import('./routes/Session'));
+const History = lazy(() => import('./routes/History'));
+const SessionDetail = lazy(() => import('./routes/SessionDetail'));
+const Exercises = lazy(() => import('./routes/Exercises'));
+const ExerciseProgress = lazy(() => import('./routes/ExerciseProgress'));
+const ActivityForm = lazy(() => import('./routes/ActivityForm'));
+const Program = lazy(() => import('./routes/Program'));
+const WorkoutEditor = lazy(() => import('./routes/WorkoutEditor'));
+const Settings = lazy(() => import('./routes/Settings'));
 
 // Dev-only routes: the dynamic imports are dead-code-eliminated from production builds.
 const UiDemo = import.meta.env.DEV ? lazy(() => import('./dev/UiDemo')) : null;
