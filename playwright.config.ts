@@ -1,11 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Set E2E_PORT to run several suites at once (e.g. parallel worktrees) without sharing a preview server.
+const port = Number(process.env.E2E_PORT ?? 4173);
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -21,9 +25,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run build && npm run preview',
-    url: 'http://localhost:4173',
-    reuseExistingServer: !process.env.CI,
+    command: `npm run build && npm run preview -- --port ${port} --strictPort`,
+    url: baseURL,
+    reuseExistingServer: !process.env.CI && !process.env.E2E_PORT,
     timeout: 180_000,
   },
 });
