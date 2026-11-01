@@ -1,6 +1,6 @@
 import type { Session, SessionStatus, SessionTarget } from '../../domain/types';
 import { newId } from '../../lib/ids';
-import { nowIso } from '../../lib/dates';
+import { isSameDay, nowIso } from '../../lib/dates';
 import { db } from '../schema';
 
 export class ActiveSessionExistsError extends Error {
@@ -18,8 +18,22 @@ export interface SessionRange {
   status?: SessionStatus;
 }
 
+export interface StartOptions {
+  /** ISO instant to record as the start; defaults to now. Used to log a workout for a past day. */
+  startedAt?: string;
+}
+
+/** True when the session's start falls on a local day other than today (a backfilled session). */
+export function isBackdated(session: Pick<Session, 'startedAt'>, now: Date = new Date()): boolean {
+  return !isSameDay(new Date(session.startedAt), now);
+}
+
 /** Starts a session, snapshotting the workout's items into `targets`. */
-export async function start(programId: string, workoutId: string): Promise<Session> {
+export async function start(
+  programId: string,
+  workoutId: string,
+  options: StartOptions = {},
+): Promise<Session> {
   return db.transaction('rw', db.sessions, db.programs, async () => {
     const active = await db.sessions.where('status').equals('active').first();
     if (active) throw new ActiveSessionExistsError(active.id);
@@ -40,7 +54,7 @@ export async function start(programId: string, workoutId: string): Promise<Sessi
       programId,
       workoutId,
       workoutName: workout.name,
-      startedAt: nowIso(),
+      startedAt: options.startedAt ?? nowIso(),
       status: 'active',
       targets,
     };
@@ -95,8 +109,15 @@ export async function swapExercise(
   });
 }
 
-export function finish(id: string): Promise<Session> {
-  return update(id, { status: 'completed', finishedAt: nowIso() });
+/**
+ * Completes a session. A backdated session (started on an earlier local day) gets
+ * `finishedAt = startedAt`, so ordering, rotation and History all use the chosen day.
+ */
+export async function finish(id: string): Promise<Session> {
+  const session = await db.sessions.get(id);
+  if (!session) throw new Error(`Session not found: ${id}`);
+  const finishedAt = isBackdated(session) ? session.startedAt : nowIso();
+  return update(id, { status: 'completed', finishedAt });
 }
 
 export function discard(id: string): Promise<Session> {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { ExerciseCard } from '../components/session/ExerciseCard';
+import { DiscardWorkoutDialog } from '../components/session/DiscardWorkoutDialog';
 import { FinishSheet } from '../components/session/FinishSheet';
 import { useExerciseCatalog, useProgramById } from '../components/session/hooks';
 import { NoteSheet } from '../components/session/NoteSheet';
@@ -28,6 +29,7 @@ export default function Session() {
   const [finishOpen, setFinishOpen] = useState(false);
   // Recorded once when Finish is opened: a plain stat, not a running clock.
   const [durationMs, setDurationMs] = useState(0);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const active = session?.status === 'active';
@@ -77,6 +79,8 @@ export default function Session() {
       </>
     );
   }
+  // The session was just discarded; we are on our way back to Today.
+  if (session === null && busy) return null;
   if (session === null) {
     return (
       <>
@@ -128,7 +132,8 @@ export default function Session() {
   async function discard() {
     if (!id || busy) return;
     setBusy(true);
-    await sessionsRepo.discard(id);
+    setDiscardOpen(false);
+    await sessionsRepo.remove(id);
     navigate('/');
   }
 
@@ -153,7 +158,10 @@ export default function Session() {
         </div>
         <Button
           onClick={() => {
-            setDurationMs(Date.now() - Date.parse(session.startedAt));
+            // A backfilled session has no meaningful duration.
+            setDurationMs(
+              sessionsRepo.isBackdated(session) ? 0 : Date.now() - Date.parse(session.startedAt),
+            );
             setFinishOpen(true);
           }}
         >
@@ -177,6 +185,17 @@ export default function Session() {
           </li>
         ))}
       </ul>
+
+      <div className="px-gutter pb-10">
+        <Button
+          variant="ghost"
+          fullWidth
+          className="!text-danger"
+          onClick={() => setDiscardOpen(true)}
+        >
+          Discard workout
+        </Button>
+      </div>
 
       <SwapSheet
         open={swapping !== undefined}
@@ -210,7 +229,16 @@ export default function Session() {
         durationMs={durationMs}
         busy={busy}
         onFinish={() => void finish()}
-        onDiscard={() => void discard()}
+        onDiscard={() => {
+          setFinishOpen(false);
+          setDiscardOpen(true);
+        }}
+      />
+      <DiscardWorkoutDialog
+        open={discardOpen}
+        setCount={sets.length}
+        onConfirm={() => void discard()}
+        onCancel={() => setDiscardOpen(false)}
       />
     </>
   );

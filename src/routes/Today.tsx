@@ -5,14 +5,13 @@ import { buildRecent, RecentList } from '../components/today/RecentList';
 import { TodaySkeleton } from '../components/today/TodaySkeleton';
 import { useStartWorkout } from '../components/today/useStartWorkout';
 import { WeekStrip } from '../components/today/WeekStrip';
-import { WorkoutPicker } from '../components/today/WorkoutPicker';
 import { buttonClass, EmptyState, PageHeader } from '../components/ui';
 import { nextWorkoutId } from '../domain/rotation';
 import { useActiveProgram } from '../hooks/useActiveProgram';
 import { useActiveSession } from '../hooks/useActiveSession';
 import { useActivities } from '../hooks/useActivities';
 import { useSessions } from '../hooks/useSessions';
-import { endOfWeek, startOfWeek } from '../lib/dates';
+import { endOfWeek, noonIso, startOfWeek, toDateKey } from '../lib/dates';
 
 const COMPLETED = { status: 'completed' } as const;
 
@@ -21,7 +20,8 @@ export default function Today() {
   const active = useActiveSession();
   const completed = useSessions(COMPLETED);
   const activities = useActivities();
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [dayKey, setDayKey] = useState(() => toDateKey(new Date()));
   const { start, starting } = useStartWorkout();
 
   if (
@@ -55,6 +55,8 @@ export default function Today() {
     }
   }
   const next = program?.workouts.find((w) => w.id === nextId);
+  const todayKey = toDateKey(today);
+  const selected = program?.workouts.find((w) => w.id === picked) ?? next;
 
   const cycle = program?.schedule.map((id) => ({
     id,
@@ -65,14 +67,29 @@ export default function Today() {
   let hero;
   if (active) {
     hero = <ResumeHero session={active} />;
-  } else if (program && next) {
+  } else if (program && next && selected) {
+    const day = dayKey > todayKey ? todayKey : dayKey;
     hero = (
       <NextUpHero
-        workoutName={next.name}
-        exerciseCount={next.items.length}
+        workouts={program.workouts.map((w) => ({
+          id: w.id,
+          name: w.name,
+          exerciseCount: w.items.length,
+        }))}
+        nextId={next.id}
+        selectedId={selected.id}
+        onSelect={setPicked}
+        dayKey={day}
+        todayKey={todayKey}
+        onDayChange={setDayKey}
         starting={starting}
-        onStart={() => void start(program.id, next.id)}
-        onChoose={() => setPickerOpen(true)}
+        onStart={() =>
+          void start(
+            program.id,
+            selected.id,
+            day === todayKey ? undefined : { startedAt: noonIso(day) ?? undefined },
+          )
+        }
         cycle={cycle}
         nextIndex={program.schedule.indexOf(next.id)}
       />
@@ -101,6 +118,11 @@ export default function Today() {
       />
       <div className="flex flex-col gap-5 px-gutter pb-6">
         {hero}
+        {active ? (
+          <p className="micro -mt-2 text-center">
+            Finish or discard the workout in progress to start another.
+          </p>
+        ) : null}
         <Link to="/activity/new" className={buttonClass('secondary', true)}>
           + Log activity
         </Link>
@@ -113,17 +135,6 @@ export default function Today() {
         />
         <RecentList index={2} entries={buildRecent(completed, activities)} />
       </div>
-      {program && !active ? (
-        <WorkoutPicker
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          workouts={program.workouts}
-          onPick={(id) => {
-            setPickerOpen(false);
-            void start(program.id, id);
-          }}
-        />
-      ) : null}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import Today from '../../../src/routes/Today';
@@ -41,5 +41,28 @@ describe('Today', () => {
     await sessions.start('v-taper-upper-lower', 'upper-a');
     renderToday();
     expect(await screen.findByRole('link', { name: 'Resume Upper A' })).toBeInTheDocument();
+  });
+
+  it('lets the user pick any workout and a past day, marking the next one', async () => {
+    renderToday();
+    expect(await screen.findByRole('radio', { name: /Upper A/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Upper A/ })).toHaveTextContent('NEXT');
+    expect(screen.getAllByRole('radio')).toHaveLength(4);
+    expect(screen.getByRole('button', { name: 'Start Upper A' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('radio', { name: /Lower B/ }));
+    expect(screen.getByRole('heading', { name: 'Lower B' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Yesterday' }));
+    expect(screen.getByRole('button', { name: /^Log Lower B · / })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Today' }));
+    expect(screen.getByRole('button', { name: 'Start Lower B' })).toBeInTheDocument();
+  });
+
+  it('hides the selector while a session is active and offers Discard', async () => {
+    await sessions.start('v-taper-upper-lower', 'upper-a');
+    renderToday();
+    expect(await screen.findByRole('button', { name: 'Discard workout' })).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.getByText(/Finish or discard the workout in progress/)).toBeInTheDocument();
   });
 });

@@ -62,11 +62,11 @@ export function buildFeed(
   return groups;
 }
 
-/** Minutes between start and finish, or null for an unfinished session. */
+/** Minutes between start and finish, or null for an unfinished or under-a-minute session. */
 export function sessionMinutes(session: Pick<Session, 'startedAt' | 'finishedAt'>): number | null {
   if (!session.finishedAt) return null;
   const ms = Date.parse(session.finishedAt) - Date.parse(session.startedAt);
-  return Number.isFinite(ms) && ms >= 0 ? ms / 60000 : null;
+  return Number.isFinite(ms) && ms >= 60000 ? ms / 60000 : null;
 }
 
 export interface SessionTotals {

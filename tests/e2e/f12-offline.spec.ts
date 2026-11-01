@@ -20,7 +20,7 @@ test('works offline after the first load: reload, start a workout, log a set', a
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Today', level: 1 })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
 
   const card = page.getByTestId('exercise-card').first();

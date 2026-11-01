@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ActivityFormBody, type ActivityInput } from '../components/activity/ActivityFormBody';
-import { EmptyState, PageHeader } from '../components/ui';
+import { ConfirmDialog, EmptyState, PageHeader } from '../components/ui';
 import * as activities from '../db/repositories/activities';
 import type { Activity } from '../domain/types';
 import { useSettings } from '../hooks/useSettings';
@@ -12,6 +13,8 @@ export default function ActivityForm() {
   const location = useLocation();
   const settings = useSettings();
   // undefined = loading, null = not found.
+  const [dirty, setDirty] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const [existing, setExisting] = useState<Activity | null | undefined>(id ? undefined : null);
 
   useEffect(() => {
@@ -29,6 +32,12 @@ export default function ActivityForm() {
   const goBack = () => {
     if (location.key === 'default') navigate('/history', { replace: true });
     else navigate(-1);
+  };
+
+  // Cancel and the back arrow: leave straight away unless the user has entered something.
+  const requestLeave = () => {
+    if (dirty) setLeaveOpen(true);
+    else goBack();
   };
 
   const save = async (input: ActivityInput) => {
@@ -57,12 +66,41 @@ export default function ActivityForm() {
 
   return (
     <>
-      <PageHeader title={title} />
+      <PageHeader
+        title={title}
+        back={
+          <button
+            type="button"
+            aria-label="Back"
+            onClick={requestLeave}
+            className="-ml-3 inline-flex h-12 w-12 shrink-0 items-center justify-center text-muted"
+          >
+            <ChevronLeft size={22} aria-hidden="true" />
+          </button>
+        }
+      />
       <ActivityFormBody
         initial={existing ?? undefined}
         weightUnit={settings.unit}
         onSave={save}
         onDelete={id ? remove : undefined}
+        onCancel={requestLeave}
+        onDirtyChange={setDirty}
+      />
+      <ConfirmDialog
+        open={leaveOpen}
+        title={id ? 'Discard changes?' : 'Discard this activity?'}
+        message={
+          id ? 'Your edits to this activity will be lost.' : 'What you entered will not be saved.'
+        }
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        destructive
+        onConfirm={() => {
+          setLeaveOpen(false);
+          goBack();
+        }}
+        onCancel={() => setLeaveOpen(false)}
       />
     </>
   );

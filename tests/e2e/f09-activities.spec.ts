@@ -49,7 +49,10 @@ test('log, edit and delete a run', async ({ page }) => {
 
   // Delete with confirmation; cancel first.
   await page.getByRole('button', { name: 'Delete' }).click();
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await page
+    .getByRole('dialog', { name: 'Delete activity?' })
+    .getByRole('button', { name: 'Cancel' })
+    .click();
   await expect(page.getByLabel('Minutes')).toHaveValue('30');
 
   await page.getByRole('button', { name: 'Delete' }).click();
