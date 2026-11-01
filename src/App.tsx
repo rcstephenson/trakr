@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { TabBar } from './components/ui';
+import { useApplyTheme } from './hooks/useApplyTheme';
 import Today from './routes/Today';
 import Session from './routes/Session';
 import History from './routes/History';
@@ -32,6 +33,7 @@ function Layout() {
 }
 
 export default function App() {
+  useApplyTheme();
   return (
     <BrowserRouter>
       <Routes>
