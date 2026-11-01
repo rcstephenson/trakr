@@ -86,7 +86,7 @@ export function ImportSheet({
         type="file"
         accept=".json,.md,.markdown,application/json,text/markdown"
         onChange={(e) => void onFile(e.target.files?.[0])}
-        className="num mb-4 block w-full rounded-btn border border-dashed border-hairline bg-bg p-3 text-xs text-ink file:mr-3 file:rounded-btn file:border file:border-hairline file:bg-raised file:px-3 file:py-2 file:font-mono file:text-xs file:uppercase file:text-ink"
+        className="num mb-4 block w-full rounded-btn border border-dashed border-hairline-strong bg-bg p-3 text-xs text-ink file:mr-3 file:rounded-btn file:border file:border-hairline file:bg-raised file:px-3 file:py-2 file:font-mono file:text-xs file:uppercase file:text-ink"
       />
 
       {preview?.kind === 'error' ? (

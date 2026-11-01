@@ -41,7 +41,7 @@ function Showcase() {
             {SWATCHES.map(([name, cls]) => (
               <li key={name} className="flex flex-col items-start gap-1">
                 <span className={`h-8 w-full rounded-chip border border-hairline ${cls}`} />
-                <span className="micro w-full break-all text-[10px] leading-3">{name}</span>
+                <span className="micro w-full break-all leading-3">{name}</span>
               </li>
             ))}
           </ul>

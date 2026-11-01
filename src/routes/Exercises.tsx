@@ -101,7 +101,7 @@ export default function Exercises() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search exercises"
-            className="min-h-touch w-full rounded-btn border border-hairline bg-raised px-4 text-sm text-ink placeholder:text-muted"
+            className="min-h-touch w-full rounded-btn border border-hairline-strong bg-raised px-4 text-base text-ink placeholder:text-muted"
           />
         </label>
 

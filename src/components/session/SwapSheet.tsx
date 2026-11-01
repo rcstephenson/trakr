@@ -80,7 +80,7 @@ export function SwapSheet({
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search exercises"
           aria-label="Search exercises"
-          className="mb-2 min-h-touch w-full rounded-btn border border-hairline bg-bg px-3 text-sm text-ink"
+          className="mb-2 min-h-touch w-full rounded-btn border border-hairline-strong bg-bg px-3 text-base text-ink"
         />
         {others.length === 0 ? (
           <p className="px-3 py-2 text-sm text-muted">No matching exercises.</p>

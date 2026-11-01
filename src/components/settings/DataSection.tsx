@@ -212,7 +212,7 @@ export function DataSection() {
           onChange={(e) => setTyped(e.target.value)}
           autoCapitalize="characters"
           autoComplete="off"
-          className="num mb-4 min-h-touch w-full rounded-btn border border-hairline bg-bg px-3 text-base text-ink"
+          className="num mb-4 min-h-touch w-full rounded-btn border border-hairline-strong bg-bg px-3 text-base text-ink"
         />
         <div className="flex flex-col gap-2">
           <Button

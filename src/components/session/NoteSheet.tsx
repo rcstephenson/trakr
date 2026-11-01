@@ -31,7 +31,7 @@ export function NoteSheet({ open, exerciseName, value, onClose, onChange }: Note
           setText(e.target.value);
           onChange(e.target.value);
         }}
-        className="mb-3 w-full rounded-btn border border-hairline bg-bg p-3 text-sm text-ink placeholder:text-muted"
+        className="mb-3 w-full rounded-btn border border-hairline-strong bg-bg p-3 text-base text-ink placeholder:text-muted"
       />
       <Button fullWidth onClick={onClose}>
         Done

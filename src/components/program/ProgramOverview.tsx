@@ -20,7 +20,7 @@ export function SchedulePills({ program }: { program: Program }) {
             ].join(' ')}
           >
             {rest ? null : (
-              <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-accent" />
+              <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-accent-ink" />
             )}
             <span className="micro">Day {i + 1}</span>
             <span className="mt-0.5 whitespace-nowrap text-sm font-semibold">

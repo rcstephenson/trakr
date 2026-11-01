@@ -27,7 +27,7 @@ export function Chip({
       {selected ? (
         <span
           aria-hidden="true"
-          className="absolute inset-x-1.5 bottom-0 h-0.5 rounded-full bg-accent"
+          className="absolute inset-x-1.5 bottom-0 h-0.5 bg-accent-ink"
         />
       ) : null}
     </button>

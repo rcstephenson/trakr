@@ -69,7 +69,7 @@ export function SetRow(props: SetRowProps) {
     >
       <span
         aria-hidden="true"
-        className="absolute inset-y-0 left-0 hidden w-0.5 bg-accent group-focus-within:block"
+        className="absolute inset-y-0 left-0 hidden w-0.5 bg-accent-ink group-focus-within:block"
       />
       <button
         type="button"
@@ -82,7 +82,7 @@ export function SetRow(props: SetRowProps) {
         ) : (
           <span>{String(n).padStart(2, '0')}</span>
         )}
-        {rir !== undefined ? <span className="text-[10px] leading-none">R{rir}</span> : null}
+        {rir !== undefined ? <span className="text-micro leading-none">R{rir}</span> : null}
       </button>
       <div className="min-w-0 flex-1">
         <input
@@ -111,13 +111,13 @@ export function SetRow(props: SetRowProps) {
               submit();
             }
           }}
-          className={`num h-12 w-full bg-transparent px-1 text-base font-medium placeholder:font-normal placeholder:text-muted focus:outline-none ${
+          className={`num h-12 w-full bg-transparent px-2 text-base font-medium placeholder:font-normal placeholder:text-muted focus-visible:outline-offset-[-2px] ${
             muted ? 'text-muted' : invalid ? 'text-danger' : 'text-ink'
           }`}
         />
         {showFeedback ? (
           <p
-            className={`num -mt-2 px-1 pb-1.5 text-micro uppercase tracking-micro ${
+            className={`num -mt-2 px-2 pb-1.5 text-micro uppercase tracking-micro ${
               parsed.ok ? 'text-muted' : 'text-danger'
             }`}
             data-testid="set-feedback"

@@ -44,7 +44,7 @@ function CycleStrip({ cycle, nextIndex }: { cycle: CycleSlot[]; nextIndex: numbe
         {cycle.map((slot, i) => (
           <li
             key={i}
-            className={`micro flex-1 text-center text-[10px] ${
+            className={`micro flex-1 text-center ${
               i === nextIndex ? '!text-ink font-semibold' : ''
             }`}
           >
@@ -141,7 +141,7 @@ export function NextUpHero({
               <span className="w-full truncate text-sm font-semibold tracking-tight text-ink">
                 {w.name}
               </span>
-              <span className="micro text-[10px]">
+              <span className="micro">
                 {w.id === nextId ? (
                   <span className="text-accent-ink">NEXT</span>
                 ) : (
@@ -153,7 +153,7 @@ export function NextUpHero({
               {on ? (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent"
+                  className="absolute inset-x-2 bottom-0 h-0.5 bg-accent-ink"
                 />
               ) : null}
             </button>
@@ -214,7 +214,7 @@ export function ResumeHero({ session }: { session: Session }) {
 
   return (
     <Card tone="raised" className="relative flex flex-col gap-5 overflow-hidden p-5 pl-6">
-      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-accent" />
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-accent-ink" />
       <div>
         <p className="micro flex items-center gap-2">
           <span aria-hidden="true" className="h-2 w-2 rounded-[2px] bg-accent" />
