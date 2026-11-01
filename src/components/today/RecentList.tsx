@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
 import type { Activity, Session } from '../../domain/types';
 import { formatRelativeDay } from '../../lib/dates';
-import { Card } from '../ui';
+import { Card, Mono, SectionLabel } from '../ui';
 
 export interface RecentEntry {
   key: string;
@@ -36,26 +37,29 @@ export function buildRecent(sessions: Session[], activities: Activity[], limit =
   return entries.sort((x, y) => Date.parse(y.at) - Date.parse(x.at)).slice(0, limit);
 }
 
-export function RecentList({ entries }: { entries: RecentEntry[] }) {
+export function RecentList({ entries, index }: { entries: RecentEntry[]; index?: number }) {
   return (
     <section aria-label="Recent">
-      <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Recent</h2>
+      <SectionLabel index={index}>Recent</SectionLabel>
       {entries.length === 0 ? (
-        <Card>
+        <Card className="mt-2">
           <p className="text-sm text-muted">Nothing logged yet.</p>
         </Card>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {entries.map((e) => (
+        <ul className="mt-2 divide-y divide-hairline overflow-hidden rounded-card border border-hairline bg-surface">
+          {entries.map((e, i) => (
             <li key={e.key}>
-              <Link to={e.to} className="block">
-                <Card className="flex min-h-touch items-center justify-between gap-3 active:opacity-80">
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-medium text-text">{e.title}</p>
-                    <p className="text-sm tabular-nums text-muted">{e.detail}</p>
-                  </div>
-                  <span className="shrink-0 text-sm text-muted">{formatRelativeDay(e.at)}</span>
-                </Card>
+              <Link
+                to={e.to}
+                className="flex min-h-touch items-center gap-3 px-3 py-2 active:bg-accent-soft"
+              >
+                <Mono className="w-5 shrink-0 text-xs text-muted">{String(i + 1).padStart(2, '0')}</Mono>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">{e.title}</p>
+                  <p className="micro">{e.detail}</p>
+                </div>
+                <Mono className="shrink-0 text-xs text-muted">{formatRelativeDay(e.at)}</Mono>
+                <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
               </Link>
             </li>
           ))}
