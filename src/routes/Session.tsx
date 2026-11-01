@@ -33,7 +33,9 @@ export default function Session() {
   const active = session?.status === 'active';
   useWakeLock(active);
 
-  // Scroll the next incomplete card into view when the current one is completed.
+  // When a card completes: scroll the next incomplete card into view and move focus to its first
+  // unlogged row, so a whole workout can be entered without the keyboard closing. When the last
+  // card completes, drop focus (the Finish button stays in the sticky header).
   const firstIncomplete =
     session && sets
       ? (session.targets.find(
@@ -46,12 +48,25 @@ export default function Session() {
   useEffect(() => {
     const prev = previousIncomplete.current;
     previousIncomplete.current = firstIncomplete;
-    if (prev === undefined || firstIncomplete === undefined || firstIncomplete === null) return;
-    if (prev === firstIncomplete) return;
+    if (prev === undefined || firstIncomplete === undefined || prev === firstIncomplete) return;
+    if (firstIncomplete === null) {
+      const el = document.activeElement;
+      if (el instanceof HTMLElement && el !== document.body) el.blur();
+      return;
+    }
+    // Only move forward: un-logging an earlier set must not yank focus around.
+    if (prev !== null && firstIncomplete < prev) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    document
-      .querySelector(`[data-testid="exercise-card"][data-slot="${firstIncomplete}"]`)
-      ?.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    const card = document.querySelector(
+      `[data-testid="exercise-card"][data-slot="${firstIncomplete}"]`,
+    );
+    card?.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    const frame = requestAnimationFrame(() => {
+      card
+        ?.querySelector<HTMLInputElement>('[data-testid="set-row"][data-completed="false"] input')
+        ?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [firstIncomplete]);
 
   if (session === undefined || sets === undefined || settings === undefined || !catalog) {
