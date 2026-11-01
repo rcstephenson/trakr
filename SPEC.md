@@ -216,7 +216,7 @@ Implemented by F02 in `src/db/repositories/` and `src/hooks/`; every UI feature 
 |---|---|
 | `programs` | `getActive()`, `list()`, `get(id)`, `save(program, { activate? })` (also upserts its exercises into the catalog), `setActive(id)`, `remove(id)` |
 | `exercises` | `list()`, `get(id)`, `upsert(exercise)` |
-| `sessions` | `start(programId, workoutId)` → `Session` (snapshots targets; throws if a session is already active), `get(id)`, `getActive()`, `list({ from?, to?, status? })`, `update(id, patch)`, `swapExercise(id, slotIndex, exerciseId)`, `finish(id)`, `discard(id)`, `remove(id)` (also deletes its sets) |
+| `sessions` | `start(programId, workoutId, { startedAt? })` → `Session` (snapshots targets; `startedAt` ISO defaults to now, used to log a past day; throws if a session is already active), `get(id)`, `getActive()`, `list({ from?, to?, status? })`, `update(id, patch)`, `swapExercise(id, slotIndex, exerciseId)`, `finish(id)` (a session started on an earlier local day gets `finishedAt = startedAt`, so rotation/History use the chosen day), `discard(id)`, `remove(id)` (also deletes its sets) |
 | `sets` | `add(input)`, `update(id, patch)`, `remove(id)`, `listBySession(sessionId)`, `listByExercise(exerciseId)` |
 | `history` | `lastPerformance(exerciseId, { excludeSessionId? })` → `{ session, sets }` or `null` (§5.2) |
 | `activities` | `add(input)`, `get(id)`, `update(id, patch)`, `remove(id)`, `list({ from?, to? })` |
@@ -264,13 +264,13 @@ Bottom tab bar (always visible except during an active session where it is repla
 
 | Route | Screen | Purpose |
 |---|---|---|
-| `/` | Today | Hero card: "Next up: **Upper B** · 9 exercises" with a large **Start** button. Secondary: pick another workout; **+ Log activity**. If a session is active, the hero becomes **Resume**. Below: this week's strip (Mon–Sun dots: done/rest/upcoming), last 3 entries. |
+| `/` | Today | Hero card: selected workout (default: the rotation's next) with a tile selector of all the program's workouts (`NEXT` marks the rotation), a **Day** control (Today / Yesterday / date picker, no future dates) and a large **Start <Workout>** button (**Log <Workout> · Oct 28** for a past day); **+ Log activity**. If a session is active, the hero becomes **Resume** with a **Discard** action (confirm) and the selector is hidden. Below: this week's strip (Mon–Sun dots: done/rest/upcoming), last 3 entries. |
 | `/session/:id` | Active session | Vertical list of exercise cards (§6.1). Sticky header: workout name, Finish (no running clock). |
 | `/history` | History | Reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
 | `/history/session/:id` | Session detail | Read-only summary (sets, volume, PRs) with Edit mode to fix mistakes; Delete. |
 | `/progress` | Exercises | Searchable list of exercises with a sparkline of top-set weight and last-performed date. |
 | `/progress/:exerciseId` | Exercise progress | Line chart (metric toggle: Top weight / e1RM / Volume; range: 1M / 3M / 1Y / All), PR cards, table of past sessions. |
-| `/activity/new`, `/activity/:id` | Activity form | Type chips, date/time (default now), duration, distance (shown for run/cycle/swim/walk), intensity 1–5, notes. |
+| `/activity/new`, `/activity/:id` | Activity form | Type chips, date/time (default now), duration, distance (shown for run/cycle/swim/walk), intensity 1–5, notes. **Cancel** and (new only) **Clear**, plus the back arrow, ask to confirm only when something was entered. |
 | `/program` | Program | Active program overview: schedule, workouts with exercise rows (sets × rep range). Read-only notes section rendered from markdown. Edit, Import, Export. |
 | `/program/edit/:workoutId` | Workout editor | Reorder (drag handle), add/remove exercises, edit sets/reps/notes/alternatives. |
 | `/settings` | Settings | Units, theme, backup export/import, "Clear all data" (double confirm). |
@@ -310,7 +310,7 @@ Each exercise is a card. **Each set is ONE text input** holding `weight x reps`,
 - A card collapses to a one-line summary when all its sets are logged; the next incomplete card scrolls into view.
 - Swap exercise: choose from `alternatives` or the catalog; history shown is for the swapped-in exercise.
 - Every change persists immediately to IndexedDB (no Save button). Reloading resumes the session (an un-logged draft in a row is not persisted).
-- The session screen has **no running clock**. Finish opens a summary sheet (sets, volume, PRs 🏆, and the plain recorded duration) → marks the session completed. Sessions with zero sets can be discarded.
+- The session screen has **no running clock**. Finish opens a summary sheet (sets, volume, PRs 🏆, and the plain recorded duration) → marks the session completed. Duration is hidden when under a minute (and for backfilled sessions). **Discard workout** (session screen bottom, Finish sheet when empty, Today Resume hero) opens a confirm ("Discard this workout?" – N logged sets will be deleted / Nothing logged yet) and calls `sessions.remove`.
 - Session detail (History) edit mode uses the same single-input row.
 
 ### 6.2 Screen awake
@@ -484,6 +484,10 @@ Product changes requested after the first build: a distinctive look ("Signal", �
 - **Scope:** apply §7 to Session (exercise cards, set rows, finish sheet), History feed and session detail, Progress list and charts, Activity form, Program overview and editor, Settings, import/export sheets. No behaviour changes. Delete the unused `Stepper` primitive.
 - **Done when:** every screen reviewed via screenshots at 390 px in both themes; tests green; no hard-coded colours outside the token layer.
 
+#### R2 · Pick any workout for any day; cancel/clear
+- **Scope:** Today tile selector + day control (backfill via `sessions.start(..., { startedAt })`, `finish` sets `finishedAt = startedAt` for past days), discard confirm for sessions (session screen, Resume hero, empty Finish sheet), Cancel/Clear/back-arrow confirms on the activity form. Removes the `WorkoutPicker` sheet.
+- **Done when:** unit tests for backfill/rotation/duration pass; `tests/e2e/r2-pick-and-cancel.spec.ts` green.
+
 ### Later (optional)
 
 #### F14 · Cloud sync
@@ -511,6 +515,7 @@ F12 ─┬─► R1a (logging rework, no timers) ─┐
 | 8 | R1a, R1b | F12 |
 | 9 | R1c | R1a, R1b |
 | 10 | F13 | R1c |
+| 11 | R2 | F13 |
 
 ---
 

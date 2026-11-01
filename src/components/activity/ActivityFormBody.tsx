@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { hasDistance, pace } from '../../domain/activity';
 import type { Activity, ActivityType, DistanceUnit, Unit } from '../../domain/types';
 import { toDateKey } from '../../lib/dates';
@@ -16,6 +16,38 @@ export interface ActivityFormBodyProps {
   weightUnit: Unit;
   onSave: (input: ActivityInput) => Promise<void> | void;
   onDelete?: () => Promise<void> | void;
+  /** Cancel pressed: the parent decides whether to confirm (it owns the back arrow too). */
+  onCancel: () => void;
+  /** Reports whether the user has changed anything since the form opened. */
+  onDirtyChange?: (dirty: boolean) => void;
+}
+
+interface Values {
+  type: ActivityType;
+  title: string;
+  date: string;
+  time: string;
+  hours: string;
+  minutes: string;
+  distance: string;
+  units: Partial<Record<ActivityType, DistanceUnit>>;
+  intensity: number | undefined;
+  notes: string;
+}
+
+function initialValues(initial: Activity | undefined, start: Date): Values {
+  return {
+    type: initial?.type ?? 'run',
+    title: initial?.title ?? '',
+    date: toDateKey(start),
+    time: timeKey(start),
+    hours: initial?.durationMin ? String(Math.floor(initial.durationMin / 60)) : '',
+    minutes: initial?.durationMin !== undefined ? String(Math.round(initial.durationMin % 60)) : '',
+    distance: initial?.distance !== undefined ? String(initial.distance) : '',
+    units: initial?.distanceUnit ? { [initial.type]: initial.distanceUnit } : {},
+    intensity: initial?.intensity,
+    notes: initial?.notes ?? '',
+  };
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -26,31 +58,65 @@ function parseNumber(text: string): number | undefined {
   return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
 
-export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: ActivityFormBodyProps) {
+export function ActivityFormBody({
+  initial,
+  weightUnit,
+  onSave,
+  onDelete,
+  onCancel,
+  onDirtyChange,
+}: ActivityFormBodyProps) {
   const defaultUnit: DistanceUnit = weightUnit === 'kg' ? 'km' : 'mi';
   const [start] = useState(() => new Date(initial?.startedAt ?? Date.now()));
+  // What the form holds before the user touches it; "dirty" means anything differs.
+  const [baseline] = useState(() => initialValues(initial, start));
 
-  const [type, setType] = useState<ActivityType>(initial?.type ?? 'run');
-  const [title, setTitle] = useState(initial?.title ?? '');
-  const [date, setDate] = useState(toDateKey(start));
-  const [time, setTime] = useState(timeKey(start));
-  const [hours, setHours] = useState(
-    initial?.durationMin ? String(Math.floor(initial.durationMin / 60)) : '',
-  );
-  const [minutes, setMinutes] = useState(
-    initial?.durationMin !== undefined ? String(Math.round(initial.durationMin % 60)) : '',
-  );
-  const [distance, setDistance] = useState(
-    initial?.distance !== undefined ? String(initial.distance) : '',
-  );
+  const [type, setType] = useState<ActivityType>(baseline.type);
+  const [title, setTitle] = useState(baseline.title);
+  const [date, setDate] = useState(baseline.date);
+  const [time, setTime] = useState(baseline.time);
+  const [hours, setHours] = useState(baseline.hours);
+  const [minutes, setMinutes] = useState(baseline.minutes);
+  const [distance, setDistance] = useState(baseline.distance);
   // Last chosen unit per activity type; lives in the form only.
-  const [units, setUnits] = useState<Partial<Record<ActivityType, DistanceUnit>>>(
-    initial?.distanceUnit ? { [initial.type]: initial.distanceUnit } : {},
-  );
-  const [intensity, setIntensity] = useState<number | undefined>(initial?.intensity);
-  const [notes, setNotes] = useState(initial?.notes ?? '');
+  const [units, setUnits] = useState<Partial<Record<ActivityType, DistanceUnit>>>(baseline.units);
+  const [intensity, setIntensity] = useState<number | undefined>(baseline.intensity);
+  const [notes, setNotes] = useState(baseline.notes);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const dirty =
+    JSON.stringify({
+      type,
+      title,
+      date,
+      time,
+      hours,
+      minutes,
+      distance,
+      units,
+      intensity,
+      notes,
+    }) !== JSON.stringify(baseline);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  const clearForm = () => {
+    const blank = baseline;
+    setType(blank.type);
+    setTitle(blank.title);
+    setDate(blank.date);
+    setTime(blank.time);
+    setHours(blank.hours);
+    setMinutes(blank.minutes);
+    setDistance(blank.distance);
+    setUnits(blank.units);
+    setIntensity(blank.intensity);
+    setNotes(blank.notes);
+    setClearOpen(false);
+  };
 
   const unit = units[type] ?? defaultUnit;
   const showDistance = hasDistance(type);
@@ -227,6 +293,20 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
         <Button type="submit" fullWidth disabled={busy}>
           Save
         </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" disabled={busy} onClick={onCancel}>
+            Cancel
+          </Button>
+          {onDelete ? null : (
+            <Button
+              variant="secondary"
+              disabled={busy || !dirty}
+              onClick={() => setClearOpen(true)}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
         {onDelete ? (
           <Button variant="danger" fullWidth disabled={busy} onClick={() => setConfirmOpen(true)}>
             Delete
@@ -242,6 +322,16 @@ export function ActivityFormBody({ initial, weightUnit, onSave, onDelete }: Acti
         destructive
         onConfirm={() => void handleDelete()}
         onCancel={() => setConfirmOpen(false)}
+      />
+      <ConfirmDialog
+        open={clearOpen}
+        title="Clear the form?"
+        message="Everything you entered will be reset."
+        confirmLabel="Clear"
+        cancelLabel="Keep editing"
+        destructive
+        onConfirm={clearForm}
+        onCancel={() => setClearOpen(false)}
       />
     </form>
   );

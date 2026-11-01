@@ -55,13 +55,15 @@ export function FinishSheet(props: FinishSheetProps) {
   });
 
   const empty = sets.length === 0;
+  // No timers in Trakr: a zero / sub-minute duration (e.g. a backfilled session) is just noise.
+  const showDuration = props.durationMs >= 60_000;
 
   return (
     <Sheet open={open} onClose={props.onClose} title={empty ? 'No sets logged' : 'Workout summary'}>
       {empty ? (
         <>
           <p className="mb-4 text-sm text-muted">
-            Nothing has been logged in this session. You can discard it, or keep logging.
+            Nothing logged yet. Discard this workout, or keep logging.
           </p>
           <div className="flex flex-col gap-2">
             <Button variant="danger" fullWidth disabled={props.busy} onClick={props.onDiscard}>
@@ -74,8 +76,10 @@ export function FinishSheet(props: FinishSheetProps) {
         </>
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-3 gap-2">
-            <Stat label="Duration" value={formatDuration(props.durationMs)} />
+          <div className={`mb-4 grid gap-2 ${showDuration ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {showDuration ? (
+              <Stat label="Duration" value={formatDuration(props.durationMs)} />
+            ) : null}
             <Stat label="Sets" value={String(working.length)} />
             <Stat label="Volume" value={formatWeight(Math.round(volume), unit, unit)} />
           </div>

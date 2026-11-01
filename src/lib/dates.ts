@@ -47,6 +47,27 @@ export function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${m}-${d}`;
 }
 
+/** Local date from a `YYYY-MM-DD` key (local midnight); null when malformed. */
+export function fromDateKey(key: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return toDateKey(d) === key ? d : null;
+}
+
+/** ISO instant for 12:00 local on the given `YYYY-MM-DD` day, or null when malformed. */
+export function noonIso(key: string): string | null {
+  const d = fromDateKey(key);
+  if (!d) return null;
+  d.setHours(12, 0, 0, 0);
+  return d.toISOString();
+}
+
+/** "Oct 28" (short month + day) for a date. */
+export function formatShortDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 /** Current instant as an ISO-8601 string. */
 export function nowIso(): string {
   return new Date().toISOString();

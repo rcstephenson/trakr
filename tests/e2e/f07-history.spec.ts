@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 /** Logs every set of the first exercise of Upper A (set 1 = 100 lb x 8) and finishes. */
 async function logUpperA(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
   const card = page.getByTestId('exercise-card').first();
   const count = await card.getByTestId('set-row').count();
@@ -40,8 +40,8 @@ test('edited set weight shows up as Last on the next session', async ({ page }) 
   await expect(page.getByTestId('detail-set').first()).toContainText('120 lb × 8');
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Choose another workout' }).click();
-  await page.getByRole('button', { name: /Upper A/ }).click();
+  await page.getByRole('radio', { name: /Upper A/ }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\//);
   await expect(page.getByTestId('last-line').first()).toContainText('120 lb × 8');
 });

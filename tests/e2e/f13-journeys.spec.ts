@@ -8,7 +8,7 @@ const CLOCK = /(^|\s)\d{1,2}:\d{2}(:\d{2})?(?!\s*\/)(\s|$)/;
 async function startNext(page: Page, name: string) {
   await page.goto('/');
   await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
-  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
 }
 
@@ -174,11 +174,8 @@ test('first week journey, keyboard only: Upper A, Lower A, run, Upper B, Upper A
 
   // Upper A again: rows prefill from week 1. Barbell bench press set 1 was typed as 100 x 8.
   await page.goto('/');
-  await page.getByRole('button', { name: 'Choose another workout' }).click();
-  await page
-    .getByRole('button', { name: /Upper A/ })
-    .first()
-    .click();
+  await page.getByRole('radio', { name: /Upper A/ }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
   const bench = page.locator('[data-slot="0"]');
   await expect(bench.getByTestId('last-line')).toContainText('100');
@@ -269,7 +266,7 @@ test('an IndexedDB from the earlier build (rest timers, increments) still opens 
   });
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Upper A', level: 2 })).toBeVisible();
-  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   const input = page.getByLabel('Set 1 entry', { exact: true }).first();
   await input.fill('100 x 8');
   await input.press('Enter');

@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function startUpperA(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
 }
 
@@ -49,11 +49,11 @@ test('log a full exercise by keyboard, reload, finish and see the summary', asyn
   await expect(page.getByLabel('Elapsed time')).toHaveCount(0);
   await expect(page.getByText(/rest timer/i)).toHaveCount(0);
 
-  // Finish: summary (with the plain recorded duration) then back to Today.
+  // Finish: summary then back to Today. A sub-minute duration is hidden (no timers, no noise).
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Workout summary' });
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('Duration');
+  await expect(dialog).not.toContainText('Duration');
   await expect(dialog).toContainText(`${count}`);
   await dialog.getByRole('button', { name: 'Finish workout' }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -101,8 +101,8 @@ test('a second session shows Last and prefills from the first', async ({ page })
   await expect(page).toHaveURL(/\/$/);
 
   // Choose Upper A again.
-  await page.getByRole('button', { name: 'Choose another workout' }).click();
-  await page.getByRole('button', { name: /Upper A/ }).click();
+  await page.getByRole('radio', { name: /Upper A/ }).click();
+  await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\//);
 
   const second = firstCard(page);
@@ -116,6 +116,11 @@ test('a second session shows Last and prefills from the first', async ({ page })
 test('an empty session can be discarded', async ({ page }) => {
   await startUpperA(page);
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
-  await page.getByRole('button', { name: 'Discard workout' }).click();
+  const sheet = page.getByRole('dialog', { name: 'No sets logged' });
+  await sheet.getByRole('button', { name: 'Discard workout' }).click();
+  const confirm = page.getByRole('dialog', { name: 'Discard this workout?' });
+  await expect(confirm).toContainText('Nothing logged yet.');
+  await confirm.getByRole('button', { name: 'Discard', exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('button', { name: /^Start / })).toBeVisible();
 });
