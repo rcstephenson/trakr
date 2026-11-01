@@ -232,3 +232,47 @@ test('first week journey, keyboard only: Upper A, Lower A, run, Upper B, Upper A
   await expect(page.getByText('Lower A').first()).toBeVisible();
   await expect(page.getByText('5:36 /km').first()).toBeVisible();
 });
+
+test('an IndexedDB from the earlier build (rest timers, increments) still opens and logs', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Upper A', level: 2 })).toBeVisible();
+  // Rewrite the stored rows the way the earlier build left them.
+  await page.evaluate(async () => {
+    const req = indexedDB.open('trakr');
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const all = await new Promise<Record<string, unknown>[]>((resolve) => {
+      const r = db.transaction('programs').objectStore('programs').getAll();
+      r.onsuccess = () => resolve(r.result as Record<string, unknown>[]);
+    });
+    const tx = db.transaction(['settings', 'programs'], 'readwrite');
+    tx.objectStore('settings').put({
+      key: 'app',
+      unit: 'lb',
+      theme: 'light',
+      increments: { barbell: 5, dumbbell: 5, cable: 2.5, machine: 5, bodyweight: 5, other: 5 },
+      restTimerEnabled: true,
+      restTimerSound: true,
+    });
+    for (const p of all) {
+      tx.objectStore('programs').put({ ...p, restSeconds: { compound: 150, isolation: 75 } });
+    }
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  });
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Upper A', level: 2 })).toBeVisible();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  const input = page.getByLabel('Set 1 entry', { exact: true }).first();
+  await input.fill('100 x 8');
+  await input.press('Enter');
+  await expect(page.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
+  await expect(page.getByRole('timer')).toHaveCount(0);
+});

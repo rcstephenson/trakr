@@ -8,6 +8,10 @@ Stack: React 18, TypeScript (strict), Tailwind, Dexie (IndexedDB), Zod, Recharts
 
 All data is stored in IndexedDB on the device and browser you use. There is no server and no account. Clearing site data, uninstalling the app or switching phones loses it unless you have a backup. **Export a JSON backup regularly** from Settings, and import it to restore or move to a new device.
 
+## Logging a workout
+
+Each set is one text field holding `weight x reps` (`135 x 8`, `135x8`, `135 8`, `62.5×10`; `12` alone for bodyweight or core work). Rows start filled with what you did last time: press Enter to log them as they are, or type over them. Enter logs the set and moves to the next row, and finishing an exercise moves on to the next one, so a whole workout can be entered without leaving the keyboard. There are no timers and no suggestions. The screen is kept awake during a session where the browser supports the Wake Lock API, which needs HTTPS (so it works on the deployed site and `localhost`, but not over plain `http://` on a LAN address).
+
 ## Local development
 
 ```bash
