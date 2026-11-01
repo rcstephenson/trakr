@@ -10,6 +10,7 @@ export default {
         raised: 'var(--raised)',
         ink: 'var(--ink)',
         hairline: 'var(--hairline)',
+        'hairline-strong': 'var(--hairline-strong)',
         'accent-ink': 'var(--accent-ink)',
         primary: 'var(--primary)',
         'on-primary': 'var(--on-primary)',
@@ -42,14 +43,13 @@ export default {
           'monospace',
         ],
       },
-      // Scale: 11 micro / 13 / 15 / 18 / 24 / 40 display.
+      // Scale (each step distinct): 11 micro / 13 xs / 15 sm / 18 base / 24 xl / 40 display.
       fontSize: {
         micro: ['11px', '16px'],
         xs: ['13px', '18px'],
         sm: ['15px', '22px'],
         base: ['18px', '24px'],
         xl: ['24px', '30px'],
-        '2xl': ['24px', '30px'],
         display: ['40px', '42px'],
       },
       borderRadius: {

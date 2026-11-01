@@ -34,7 +34,7 @@ export function TabBar() {
                     <span
                       aria-hidden="true"
                       data-testid="tab-tick"
-                      className="absolute inset-x-5 -top-px h-0.5 bg-accent"
+                      className="absolute inset-x-5 -top-px h-0.5 bg-accent-ink"
                     />
                   ) : null}
                   <Icon size={20} strokeWidth={isActive ? 2.25 : 1.75} aria-hidden="true" />

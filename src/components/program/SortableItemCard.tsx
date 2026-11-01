@@ -47,7 +47,7 @@ function NumberField({
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.currentTarget.blur();
         }}
-        className="num mt-1 min-h-touch w-full rounded-btn border border-hairline bg-raised px-3 text-center text-base font-semibold text-ink"
+        className="num mt-1 min-h-touch w-full rounded-btn border border-hairline-strong bg-raised px-3 text-center text-base font-semibold text-ink"
       />
     </div>
   );
@@ -147,7 +147,7 @@ export function SortableItemCard({
             type="text"
             value={item.notes}
             onChange={(e) => onChange({ ...item, notes: e.target.value })}
-            className="mt-1 min-h-touch w-full rounded-btn border border-hairline bg-raised px-3 text-sm normal-case tracking-normal text-ink"
+            className="mt-1 min-h-touch w-full rounded-btn border border-hairline-strong bg-raised px-3 text-base normal-case tracking-normal text-ink"
           />
         </label>
 

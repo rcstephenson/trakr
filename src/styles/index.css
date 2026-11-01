@@ -14,6 +14,8 @@
   --ink: #0a0e14;
   --muted: #5b6572;
   --hairline: #d3d9e0;
+  /* Form-control boundary: >= 3:1 on bg, surface and raised (WCAG 1.4.11). */
+  --hairline-strong: #7d8794;
   --accent: #c6ff3d;
   --on-accent: #0a0e14;
   --accent-ink: #3d5a00;
@@ -33,6 +35,7 @@
   --ink: #e8edf2;
   --muted: #8893a0;
   --hairline: #232a33;
+  --hairline-strong: #657080;
   --accent: #c6ff3d;
   --on-accent: #0a0c10;
   --accent-ink: #c6ff3d;
@@ -52,7 +55,7 @@
   body {
     @apply bg-bg font-sans text-sm text-ink antialiased;
     margin: 0;
-    /* Faint graph-paper dot grid: 24px pitch, ~5% ink. */
+    /* Faint graph-paper dot grid: 24px pitch, 9% ink at a 1px core. */
     background-image: radial-gradient(
       color-mix(in srgb, var(--ink) 9%, transparent) 1px,
       transparent 1.2px
@@ -63,6 +66,10 @@
   :focus-visible {
     outline: 2px solid var(--accent-ink);
     outline-offset: 2px;
+  }
+  /* Inside clipped containers (list cards) an outer ring would be cut off: draw it inset. */
+  .overflow-hidden :focus-visible {
+    outline-offset: -2px;
   }
   input,
   button {

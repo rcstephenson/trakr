@@ -58,6 +58,21 @@ describe('theme', () => {
     applyTheme('system');
     expect(document.documentElement.dataset.theme).toBe('light');
   });
+
+  it('keeps every theme-color meta on the applied theme background', () => {
+    document.head.innerHTML =
+      '<meta name="theme-color" content="#eef1f4" media="(prefers-color-scheme: light)">' +
+      '<meta name="theme-color" content="#0a0c10" media="(prefers-color-scheme: dark)">';
+    const colors = () =>
+      [...document.head.querySelectorAll('meta[name="theme-color"]')].map((m) =>
+        m.getAttribute('content'),
+      );
+    applyTheme('dark');
+    expect(colors()).toEqual(['#0a0c10', '#0a0c10']);
+    applyTheme('light');
+    expect(colors()).toEqual(['#eef1f4', '#eef1f4']);
+    document.head.innerHTML = '';
+  });
 });
 
 describe('types and stub program', () => {
