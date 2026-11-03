@@ -1,3 +1,4 @@
+import { formatWeightText } from '../../domain/setEntry';
 import { convert, formatWeight, roundForDisplay } from '../../domain/units';
 import type { Exercise, Unit } from '../../domain/types';
 
@@ -19,18 +20,30 @@ export function weightInUnit(set: Pick<LoggedSet, 'weight' | 'unit'>, displayUni
 }
 
 /**
- * Prefill for set `setIndex` (0-based) from the last performance's working sets (SPEC 6.1):
- * the same set number if it exists, otherwise the last set repeated, otherwise nothing.
- * Values are never adjusted, only converted to the display unit.
+ * Prefill for an exercise (SPEC 6.1): the previous session's first working set, converted to the
+ * display unit and otherwise unadjusted. `lastSets` are already working sets sorted by setIndex.
  */
-export function prefillForSet(
+export function prefillFromLast(
   lastSets: ReadonlyArray<LoggedSet> | null | undefined,
-  setIndex: number,
   displayUnit: Unit,
 ): SetValues | null {
   if (!lastSets || lastSets.length === 0) return null;
-  const source = lastSets[Math.min(setIndex, lastSets.length - 1)];
-  return { weight: weightInUnit(source, displayUnit), reps: source.reps };
+  return { weight: weightInUnit(lastSets[0], displayUnit), reps: lastSets[0].reps };
+}
+
+/** The set that stands for an exercise's single entry: its first working set (else its first set). */
+export function entrySet<T extends { isWarmup: boolean; setIndex: number }>(
+  slotSets: ReadonlyArray<T>,
+): T | undefined {
+  const sorted = [...slotSets].sort((a, b) => a.setIndex - b.setIndex);
+  return sorted.find((s) => !s.isWarmup) ?? sorted[0];
+}
+
+/** True when every set has the same weight, unit and reps. */
+export function allIdentical(sets: ReadonlyArray<LoggedSet>): boolean {
+  return sets.every(
+    (s) => s.weight === sets[0].weight && s.unit === sets[0].unit && s.reps === sets[0].reps,
+  );
 }
 
 type LoadInfo = Pick<Exercise, 'load'> | undefined;
@@ -61,9 +74,28 @@ export function formatSets(
     .join(' · ');
 }
 
+/**
+ * The compact LAST line: identical working sets collapse to one entry ("105 x 9"); differing sets
+ * are listed as in `formatSets` ("135 lb � 8 � 145 lb � 6").
+ */
+export function formatLast(
+  sets: ReadonlyArray<LoggedSet>,
+  displayUnit: Unit,
+  exercise: LoadInfo,
+): string {
+  if (sets.length === 0) return '';
+  if (!allIdentical(sets)) return formatSets(sets, displayUnit, exercise);
+  const s = sets[0];
+  if (exercise?.load === 'none') return `${s.reps} reps`;
+  const w = weightInUnit(s, displayUnit);
+  if (exercise?.load === 'bodyweight-plus')
+    return `${formatWeightText(w, 'bodyweight-plus')} x ${s.reps}`;
+  return `${formatWeightText(w)} x ${s.reps}`;
+}
+
 const NOTE_LINE = /^Exercise (\d+): (.*)$/;
 
-/** Per-exercise notes live in `Session.notes`, one `Exercise N: text` line per slot (1-based). */
+/** Legacy per-exercise notes live in `Session.notes`, one `Exercise N: text` line per slot (1-based). */
 export function readSlotNotes(notes: string | undefined): Record<number, string> {
   const result: Record<number, string> = {};
   for (const line of (notes ?? '').split('\n')) {
@@ -71,22 +103,4 @@ export function readSlotNotes(notes: string | undefined): Record<number, string>
     if (m) result[Number(m[1]) - 1] = m[2];
   }
   return result;
-}
-
-/** Returns the new `Session.notes` with the slot's note replaced; other text is preserved. */
-export function writeSlotNote(
-  notes: string | undefined,
-  slotIndex: number,
-  text: string,
-): string | undefined {
-  const prefix = `Exercise ${slotIndex + 1}: `;
-  const lines = (notes ?? '').split('\n').filter((l) => l !== '' && !l.startsWith(prefix));
-  const clean = text.replace(/\s*\n\s*/g, ' ').trim();
-  if (clean) lines.push(prefix + clean);
-  lines.sort((a, b) => {
-    const ma = NOTE_LINE.exec(a);
-    const mb = NOTE_LINE.exec(b);
-    return (ma ? Number(ma[1]) : 0) - (mb ? Number(mb[1]) : 0);
-  });
-  return lines.length > 0 ? lines.join('\n') : undefined;
 }

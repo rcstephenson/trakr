@@ -1,18 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import * as exercises from '../../db/repositories/exercises';
 import * as history from '../../db/repositories/history';
-import * as programs from '../../db/repositories/programs';
-import type { Exercise, StoredProgram, Unit } from '../../domain/types';
+import type { Exercise, Unit } from '../../domain/types';
 import { weightInUnit } from './prefill';
 
 /** Live exercise catalog (A-Z). `undefined` while loading. */
 export function useExerciseCatalog(): Exercise[] | undefined {
   return useLiveQuery(() => exercises.list(), []);
-}
-
-/** The program a session was started from. `undefined` while loading, `null` if gone. */
-export function useProgramById(id: string | undefined): StoredProgram | null | undefined {
-  return useLiveQuery(() => (id ? programs.get(id) : null), [id]);
 }
 
 export interface PriorSet {

@@ -16,71 +16,125 @@ async function renderSession(id: string) {
       </Routes>
     </MemoryRouter>,
   );
-  return (await screen.findAllByTestId('exercise-card'))[0];
+  return (await screen.findAllByTestId('exercise-row'))[0];
 }
 
-function type(card: HTMLElement, label: string, value: string) {
-  const input = within(card).getByLabelText(label);
-  fireEvent.change(input, { target: { value } });
-  return input;
+function enter(row: HTMLElement, name: string, weight: string, reps: string) {
+  fireEvent.change(within(row).getByLabelText(`${name} weight`), { target: { value: weight } });
+  const repsInput = within(row).getByLabelText(`${name} reps`);
+  fireEvent.change(repsInput, { target: { value: reps } });
+  return repsInput;
 }
 
-describe('Session screen', () => {
+describe('Session screen (one entry per exercise)', () => {
   beforeEach(async () => {
     await Promise.all(db.tables.map((t) => t.clear()));
     await ensureSeeded();
   });
 
-  it('logs a set by typing weight x reps and pressing Enter, and carries it to the next row', async () => {
+  it('shows one weight and one reps field per exercise and none of the old actions', async () => {
     const s = await sessions.start('v-taper-upper-lower', 'upper-a');
-    const card = await renderSession(s.id);
-    expect(within(card).getByLabelText('Set 1 entry')).toHaveAttribute(
-      'placeholder',
-      'weight x reps',
-    );
-    const input = type(card, 'Set 1 entry', '100x8');
-    expect(await within(card).findByText('100 lb × 8')).toBeInTheDocument();
-    fireEvent.keyDown(input, { key: 'Enter' });
+    const row = await renderSession(s.id);
+    const rows = screen.getAllByTestId('exercise-row');
+    expect(rows).toHaveLength(s.targets.length);
+    expect(within(row).getAllByRole('textbox')).toHaveLength(2);
+    expect(screen.queryByText(/add set/i)).toBeNull();
+    expect(screen.queryByText(/swap exercise/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /note/i })).toBeNull();
+    expect(screen.queryByText(/options/i)).toBeNull();
+  });
+
+  it('uses text inputs with numeric keyboards', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const row = await renderSession(s.id);
+    const [weight, reps] = within(row).getAllByRole('textbox');
+    expect(weight).toHaveAttribute('inputmode', 'decimal');
+    expect(weight).toHaveAttribute('enterkeyhint', 'next');
+    expect(reps).toHaveAttribute('inputmode', 'numeric');
+    expect(reps).toHaveAttribute('enterkeyhint', 'done');
+  });
+
+  it('Enter in weight moves to reps; Enter in reps writes N identical sets and moves to the next exercise', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const row = await renderSession(s.id);
+    const target = s.targets[0];
+    const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
+    const weight = within(row).getByLabelText(`${name} weight`);
+    fireEvent.change(weight, { target: { value: '100' } });
+    fireEvent.keyDown(weight, { key: 'Enter' });
+    expect(within(row).getByLabelText(`${name} reps`)).toHaveFocus();
+
+    const reps = enter(row, name, '100', '8');
+    expect(await within(row).findByText('100 lb × 8')).toBeInTheDocument();
+    fireEvent.keyDown(reps, { key: 'Enter' });
     await waitFor(() =>
-      expect(within(card).getByRole('button', { name: 'Un-log set 1' })).toBeInTheDocument(),
+      expect(within(row).getByRole('button', { name: `Un-log ${name}` })).toBeInTheDocument(),
     );
-    expect(within(card).getByLabelText('Set 1 entry')).toHaveValue('100 x 8');
-    expect(within(card).getByLabelText('Set 2 entry')).toHaveValue('100 x 8');
-    expect(within(card).getByLabelText('Set 2 entry')).toHaveFocus();
-    expect((await setsRepo.listBySession(s.id))[0]).toMatchObject({
-      weight: 100,
-      reps: 8,
-      unit: 'lb',
-    });
+    const stored = await setsRepo.listBySession(s.id);
+    expect(stored).toHaveLength(target.sets);
+    expect(stored.every((x) => x.weight === 100 && x.reps === 8 && !x.isWarmup)).toBe(true);
+    expect(stored.map((x) => x.setIndex)).toEqual(stored.map((_, i) => i));
+    const nextRow = screen.getAllByTestId('exercise-row')[1];
+    expect(within(nextRow).getAllByRole('textbox')[0]).toHaveFocus();
   });
 
   it('shows a hint for invalid text and does not log', async () => {
     const s = await sessions.start('v-taper-upper-lower', 'upper-a');
-    const card = await renderSession(s.id);
-    const input = type(card, 'Set 1 entry', 'abc');
-    expect(await within(card).findByTestId('set-feedback')).toHaveTextContent('weight x reps');
-    expect(within(card).getByRole('button', { name: 'Log set 1' })).toBeDisabled();
-    fireEvent.keyDown(input, { key: 'Enter' });
+    const row = await renderSession(s.id);
+    const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
+    const reps = enter(row, name, 'abc', '8');
+    expect(await within(row).findByTestId('entry-caption')).toHaveTextContent('weight');
+    expect(within(row).getByRole('button', { name: `Log ${name}` })).toBeDisabled();
+    fireEvent.keyDown(reps, { key: 'Enter' });
     expect(await setsRepo.listBySession(s.id)).toHaveLength(0);
   });
 
-  it('editing a logged row and pressing Enter updates the stored set in place; the check un-logs', async () => {
+  it('editing a logged entry rewrites all its sets; the tick un-logs them all', async () => {
     const s = await sessions.start('v-taper-upper-lower', 'upper-a');
-    const card = await renderSession(s.id);
-    fireEvent.keyDown(type(card, 'Set 1 entry', '100 x 8'), { key: 'Enter' });
-    await waitFor(() =>
-      expect(within(card).getByRole('button', { name: 'Un-log set 1' })).toBeVisible(),
-    );
-    const [first] = await setsRepo.listBySession(s.id);
-
-    fireEvent.keyDown(type(card, 'Set 1 entry', '105 x 7'), { key: 'Enter' });
+    const row = await renderSession(s.id);
+    const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
+    fireEvent.keyDown(enter(row, name, '100', '8'), { key: 'Enter' });
     await waitFor(async () =>
-      expect((await setsRepo.listBySession(s.id))[0]).toMatchObject({ weight: 105, reps: 7 }),
+      expect(await setsRepo.listBySession(s.id)).toHaveLength(s.targets[0].sets),
     );
-    expect((await setsRepo.listBySession(s.id))[0].id).toBe(first.id);
 
-    fireEvent.click(await within(card).findByRole('button', { name: 'Un-log set 1' }));
+    fireEvent.keyDown(enter(row, name, '105', '7'), { key: 'Enter' });
+    await waitFor(async () => {
+      const stored = await setsRepo.listBySession(s.id);
+      expect(stored).toHaveLength(s.targets[0].sets);
+      expect(stored.every((x) => x.weight === 105 && x.reps === 7)).toBe(true);
+    });
+
+    fireEvent.click(await within(row).findByRole('button', { name: `Un-log ${name}` }));
     await waitFor(async () => expect(await setsRepo.listBySession(s.id)).toHaveLength(0));
+  });
+
+  it('treats a legacy slot with differing sets as logged, showing the first working set', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const t = s.targets[0];
+    await setsRepo.add({
+      sessionId: s.id,
+      exerciseId: t.exerciseId,
+      slotIndex: 0,
+      setIndex: 0,
+      weight: 90,
+      unit: 'lb',
+      reps: 10,
+    });
+    await setsRepo.add({
+      sessionId: s.id,
+      exerciseId: t.exerciseId,
+      slotIndex: 0,
+      setIndex: 1,
+      weight: 95,
+      unit: 'lb',
+      reps: 8,
+    });
+    const row = await renderSession(s.id);
+    const [weight, reps] = within(row).getAllByRole('textbox');
+    await waitFor(() => expect(weight).toHaveValue('90'));
+    expect(reps).toHaveValue('10');
+    expect(within(row).getByRole('button', { name: /^Un-log/ })).toBeInTheDocument();
   });
 
   it('has no timer UI', async () => {

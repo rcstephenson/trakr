@@ -1,4 +1,36 @@
-import type { SessionTarget, SetEntry } from '../../domain/types';
+import { formatWeight } from '../../domain/units';
+import type { Exercise, SessionTarget, SetEntry, Unit } from '../../domain/types';
+
+interface SetLike {
+  weight: number;
+  reps: number;
+  unit: Unit;
+}
+
+/** True when there is more than one set and they all share weight, unit and reps. */
+export function isUniformRun(sets: ReadonlyArray<SetLike>): boolean {
+  return (
+    sets.length > 1 &&
+    sets.every(
+      (s) => s.weight === sets[0].weight && s.unit === sets[0].unit && s.reps === sets[0].reps,
+    )
+  );
+}
+
+/** "3 × 100 lb × 8" (or "3 × 12 reps" for load none) for a run of identical working sets. */
+export function formatUniformRun(
+  sets: ReadonlyArray<SetLike>,
+  exercise: Pick<Exercise, 'load'> | undefined,
+  displayUnit: Unit,
+): string {
+  const s = sets[0];
+  if (exercise?.load === 'none') return `${sets.length} × ${s.reps} reps`;
+  const w = formatWeight(s.weight, s.unit, displayUnit, {
+    perHand: exercise?.load === 'per-hand',
+    bodyweightPlus: exercise?.load === 'bodyweight-plus',
+  });
+  return `${sets.length} × ${w} × ${s.reps}`;
+}
 
 export interface SetGroup {
   key: string;
