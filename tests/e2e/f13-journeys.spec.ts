@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /** Words that would indicate coaching / recommendations (SPEC 1 non-goals). */
 const ADVICE = /\b(recommend\w*|suggest\w*|advice|advise\w*|you should|try adding|deload)\b/i;
@@ -29,49 +29,39 @@ async function loggedSetCount(page: Page): Promise<number> {
   });
 }
 
-/** The set input that currently has focus, or null. */
-function focusedSetInput(page: Page): Locator {
-  return page.locator('input[aria-label$=" entry"]:focus');
-}
+const FOCUSED = 'input:focus';
 
 /**
- * Logs the focused row and every following row of the current exercise using only the keyboard.
- * Types `weight` when the row is empty, otherwise accepts the prefill with Enter. Returns after
- * the exercise's last Enter has been persisted.
+ * Logs the focused exercise using only the keyboard: types a weight when the field is empty
+ * (otherwise accepts the prefill), Enter to reps, types reps when empty, Enter to log. Returns once
+ * the exercise is stored.
  */
 async function logFocusedExercise(page: Page, weight: number) {
-  for (let guard = 0; guard < 12; guard++) {
-    const input = focusedSetInput(page);
-    await expect(input).toBeFocused();
-    const label = await input.getAttribute('aria-label');
-    const card = page.locator('[data-testid="exercise-card"]', { has: input });
-    const slot = await card.getAttribute('data-slot');
-    const before = await loggedSetCount(page);
-    if ((await input.inputValue()) === '') {
-      const repsOnly = (await input.getAttribute('placeholder')) === 'reps';
-      await page.keyboard.type(repsOnly ? '12' : `${weight} x 8`);
-    }
+  await expect(page.locator(FOCUSED)).toBeFocused();
+  const row = page.locator('[data-testid="exercise-row"]', { has: page.locator(FOCUSED) });
+  const slot = await row.getAttribute('data-slot');
+  const fields = row.getByRole('textbox');
+  if ((await fields.count()) === 2) {
+    if ((await fields.first().inputValue()) === '') await page.keyboard.type(String(weight));
     await page.keyboard.press('Enter');
-    await expect.poll(() => loggedSetCount(page)).toBe(before + 1);
-    // Stay in the same exercise while it still has unlogged rows after this one.
-    const rowsLeft = await page
-      .locator(`[data-testid="exercise-card"][data-slot="${slot}"] [data-completed="false"]`)
-      .count();
-    if (rowsLeft === 0) return;
-    expect(label).toBeTruthy();
+    await expect(fields.last()).toBeFocused();
   }
+  if ((await fields.last().inputValue()) === '') await page.keyboard.type('8');
+  await page.keyboard.press('Enter');
+  await expect(page.locator(`[data-testid="exercise-row"][data-slot="${slot}"]`)).toHaveAttribute(
+    'data-logged',
+    'true',
+  );
 }
 
 /** Keyboard-only: tap into the first row once, then type the whole workout. */
 async function logWholeWorkout(page: Page, baseWeight: number) {
-  const unlogged = page.locator('[data-testid="set-row"][data-completed="false"] input');
-  await unlogged.first().click();
+  await page.locator('[data-logged="false"] input').first().click();
   for (let slot = 0; slot < 20; slot++) {
-    if ((await page.locator('[data-completed="false"]').count()) === 0) break;
-    await expect(focusedSetInput(page)).toBeFocused();
+    if ((await page.locator('[data-logged="false"]').count()) === 0) break;
     await logFocusedExercise(page, baseWeight + slot * 5);
   }
-  await expect(page.locator('[data-completed="false"]')).toHaveCount(0);
+  await expect(page.locator('[data-logged="false"]')).toHaveCount(0);
 }
 
 async function finishWorkout(page: Page) {
@@ -90,28 +80,21 @@ async function expectNoTimersOrAdvice(page: Page) {
   expect(text).not.toMatch(ADVICE);
 }
 
-test('keyboard flow: focus follows into the next exercise after the last set', async ({ page }) => {
+test('keyboard flow: focus follows into the next exercise after each log', async ({ page }) => {
   await startNext(page, 'Upper A');
-  const firstCard = page.locator('[data-testid="exercise-card"][data-slot="0"]');
-  const secondCard = page.locator('[data-testid="exercise-card"][data-slot="1"]');
-  await firstCard.getByLabel('Set 1 entry', { exact: true }).click();
+  const second = page.locator('[data-testid="exercise-row"][data-slot="1"]');
+  await page.locator('[data-slot="0"]').getByRole('textbox').first().click();
 
   // Exercise 1, purely from the keyboard.
   await logFocusedExercise(page, 100);
-  await expect(firstCard.getByRole('button', { name: /Expand/ })).toBeVisible();
 
-  // Focus is now in exercise 2 set 1 (not <body>), so the phone keyboard stays up.
-  const ex2Set1 = secondCard.getByLabel('Set 1 entry', { exact: true });
-  await expect(ex2Set1).toBeFocused();
-  await expect(secondCard).toBeInViewport();
+  // Focus is now in exercise 2 (not <body>), so the phone keyboard stays up.
+  await expect(second.getByRole('textbox').first()).toBeFocused();
+  await expect(second).toBeInViewport();
 
   // Exercise 2 with the keyboard, then focus lands in exercise 3.
   await logFocusedExercise(page, 60);
-  await expect(secondCard.getByRole('button', { name: /Expand/ })).toBeVisible();
-  const thirdSet1 = page
-    .locator('[data-testid="exercise-card"][data-slot="2"]')
-    .getByLabel('Set 1 entry', { exact: true });
-  await expect(thirdSet1).toBeFocused();
+  await expect(page.locator('[data-slot="2"]').getByRole('textbox').first()).toBeFocused();
 });
 
 test('keyboard flow: finishing the last exercise blurs and leaves Finish available', async ({
@@ -124,11 +107,14 @@ test('keyboard flow: finishing the last exercise blurs and leaves Finish availab
   await expect(page.getByRole('button', { name: 'Finish', exact: true })).toBeVisible();
 });
 
-test('tapping into a filled row selects its text for easy replacement', async ({ page }) => {
+test('tapping into a filled field selects its text for easy replacement', async ({ page }) => {
   await startNext(page, 'Upper A');
-  const input = page.locator('[data-slot="0"]').getByLabel('Set 1 entry', { exact: true });
-  await input.fill('100 x 8');
+  const row = page.locator('[data-slot="0"]');
+  const input = row.getByRole('textbox').first();
+  await input.fill('100');
   await input.press('Enter');
+  await row.getByRole('textbox').last().fill('8');
+  await row.getByRole('textbox').last().press('Enter');
   await page.locator('body').click({ position: { x: 5, y: 300 } });
   await input.tap();
   const sel = await input.evaluate((el: HTMLInputElement) => [
@@ -172,21 +158,19 @@ test('first week journey, keyboard only: Upper A, Lower A, run, Upper B, Upper A
   await logWholeWorkout(page, 40);
   await finishWorkout(page);
 
-  // Upper A again: rows prefill from week 1. Barbell bench press set 1 was typed as 100 x 8.
+  // Upper A again: the entry prefills from week 1. Barbell bench press was typed as 100 and 8.
   await page.goto('/');
   await page.getByRole('radio', { name: /Upper A/ }).click();
   await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
   const bench = page.locator('[data-slot="0"]');
-  await expect(bench.getByTestId('last-line')).toContainText('100');
-  await expect(bench.getByLabel('Set 1 entry', { exact: true })).toHaveValue('100 x 8');
-  await expect(bench.getByLabel('Set 2 entry', { exact: true })).toHaveValue('100 x 8');
-  // Accept all prefills with Enter only.
-  await bench.getByLabel('Set 1 entry', { exact: true }).click();
+  await expect(bench.getByTestId('last-line')).toContainText('Last 100 x 8');
+  await expect(bench.getByRole('textbox').first()).toHaveValue('100');
+  await expect(bench.getByRole('textbox').last()).toHaveValue('8');
+  // Accept the prefill with Enter only.
+  await bench.getByRole('textbox').first().click();
   await logFocusedExercise(page, 0);
-  await expect(
-    page.locator('[data-slot="1"]').getByLabel('Set 1 entry', { exact: true }),
-  ).toBeFocused();
+  await expect(page.locator('[data-slot="1"]').getByRole('textbox').first()).toBeFocused();
   await finishWorkout(page);
 
   // History shows all of it.
@@ -267,9 +251,10 @@ test('an IndexedDB from the earlier build (rest timers, increments) still opens 
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Upper A', level: 2 })).toBeVisible();
   await page.getByRole('button', { name: /^Start / }).click();
-  const input = page.getByLabel('Set 1 entry', { exact: true }).first();
-  await input.fill('100 x 8');
-  await input.press('Enter');
-  await expect(page.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
+  const row = page.locator('[data-slot="0"]');
+  await row.getByRole('textbox').first().fill('100');
+  await row.getByRole('textbox').last().fill('8');
+  await row.getByRole('textbox').last().press('Enter');
+  await expect(row).toHaveAttribute('data-logged', 'true');
   await expect(page.getByRole('timer')).toHaveCount(0);
 });

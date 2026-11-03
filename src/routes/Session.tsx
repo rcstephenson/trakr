@@ -1,14 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import { ExerciseCard } from '../components/session/ExerciseCard';
+import { ExerciseRow } from '../components/session/ExerciseRow';
 import { DiscardWorkoutDialog } from '../components/session/DiscardWorkoutDialog';
 import { FinishSheet } from '../components/session/FinishSheet';
-import { useExerciseCatalog, useProgramById } from '../components/session/hooks';
-import { NoteSheet } from '../components/session/NoteSheet';
-import { readSlotNotes, writeSlotNote } from '../components/session/prefill';
-import { SwapSheet } from '../components/session/SwapSheet';
-import { Button, EmptyState, PageHeader } from '../components/ui';
+import { useExerciseCatalog } from '../components/session/hooks';
+import { Button, Card, EmptyState, PageHeader, SegmentedBar } from '../components/ui';
 import * as sessionsRepo from '../db/repositories/sessions';
 import { useSession } from '../hooks/useSession';
 import { useSessionSets } from '../hooks/useSessionSets';
@@ -22,10 +19,7 @@ export default function Session() {
   const sets = useSessionSets(id);
   const settings = useSettings();
   const catalog = useExerciseCatalog();
-  const program = useProgramById(session?.programId);
 
-  const [swapSlot, setSwapSlot] = useState<number | null>(null);
-  const [noteSlot, setNoteSlot] = useState<number | null>(null);
   const [finishOpen, setFinishOpen] = useState(false);
   // Recorded once when Finish is opened: a plain stat, not a running clock.
   const [durationMs, setDurationMs] = useState(0);
@@ -35,41 +29,22 @@ export default function Session() {
   const active = session?.status === 'active';
   useWakeLock(active);
 
-  // When a card completes: scroll the next incomplete card into view and move focus to its first
-  // unlogged row, so a whole workout can be entered without the keyboard closing. When the last
-  // card completes, drop focus (the Finish button stays in the sticky header).
-  const firstIncomplete =
-    session && sets
-      ? (session.targets.find(
-          (t) =>
-            sets.filter((s) => s.slotIndex === t.slotIndex && s.exerciseId === t.exerciseId)
-              .length < t.sets,
-        )?.slotIndex ?? null)
-      : undefined;
-  const previousIncomplete = useRef<number | null | undefined>(undefined);
-  useEffect(() => {
-    const prev = previousIncomplete.current;
-    previousIncomplete.current = firstIncomplete;
-    if (prev === undefined || firstIncomplete === undefined || prev === firstIncomplete) return;
-    if (firstIncomplete === null) {
+  // After an exercise is logged, move focus to the next exercise's first field (so a whole workout
+  // can be entered without the keyboard closing) and scroll it into view. After the last exercise
+  // drop focus (the Finish button stays in the sticky header).
+  function advance(slotIndex: number) {
+    const next = document.querySelector<HTMLElement>(
+      `[data-testid="exercise-row"][data-slot="${slotIndex + 1}"]`,
+    );
+    if (!next) {
       const el = document.activeElement;
       if (el instanceof HTMLElement && el !== document.body) el.blur();
       return;
     }
-    // Only move forward: un-logging an earlier set must not yank focus around.
-    if (prev !== null && firstIncomplete < prev) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const card = document.querySelector(
-      `[data-testid="exercise-card"][data-slot="${firstIncomplete}"]`,
-    );
-    card?.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-    const frame = requestAnimationFrame(() => {
-      card
-        ?.querySelector<HTMLInputElement>('[data-testid="set-row"][data-completed="false"] input')
-        ?.focus({ preventScroll: true });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [firstIncomplete]);
+    next.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+    next.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+  }
 
   if (session === undefined || sets === undefined || settings === undefined || !catalog) {
     return (
@@ -117,10 +92,10 @@ export default function Session() {
   }
 
   const exercises = new Map(catalog.map((e) => [e.id, e]));
-  const slotNotes = readSlotNotes(session.notes);
-  const swapTarget = session.targets.find((t) => t.slotIndex === noteSlot);
-  const swapping = session.targets.find((t) => t.slotIndex === swapSlot);
-  const workout = program?.workouts.find((w) => w.id === session.workoutId);
+  const loggedCount = session.targets.filter((t) =>
+    sets.some((x) => x.slotIndex === t.slotIndex && x.exerciseId === t.exerciseId),
+  ).length;
+  const total = session.targets.length;
 
   async function finish() {
     if (!id || busy) return;
@@ -169,22 +144,35 @@ export default function Session() {
         </Button>
       </header>
 
-      <ul className="flex flex-col gap-3 px-gutter pb-8 pt-3">
-        {session.targets.map((target) => (
-          <li key={`${target.slotIndex}-${target.exerciseId}`}>
-            <ExerciseCard
-              session={session}
-              target={target}
-              exercise={exercises.get(target.exerciseId)}
-              sets={sets}
-              settings={settings}
-              note={slotNotes[target.slotIndex] ?? ''}
-              onSwap={() => setSwapSlot(target.slotIndex)}
-              onNote={() => setNoteSlot(target.slotIndex)}
-            />
-          </li>
-        ))}
-      </ul>
+      <div className="px-gutter pb-6 pt-3">
+        <Card className="!p-0 overflow-hidden" data-testid="exercise-ledger">
+          <div className="flex items-baseline justify-between gap-3 px-3 pt-3">
+            <p className="micro">
+              Exercise · <span className="num text-ink">{loggedCount}</span> / {total} logged
+            </p>
+            <p className="micro shrink-0">Weight / reps</p>
+          </div>
+          <SegmentedBar
+            className="mx-3 mb-3 mt-2"
+            value={loggedCount}
+            total={total}
+            label={`${loggedCount} of ${total} exercises logged`}
+          />
+          <ul className="border-t border-hairline">
+            {session.targets.map((target) => (
+              <ExerciseRow
+                key={`${target.slotIndex}-${target.exerciseId}`}
+                session={session}
+                target={target}
+                exercise={exercises.get(target.exerciseId)}
+                sets={sets}
+                settings={settings}
+                onLogged={advance}
+              />
+            ))}
+          </ul>
+        </Card>
+      </div>
 
       <div className="px-gutter pb-10">
         <Button
@@ -197,29 +185,6 @@ export default function Session() {
         </Button>
       </div>
 
-      <SwapSheet
-        open={swapping !== undefined}
-        onClose={() => setSwapSlot(null)}
-        currentId={swapping?.exerciseId ?? ''}
-        alternativeIds={workout?.items[swapping?.slotIndex ?? -1]?.alternatives ?? []}
-        catalog={catalog}
-        onPick={(exerciseId) => {
-          if (swapping) void sessionsRepo.swapExercise(session.id, swapping.slotIndex, exerciseId);
-          setSwapSlot(null);
-        }}
-      />
-      <NoteSheet
-        open={swapTarget !== undefined}
-        exerciseName={exercises.get(swapTarget?.exerciseId ?? '')?.name ?? 'exercise'}
-        value={slotNotes[noteSlot ?? -1] ?? ''}
-        onClose={() => setNoteSlot(null)}
-        onChange={(text) => {
-          if (noteSlot === null) return;
-          void sessionsRepo.update(session.id, {
-            notes: writeSlotNote(session.notes, noteSlot, text),
-          });
-        }}
-      />
       <FinishSheet
         open={finishOpen}
         onClose={() => setFinishOpen(false)}

@@ -6,7 +6,13 @@ import {
   sessionTotals,
   weekLabel,
 } from '../../../src/components/history/feed';
-import { freeNotes, groupSets, withEmptySlots } from '../../../src/components/history/detail';
+import {
+  formatUniformRun,
+  freeNotes,
+  groupSets,
+  isUniformRun,
+  withEmptySlots,
+} from '../../../src/components/history/detail';
 import type { Activity, Session, SessionTarget, SetEntry } from '../../../src/domain/types';
 
 // Wednesday 2025-01-15 local time.
@@ -210,5 +216,29 @@ describe('freeNotes', () => {
       'Slept badly',
     ]);
     expect(freeNotes(undefined)).toEqual([]);
+  });
+});
+
+describe('compact working-set line', () => {
+  const s = (weight: number, reps: number, unit: 'lb' | 'kg' = 'lb') => ({ weight, reps, unit });
+  it('detects identical runs of more than one set', () => {
+    expect(isUniformRun([s(100, 8), s(100, 8), s(100, 8)])).toBe(true);
+    expect(isUniformRun([s(100, 8)])).toBe(false);
+    expect(isUniformRun([s(100, 8), s(100, 7)])).toBe(false);
+    expect(isUniformRun([s(100, 8), s(100, 8, 'kg')])).toBe(false);
+  });
+  it('formats "3 × 100 lb × 8" for each load type', () => {
+    const run = [s(100, 8), s(100, 8), s(100, 8)];
+    expect(formatUniformRun(run, { load: 'total' }, 'lb')).toBe('3 × 100 lb × 8');
+    expect(formatUniformRun(run, { load: 'per-hand' }, 'lb')).toBe('3 × 100 lb ea × 8');
+    expect(formatUniformRun([s(25, 8), s(25, 8)], { load: 'bodyweight-plus' }, 'lb')).toBe(
+      '2 × BW + 25 lb × 8',
+    );
+    expect(formatUniformRun([s(0, 12), s(0, 12)], { load: 'none' }, 'lb')).toBe('2 × 12 reps');
+  });
+  it('converts to the display unit', () => {
+    expect(formatUniformRun([s(100, 5, 'kg'), s(100, 5, 'kg')], { load: 'total' }, 'lb')).toBe(
+      '2 × 220 lb × 5',
+    );
   });
 });

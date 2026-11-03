@@ -1,49 +1,46 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import {
+  exerciseRow,
+  expectLogged,
+  logRow,
+  repsField,
+  startWorkout,
+  weightField,
+} from './session-helpers';
 
-async function startUpperA(page: Page) {
-  await page.goto('/');
-  await page.getByRole('button', { name: /^Start / }).click();
-  await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
+/** Sets per exercise, read from the "3 × 6–10" target line of a row. */
+async function targetSets(row: ReturnType<typeof exerciseRow>): Promise<number> {
+  const text = (await row.locator('p.num').first().innerText()) ?? '';
+  return Number(/^(\d+)\s*×/.exec(text)?.[1] ?? 1);
 }
 
-function firstCard(page: Page) {
-  return page.getByTestId('exercise-card').first();
-}
+test('log an exercise with weight then reps, reload, finish and see the summary', async ({
+  page,
+}) => {
+  await startWorkout(page);
+  const row = exerciseRow(page, 0);
+  const sets = await targetSets(row);
+  expect(sets).toBeGreaterThanOrEqual(2);
 
-test('log a full exercise by keyboard, reload, finish and see the summary', async ({ page }) => {
-  await startUpperA(page);
-  const card = firstCard(page);
-  const rows = card.getByTestId('set-row');
-  await expect(rows.first()).toBeVisible();
-  const count = await rows.count();
-  expect(count).toBeGreaterThanOrEqual(2);
+  // One entry per exercise: two fields and nothing about sets, swap or notes.
+  await expect(row.getByRole('textbox')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: /add set|swap exercise|^note$/i })).toHaveCount(0);
 
-  // Set 1: type weight x reps, Enter. Focus moves to set 2, prefilled with the same values.
-  const first = card.getByLabel('Set 1 entry', { exact: true });
-  await expect(first).toHaveAttribute('placeholder', 'weight x reps');
-  await first.fill('100x8');
-  await expect(card.getByTestId('set-feedback')).toHaveText('100 lb × 8');
-  await first.press('Enter');
-  await expect(rows.nth(0)).toHaveAttribute('data-completed', 'true');
-  await expect(first).toHaveValue('100 x 8');
+  await weightField(row).fill('100');
+  await weightField(row).press('Enter');
+  await expect(repsField(row)).toBeFocused();
+  await repsField(row).fill('8');
+  await expect(row.getByTestId('entry-caption')).toHaveText('100 lb × 8');
+  await repsField(row).press('Enter');
+  await expectLogged(row);
+  await expect(weightField(exerciseRow(page, 1))).toBeFocused();
 
-  // Later sets: Enter on the focused, prefilled rows.
-  for (let n = 2; n <= count; n++) {
-    const input = card.getByLabel(`Set ${n} entry`, { exact: true });
-    await expect(input).toHaveValue('100 x 8');
-    await expect(input).toBeFocused();
-    await page.keyboard.press('Enter');
-  }
-
-  // All sets done: the card collapses to a one-line summary.
-  await expect(card.getByRole('button', { name: /Expand/ })).toBeVisible();
-
-  // Reload mid-session: everything persisted.
+  // Reload mid-session: everything persisted, with the entry shown once.
   await page.reload();
-  const reloaded = firstCard(page);
-  await expect(reloaded).toContainText('100 lb × ' + Array(count).fill('8').join(', '));
-  await reloaded.getByRole('button', { name: /Expand/ }).click();
-  await expect(reloaded.locator('[data-completed="true"]')).toHaveCount(count);
+  const reloaded = exerciseRow(page, 0);
+  await expectLogged(reloaded);
+  await expect(weightField(reloaded)).toHaveValue('100');
+  await expect(repsField(reloaded)).toHaveValue('8');
 
   // No timers anywhere in the session UI.
   await expect(page.getByLabel('Elapsed time')).toHaveCount(0);
@@ -54,48 +51,44 @@ test('log a full exercise by keyboard, reload, finish and see the summary', asyn
   const dialog = page.getByRole('dialog', { name: 'Workout summary' });
   await expect(dialog).toBeVisible();
   await expect(dialog).not.toContainText('Duration');
-  await expect(dialog).toContainText(`${count}`);
+  await expect(dialog).toContainText(`${sets}`);
   await dialog.getByRole('button', { name: 'Finish workout' }).click();
   await expect(page).toHaveURL(/\/$/);
 });
 
-test('invalid text shows a hint and does not log; editing a logged row updates it', async ({
+test('invalid text shows a hint and does not log; editing a logged entry rewrites it', async ({
   page,
 }) => {
-  await startUpperA(page);
-  const card = firstCard(page);
-  const first = card.getByLabel('Set 1 entry', { exact: true });
-  await first.fill('lots');
-  await expect(card.getByTestId('set-feedback')).toHaveText('weight x reps');
-  await first.press('Enter');
-  await expect(card.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'false');
+  await startWorkout(page);
+  const row = exerciseRow(page, 0);
+  await weightField(row).fill('lots');
+  await repsField(row).fill('8');
+  await expect(row.getByTestId('entry-caption')).toContainText('weight');
+  await repsField(row).press('Enter');
+  await expectLogged(row, false);
 
-  await first.fill('100 x 8');
-  await first.press('Enter');
-  await expect(card.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
+  await logRow(row, '100', '8');
+  await expectLogged(row);
 
-  await first.fill('105 8');
-  await first.press('Enter');
-  await expect(first).toHaveValue('105 x 8');
+  await weightField(row).fill('105');
+  await repsField(row).fill('7');
+  await repsField(row).press('Enter');
+  await expect(weightField(row)).toHaveValue('105');
   await page.reload();
-  const reloaded = firstCard(page);
-  await expect(reloaded.getByLabel('Set 1 entry', { exact: true })).toHaveValue('105 x 8');
+  const reloaded = exerciseRow(page, 0);
+  await expect(weightField(reloaded)).toHaveValue('105');
+  await expect(repsField(reloaded)).toHaveValue('7');
 
   // Tapping the check on a logged row un-logs it.
-  await reloaded.getByRole('button', { name: 'Un-log set 1' }).click();
-  await expect(reloaded.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'false');
+  await reloaded.getByRole('button', { name: /^Un-log / }).click();
+  await expectLogged(reloaded, false);
 });
 
-test('a second session shows Last and prefills from the first', async ({ page }) => {
-  await startUpperA(page);
-  const card = firstCard(page);
-  await expect(card.getByTestId('set-row').first()).toBeVisible();
-  const count = await card.getByTestId('set-row').count();
-  await card.getByLabel('Set 1 entry', { exact: true }).fill('105 x 9');
-  for (let n = 1; n <= count; n++) {
-    await card.getByLabel(`Set ${n} entry`, { exact: true }).press('Enter');
-  }
-  await expect(card.getByRole('button', { name: /Expand/ })).toBeVisible();
+test('a second session shows the compact Last line and prefills from the first', async ({
+  page,
+}) => {
+  await startWorkout(page);
+  await logRow(exerciseRow(page, 0), '105', '9');
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
   await page.getByRole('button', { name: 'Finish workout' }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -105,16 +98,15 @@ test('a second session shows Last and prefills from the first', async ({ page })
   await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\//);
 
-  const second = firstCard(page);
-  await expect(second.getByTestId('last-line')).toContainText(
-    'Last: 105 lb × ' + Array(count).fill('9').join(', '),
-  );
-  await expect(second.getByLabel('Set 1 entry', { exact: true })).toHaveValue('105 x 9');
-  await expect(second.getByLabel(`Set ${count} entry`, { exact: true })).toHaveValue('105 x 9');
+  const second = exerciseRow(page, 0);
+  await expect(second.getByTestId('last-line')).toContainText('Last 105 x 9');
+  await expect(weightField(second)).toHaveValue('105');
+  await expect(repsField(second)).toHaveValue('9');
+  await expectLogged(second, false);
 });
 
 test('an empty session can be discarded', async ({ page }) => {
-  await startUpperA(page);
+  await startWorkout(page);
   await page.getByRole('button', { name: 'Finish', exact: true }).click();
   const sheet = page.getByRole('dialog', { name: 'No sets logged' });
   await sheet.getByRole('button', { name: 'Discard workout' }).click();

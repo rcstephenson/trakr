@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { formatSetEntry, parseSetEntry } from '../../../src/domain/setEntry';
+import { formatRepsText, formatWeightText, parseWeightReps } from '../../../src/domain/setEntry';
 import type { LoadType, Unit } from '../../../src/domain/types';
 
-const p = (text: string, load: LoadType = 'total', unit: Unit = 'lb') =>
-  parseSetEntry(text, { load, unit });
+const p = (w: string, r: string, load: LoadType = 'total', unit: Unit = 'lb') =>
+  parseWeightReps(w, r, { load, unit });
 const ok = (weight: number, reps: number, unit: Unit = 'lb') => ({
   ok: true,
   weight,
@@ -11,179 +11,110 @@ const ok = (weight: number, reps: number, unit: Unit = 'lb') => ({
   unit,
 });
 
-describe('parseSetEntry: separators', () => {
-  it.each([
-    '135 x 8',
-    '135x8',
-    '135X8',
-    '135 X 8',
-    '135×8',
-    '135 × 8',
-    '135*8',
-    '135 * 8',
-    '135 8',
-    '  135   8  ',
-    '135 x8',
-    '135x 8',
-  ])('accepts %j', (text) => {
-    expect(p(text)).toEqual(ok(135, 8));
+describe('parseWeightReps: weight', () => {
+  it('accepts whole numbers and decimals', () => {
+    expect(p('135', '8')).toEqual(ok(135, 8));
+    expect(p('62.5', '10')).toEqual(ok(62.5, 10));
+    expect(p('.5', '10')).toEqual(ok(0.5, 10));
+    expect(p('  135  ', ' 8 ')).toEqual(ok(135, 8));
   });
 
-  it('does not treat a plain number as weight and reps', () => {
-    expect(p('1358').ok).toBe(false);
+  it('accepts an explicit zero for a loaded exercise', () => {
+    expect(p('0', '8')).toEqual(ok(0, 8));
+  });
+
+  it('converts a lb/kg suffix to the display unit', () => {
+    expect(p('100kg', '5')).toEqual(ok(220, 5));
+    expect(p('100 kg', '5', 'total', 'kg')).toEqual(ok(100, 5, 'kg'));
+    expect(p('225lb', '5', 'total', 'kg')).toEqual(ok(102, 5, 'kg'));
+    expect(p('135 lbs', '5')).toEqual(ok(135, 5));
+  });
+
+  it.each(['', '  ', 'abc', '135x', '1,5', '-5', '--', '135 8', '10001', '+25', 'bw'])(
+    'rejects %j for load total',
+    (w) => {
+      const r = p(w, '8');
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.field).toBe('weight');
+    },
+  );
+
+  it('rejects a + prefix and bw for per-hand', () => {
+    expect(p('+25', '8', 'per-hand').ok).toBe(false);
+    expect(p('bw', '8', 'per-hand').ok).toBe(false);
+    expect(p('30', '8', 'per-hand')).toEqual(ok(30, 8));
   });
 });
 
-describe('parseSetEntry: numbers', () => {
-  it('accepts decimals', () => {
-    expect(p('62.5x10')).toEqual(ok(62.5, 10));
-    expect(p('.5 x 10')).toEqual(ok(0.5, 10));
+describe('parseWeightReps: bodyweight-plus', () => {
+  it('reads +25 and plain 25 as added load', () => {
+    expect(p('+25', '8', 'bodyweight-plus')).toEqual(ok(25, 8));
+    expect(p('25', '8', 'bodyweight-plus')).toEqual(ok(25, 8));
+    expect(p('+ 12.5', '8', 'bodyweight-plus')).toEqual(ok(12.5, 8));
+    expect(p('bw+25', '8', 'bodyweight-plus')).toEqual(ok(25, 8));
+    expect(p('+25kg', '8', 'bodyweight-plus')).toEqual(ok(55, 8));
   });
-  it('accepts zero weight', () => {
-    expect(p('0 x 5')).toEqual(ok(0, 5));
+
+  it('reads bw, empty and 0 as bodyweight', () => {
+    expect(p('bw', '12', 'bodyweight-plus')).toEqual(ok(0, 12));
+    expect(p('BW', '12', 'bodyweight-plus')).toEqual(ok(0, 12));
+    expect(p('', '12', 'bodyweight-plus')).toEqual(ok(0, 12));
+    expect(p('0', '12', 'bodyweight-plus')).toEqual(ok(0, 12));
   });
-  it('rejects fractional, zero and negative reps', () => {
-    expect(p('135 x 8.5').ok).toBe(false);
-    expect(p('135 x 0').ok).toBe(false);
-    expect(p('135 x -3').ok).toBe(false);
-  });
-  it('rejects negative weight', () => {
-    expect(p('-135 x 8').ok).toBe(false);
-  });
-  it('rejects absurd values', () => {
-    expect(p('135 x 5000').ok).toBe(false);
-    expect(p('99999 x 5').ok).toBe(false);
+
+  it('rejects nonsense', () => {
+    const r = p('x', '12', 'bodyweight-plus');
+    expect(r).toMatchObject({ ok: false, field: 'weight', hint: '+25, or bw' });
   });
 });
 
-describe('parseSetEntry: unit suffix', () => {
-  it('keeps a matching suffix as is', () => {
-    expect(p('100lb x 5', 'total', 'lb')).toEqual(ok(100, 5, 'lb'));
-    expect(p('100 lbs x 5', 'total', 'lb')).toEqual(ok(100, 5, 'lb'));
-    expect(p('60 KG x 5', 'total', 'kg')).toEqual(ok(60, 5, 'kg'));
-  });
-  it('converts kg to lb for display', () => {
-    expect(p('100kg x 5', 'total', 'lb')).toEqual(ok(220, 5, 'lb'));
-  });
-  it('converts lb to kg for display (nearest 0.5)', () => {
-    expect(p('135 lb x 5', 'total', 'kg')).toEqual(ok(61, 5, 'kg'));
-  });
-  it('accepts a suffix with whitespace separator', () => {
-    expect(p('100kg 5', 'total', 'lb')).toEqual(ok(220, 5, 'lb'));
-  });
-  it('rejects unknown units', () => {
-    expect(p('100st x 5').ok).toBe(false);
+describe('parseWeightReps: load none', () => {
+  it('ignores the weight and needs only reps', () => {
+    expect(p('', '12', 'none')).toEqual(ok(0, 12));
+    expect(p('whatever', '12', 'none')).toEqual(ok(0, 12));
   });
 });
 
-describe('parseSetEntry: bodyweight-plus', () => {
-  it('reads +25 x 8 and 25 x 8 as added weight', () => {
-    expect(p('+25 x 8', 'bodyweight-plus')).toEqual(ok(25, 8));
-    expect(p('25 x 8', 'bodyweight-plus')).toEqual(ok(25, 8));
-    expect(p('+25x8', 'bodyweight-plus')).toEqual(ok(25, 8));
+describe('parseWeightReps: reps', () => {
+  it('accepts whole numbers from 1 to 999', () => {
+    expect(p('135', '1')).toEqual(ok(135, 1));
+    expect(p('135', '999')).toEqual(ok(135, 999));
   });
-  it('reads bw x 12, 0 x 12 and 12 as bodyweight', () => {
-    expect(p('bw x 12', 'bodyweight-plus')).toEqual(ok(0, 12));
-    expect(p('BW12', 'bodyweight-plus').ok).toBe(false);
-    expect(p('bw 12', 'bodyweight-plus')).toEqual(ok(0, 12));
-    expect(p('0 x 12', 'bodyweight-plus')).toEqual(ok(0, 12));
-    expect(p('12', 'bodyweight-plus')).toEqual(ok(0, 12));
-  });
-  it('reads bw + 25 x 8', () => {
-    expect(p('bw+25 x 8', 'bodyweight-plus')).toEqual(ok(25, 8));
-  });
-  it('converts added weight with a suffix', () => {
-    expect(p('+10kg x 8', 'bodyweight-plus', 'lb')).toEqual(ok(22, 8, 'lb'));
+
+  it.each(['', ' ', '0', '00', '1000', '8.5', '-3', 'ab', '8 reps', '1e2'])(
+    'rejects reps %j',
+    (r) => {
+      const res = p('135', r);
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.field).toBe('reps');
+    },
+  );
+
+  it('reports weight before reps when both are bad', () => {
+    const r = p('', '');
+    expect(r).toMatchObject({ ok: false, field: 'weight' });
   });
 });
 
-describe('parseSetEntry: load none', () => {
-  it('takes reps only', () => {
-    expect(p('12', 'none')).toEqual(ok(0, 12));
+describe('formatters', () => {
+  it('formats weight text canonically', () => {
+    expect(formatWeightText(135)).toBe('135');
+    expect(formatWeightText(62.5, 'total')).toBe('62.5');
+    expect(formatWeightText(100.004, 'total')).toBe('100');
+    expect(formatWeightText(0, 'bodyweight-plus')).toBe('bw');
+    expect(formatWeightText(25, 'bodyweight-plus')).toBe('+25');
+    expect(formatWeightText(0, 'none')).toBe('');
   });
-  it('tolerates an explicit zero or bw load', () => {
-    expect(p('0 x 12', 'none')).toEqual(ok(0, 12));
-    expect(p('bw x 12', 'none')).toEqual(ok(0, 12));
-  });
-  it('rejects a real weight rather than dropping it', () => {
-    const r = p('25 x 12', 'none');
-    expect(r.ok).toBe(false);
-  });
-  it('rejects 0 reps', () => {
-    expect(p('0', 'none').ok).toBe(false);
-  });
-});
 
-describe('parseSetEntry: per-hand', () => {
-  it('needs weight x reps', () => {
-    expect(p('30 x 10', 'per-hand')).toEqual(ok(30, 10));
-    expect(p('10', 'per-hand').ok).toBe(false);
+  it('formats reps as a plain integer', () => {
+    expect(formatRepsText(8)).toBe('8');
   });
-});
 
-describe('parseSetEntry: invalid input', () => {
-  const cases = [
-    '',
-    '   ',
-    'abc',
-    'x',
-    '135x',
-    'x8',
-    '135 x x 8',
-    '135 x 8 x 3',
-    '1 2 3',
-    '135,8',
-    '8 reps',
-    'bw x 12',
-    '+25 x 8',
-    '135 lb',
-    '135',
-  ];
-  it.each(cases)('rejects %j for total load with a hint', (text) => {
-    const r = p(text);
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.hint).toContain('weight x reps');
-  });
-  it('gives load-specific hints', () => {
-    const none = p('abc', 'none');
-    const bw = p('abc', 'bodyweight-plus');
-    expect(none.ok || none.hint).toMatch(/reps/);
-    expect(bw.ok || bw.hint).toMatch(/bw/);
-  });
-  it('never guesses: no partial parse', () => {
-    expect(p('135 x 8abc').ok).toBe(false);
-    expect(p('abc 135 x 8').ok).toBe(false);
-  });
-});
-
-describe('formatSetEntry', () => {
-  it('formats canonically', () => {
-    expect(formatSetEntry(135, 8)).toBe('135 x 8');
-    expect(formatSetEntry(62.5, 10)).toBe('62.5 x 10');
-    expect(formatSetEntry(0, 12)).toBe('0 x 12');
-  });
-  it('trims float noise', () => {
-    expect(formatSetEntry(0.1 + 0.2, 5)).toBe('0.3 x 5');
-  });
-  it('is reps only for load none', () => {
-    expect(formatSetEntry(0, 12, 'none')).toBe('12');
-  });
-  it('shows bw for unweighted bodyweight-plus', () => {
-    expect(formatSetEntry(0, 12, 'bodyweight-plus')).toBe('bw x 12');
-    expect(formatSetEntry(25, 8, 'bodyweight-plus')).toBe('25 x 8');
-  });
   it('round-trips through the parser', () => {
-    const loads: LoadType[] = ['total', 'per-hand', 'bodyweight-plus', 'none'];
-    for (const load of loads) {
-      for (const [w, r] of [
-        [0, 12],
-        [135, 8],
-        [62.5, 10],
-      ] as const) {
-        if (load === 'none' && w !== 0) continue;
-        if (load !== 'none' && load !== 'bodyweight-plus' && w === 0) continue;
-        expect(p(formatSetEntry(w, r, load), load)).toEqual(ok(w, r));
-      }
+    for (const load of ['total', 'per-hand', 'bodyweight-plus', 'none'] as LoadType[]) {
+      const weight = load === 'none' ? 0 : 62.5;
+      const r = p(formatWeightText(weight, load), formatRepsText(9), load);
+      expect(r).toEqual(ok(weight, 9));
     }
   });
 });

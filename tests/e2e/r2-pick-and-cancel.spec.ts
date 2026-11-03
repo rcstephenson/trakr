@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { exerciseRow, expectLogged, logRow } from './session-helpers';
 
 const dayLabel = (d: Date) =>
   d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -22,13 +23,11 @@ async function setCount(page: Page): Promise<number> {
   });
 }
 
-/** Logs set 1 of the first exercise. */
+/** Logs the first exercise (100 x 8). */
 async function logOneSet(page: Page) {
-  const card = page.getByTestId('exercise-card').first();
-  const entry = card.getByLabel('Set 1 entry', { exact: true });
-  await entry.fill('100 x 8');
-  await entry.press('Enter');
-  await expect(card.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
+  const row = exerciseRow(page, 0);
+  await logRow(row, '100', '8');
+  await expectLogged(row);
 }
 
 async function finishWithOneSet(page: Page) {
@@ -104,15 +103,17 @@ test('discarding a session keeps it on Cancel and deletes it and its sets on con
   await page.goto('/');
   await page.getByRole('button', { name: /^Start / }).click();
   await logOneSet(page);
-  expect(await setCount(page)).toBe(1);
+  // One entry per exercise stores all of the exercise's sets.
+  const n = await setCount(page);
+  expect(n).toBeGreaterThanOrEqual(2);
 
   await page.getByRole('button', { name: 'Discard workout' }).click();
   const dialog = page.getByRole('dialog', { name: 'Discard this workout?' });
-  await expect(dialog).toContainText('1 logged set will be deleted.');
+  await expect(dialog).toContainText(`${n} logged sets will be deleted.`);
   await dialog.getByRole('button', { name: 'Keep logging' }).click();
   await expect(dialog).toBeHidden();
   await expect(page).toHaveURL(/\/session\//);
-  expect(await setCount(page)).toBe(1);
+  expect(await setCount(page)).toBe(n);
 
   await page.getByRole('button', { name: 'Discard workout' }).click();
   await page
@@ -129,6 +130,7 @@ test('the Resume hero can discard the in-progress workout', async ({ page }) => 
   await page.goto('/');
   await page.getByRole('button', { name: /^Start / }).click();
   await logOneSet(page);
+  const n = await setCount(page);
   await page.goto('/');
 
   await expect(page.getByRole('link', { name: 'Resume Upper A' })).toBeVisible();
@@ -137,7 +139,7 @@ test('the Resume hero can discard the in-progress workout', async ({ page }) => 
 
   await page.getByRole('button', { name: 'Discard workout' }).click();
   const dialog = page.getByRole('dialog', { name: 'Discard this workout?' });
-  await expect(dialog).toContainText('1 logged set will be deleted.');
+  await expect(dialog).toContainText(`${n} logged sets will be deleted.`);
   await dialog.getByRole('button', { name: 'Keep logging' }).click();
   await expect(page.getByRole('link', { name: 'Resume Upper A' })).toBeVisible();
 

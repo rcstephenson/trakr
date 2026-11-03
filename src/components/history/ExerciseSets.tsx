@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Plus, Trophy } from 'lucide-react';
 import * as setsRepo from '../../db/repositories/sets';
-import { formatSetEntry } from '../../domain/setEntry';
+import { formatRepsText, formatWeightText } from '../../domain/setEntry';
 import { formatWeight } from '../../domain/units';
 import type { Exercise, SetEntry, Settings } from '../../domain/types';
 import { weightInUnit } from '../session/prefill';
-import { SetRow } from '../session/SetRow';
+import { EntryFields } from '../session/EntryFields';
 import { Button, Card, Sheet } from '../ui';
-import type { SetGroup } from './detail';
+import { formatUniformRun, isUniformRun, type SetGroup } from './detail';
 
 export interface ExerciseSetsProps {
   sessionId: string;
@@ -43,6 +43,19 @@ export function ExerciseSets({
   const load = exercise?.load ?? 'total';
   const optionSet = group.sets.find((s) => s.id === optionsId);
 
+  // Read view rows: identical working sets collapse into one "3 × 100 lb × 8" line; warm-ups and
+  // legacy differing sets stay one row each.
+  const working = group.sets.filter((s) => !s.isWarmup);
+  const uniform = isUniformRun(working);
+  const readRows: { sets: SetEntry[]; number: number }[] = [];
+  group.sets.forEach((s, i) => {
+    if (uniform && !s.isWarmup) {
+      if (s === working[0]) readRows.push({ sets: working, number: i + 1 });
+      return;
+    }
+    readRows.push({ sets: [s], number: i + 1 });
+  });
+
   async function addSet() {
     const last = group.sets[group.sets.length - 1];
     await setsRepo.add({
@@ -74,21 +87,40 @@ export function ExerciseSets({
         <>
           <ul className="mt-2 border-t border-hairline">
             {group.sets.map((s, i) => (
-              <SetRow
+              <li
                 key={s.id}
-                index={i}
-                completed
-                isWarmup={s.isWarmup}
-                rir={s.rir}
-                load={load}
-                unit={settings.unit}
-                baseText={formatSetEntry(weightInUnit(s, settings.unit), s.reps, load)}
-                onLog={(p) =>
-                  void setsRepo.update(s.id, { weight: p.weight, unit: p.unit, reps: p.reps })
-                }
-                onUnlog={() => void setsRepo.remove(s.id)}
-                onOptions={() => setOptionsId(s.id)}
-              />
+                className="flex border-t border-hairline first:border-t-0"
+                data-testid="edit-set-row"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOptionsId(s.id)}
+                  aria-label={`Set ${i + 1} options`}
+                  className="num flex h-12 w-12 shrink-0 items-center justify-center text-xs font-medium text-muted"
+                >
+                  {s.isWarmup ? (
+                    <span className="rounded-chip border border-pr px-1 font-semibold text-ink">
+                      W
+                    </span>
+                  ) : (
+                    String(i + 1).padStart(2, '0')
+                  )}
+                </button>
+                <div className="flex min-w-0 flex-1 border-l border-hairline">
+                  <EntryFields
+                    label={`Set ${i + 1}`}
+                    load={load}
+                    unit={settings.unit}
+                    baseWeight={formatWeightText(weightInUnit(s, settings.unit), load)}
+                    baseReps={formatRepsText(s.reps)}
+                    completed
+                    onSubmit={(p) =>
+                      void setsRepo.update(s.id, { weight: p.weight, unit: p.unit, reps: p.reps })
+                    }
+                    onUnlog={() => void setsRepo.remove(s.id)}
+                  />
+                </div>
+              </li>
             ))}
           </ul>
           <div className="border-t border-hairline">
@@ -137,27 +169,34 @@ export function ExerciseSets({
         </>
       ) : (
         <ul className="mt-2 border-t border-hairline">
-          {group.sets.map((s, i) => {
-            const pr = prSetIds.has(s.id);
+          {readRows.map((row) => {
+            const pr = row.sets.some((x) => prSetIds.has(x.id));
+            const first = row.sets[0];
             return (
               <li
-                key={s.id}
+                key={first.id}
                 data-testid="detail-set"
                 className={`num relative flex min-h-[44px] items-center gap-3 border-t border-hairline pr-3 text-base first:border-t-0 ${
-                  s.isWarmup ? 'text-muted' : 'text-ink'
+                  first.isWarmup ? 'text-muted' : 'text-ink'
                 }`}
               >
                 <span className="w-10 text-center text-xs text-muted">
-                  {s.isWarmup ? (
+                  {first.isWarmup ? (
                     <span className="rounded-chip border border-pr px-1 font-semibold text-ink">
                       W
                     </span>
-                  ) : (
-                    String(i + 1).padStart(2, '0')
+                  ) : row.sets.length > 1 ? null : (
+                    String(row.number).padStart(2, '0')
                   )}
                 </span>
-                <span className="font-medium">{setText(s, exercise, settings)}</span>
-                {s.rir !== undefined ? <span className="micro">RIR {s.rir}</span> : null}
+                <span className="font-medium">
+                  {row.sets.length > 1
+                    ? formatUniformRun(row.sets, exercise, settings.unit)
+                    : setText(first, exercise, settings)}
+                </span>
+                {first.rir !== undefined && row.sets.length === 1 ? (
+                  <span className="micro">RIR {first.rir}</span>
+                ) : null}
                 {pr ? (
                   <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-ink">
                     <Trophy size={14} className="text-pr" aria-hidden="true" />

@@ -1,10 +1,14 @@
 import { convert, roundForDisplay } from './units';
 import type { LoadType, Unit } from './types';
 
-export type SetEntryResult =
-  { ok: true; weight: number; reps: number; unit: Unit } | { ok: false; hint: string };
+/** Which of the two fields a rejected entry is about. */
+export type EntryField = 'weight' | 'reps';
 
-export interface SetEntryOptions {
+export type WeightRepsResult =
+  | { ok: true; weight: number; reps: number; unit: Unit }
+  | { ok: false; field: EntryField; hint: string };
+
+export interface WeightRepsOptions {
   load: LoadType;
   /** The display unit: the unit of the returned weight. */
   unit: Unit;
@@ -14,21 +18,15 @@ const MAX_WEIGHT = 10000;
 const MAX_REPS = 999;
 
 const NUM = String.raw`(?:\d+(?:\.\d+)?|\.\d+)`;
-const SPLIT_RE = /^(.*?)(?:\s*[x×*]\s*|\s+)(\d+)$/;
 const WEIGHT_RE = new RegExp(String.raw`^(\+?)\s*(${NUM})\s*(lbs?|kg)?$`);
 const BW_PLUS_RE = new RegExp(String.raw`^bw\s*\+\s*(${NUM})\s*(lbs?|kg)?$`);
 const REPS_RE = /^\d+$/;
 
-function hintFor(load: LoadType): string {
-  switch (load) {
-    case 'none':
-      return 'reps (e.g. 12)';
-    case 'bodyweight-plus':
-      return 'added x reps, or bw x reps';
-    default:
-      return 'weight x reps';
-  }
+function weightHint(load: LoadType): string {
+  return load === 'bodyweight-plus' ? '+25, or bw' : 'weight (e.g. 135)';
 }
+
+const REPS_HINT = 'whole reps (e.g. 8)';
 
 function suffixUnit(suffix: string | undefined): Unit | undefined {
   if (!suffix) return undefined;
@@ -41,62 +39,65 @@ function toDisplayUnit(value: number, from: Unit | undefined, unit: Unit): numbe
 }
 
 /**
- * Parses one set's text (`135 x 8`) into numbers in the display unit. Anything that does not
- * match the grammar in SPEC 6.1 is rejected with a short hint; this never guesses.
+ * Parses the weight text on its own. Returns the weight in the display unit, or null if it is not
+ * acceptable for this load type. Load `none` has no weight (always 0).
  */
-export function parseSetEntry(text: string, options: SetEntryOptions): SetEntryResult {
-  const { load, unit } = options;
-  const bad: SetEntryResult = { ok: false, hint: hintFor(load) };
+function parseWeight(text: string, load: LoadType, unit: Unit): number | null {
+  if (load === 'none') return 0;
   const t = text.trim().toLowerCase();
-  if (t === '') return bad;
+  if (load === 'bodyweight-plus' && (t === '' || t === 'bw' || t === 'bodyweight')) return 0;
+  if (t === '') return null;
 
-  const finish = (weight: number, reps: number): SetEntryResult => {
-    if (!Number.isFinite(weight) || !Number.isInteger(reps)) return bad;
-    if (reps < 1 || reps > MAX_REPS || weight < 0 || weight > MAX_WEIGHT) return bad;
-    return { ok: true, weight, reps, unit };
-  };
-
-  // Reps only.
-  if (REPS_RE.test(t)) {
-    return load === 'none' || load === 'bodyweight-plus' ? finish(0, Number(t)) : bad;
-  }
-
-  const parts = SPLIT_RE.exec(t);
-  if (!parts) return bad;
-  const weightPart = parts[1].trim();
-  const reps = Number(parts[2]);
-
-  if (load === 'none') {
-    // Reps only is the entry; an explicit zero / bodyweight load is harmless, anything else is not.
-    return weightPart === 'bw' || /^0+(?:\.0*)?$/.test(weightPart) ? finish(0, reps) : bad;
-  }
-
-  if (weightPart === 'bw' || weightPart === 'bodyweight') {
-    return load === 'bodyweight-plus' ? finish(0, reps) : bad;
-  }
-
-  const bwPlus = BW_PLUS_RE.exec(weightPart);
+  const bwPlus = BW_PLUS_RE.exec(t);
   if (bwPlus) {
-    if (load !== 'bodyweight-plus') return bad;
-    return finish(toDisplayUnit(Number(bwPlus[1]), suffixUnit(bwPlus[2]), unit), reps);
+    if (load !== 'bodyweight-plus') return null;
+    return check(toDisplayUnit(Number(bwPlus[1]), suffixUnit(bwPlus[2]), unit));
   }
+  const w = WEIGHT_RE.exec(t);
+  if (!w) return null;
+  if (w[1] === '+' && load !== 'bodyweight-plus') return null;
+  return check(toDisplayUnit(Number(w[2]), suffixUnit(w[3]), unit));
+}
 
-  const w = WEIGHT_RE.exec(weightPart);
-  if (!w) return bad;
-  if (w[1] === '+' && load !== 'bodyweight-plus') return bad;
-  return finish(toDisplayUnit(Number(w[2]), suffixUnit(w[3]), unit), reps);
+function check(weight: number): number | null {
+  return Number.isFinite(weight) && weight >= 0 && weight <= MAX_WEIGHT ? weight : null;
+}
+
+/**
+ * Validates the two entry fields (SPEC 6.1) into numbers in the display unit. Anything outside the
+ * rules is rejected with a short hint naming the field; this never guesses.
+ * - weight: a non-negative number (`.` decimal), optional `lb`/`kg` suffix (converted). Bodyweight-plus
+ *   also takes `+25` (added load) and `bw`/empty/0 (bodyweight). Load `none` ignores the weight.
+ * - reps: a whole number from 1 to 999.
+ */
+export function parseWeightReps(
+  weightText: string,
+  repsText: string,
+  options: WeightRepsOptions,
+): WeightRepsResult {
+  const { load, unit } = options;
+  const weight = parseWeight(weightText, load, unit);
+  if (weight === null) return { ok: false, field: 'weight', hint: weightHint(load) };
+  const r = repsText.trim();
+  const reps = REPS_RE.test(r) ? Number(r) : NaN;
+  if (!Number.isInteger(reps) || reps < 1 || reps > MAX_REPS) {
+    return { ok: false, field: 'reps', hint: REPS_HINT };
+  }
+  return { ok: true, weight, reps, unit };
 }
 
 function num(n: number): string {
   return String(Number(n.toFixed(2)));
 }
 
-/**
- * Canonical text for a set: `135 x 8`. With `load` given, load `none` is reps only (`12`) and a
- * bodyweight-plus set with no added weight is `bw x 12`.
- */
-export function formatSetEntry(weight: number, reps: number, load?: LoadType): string {
-  if (load === 'none') return String(reps);
-  if (load === 'bodyweight-plus' && weight === 0) return `bw x ${reps}`;
-  return `${num(weight)} x ${reps}`;
+/** Canonical weight field text: `135`, `62.5`; bodyweight-plus is `bw` or `+25`; load none is ''. */
+export function formatWeightText(weight: number, load?: LoadType): string {
+  if (load === 'none') return '';
+  if (load === 'bodyweight-plus') return weight === 0 ? 'bw' : `+${num(weight)}`;
+  return num(weight);
+}
+
+/** Canonical reps field text (a plain integer). */
+export function formatRepsText(reps: number): string {
+  return String(reps);
 }
