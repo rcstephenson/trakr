@@ -1,4 +1,5 @@
 ﻿import { expect, test } from '@playwright/test';
+import { exerciseRow, expectLogged, logRow, repsField, weightField } from './session-helpers';
 
 // Runs against the production build served by `vite preview` (service workers don't run in dev).
 test('works offline after the first load: reload, start a workout, log a set', async ({
@@ -23,15 +24,15 @@ test('works offline after the first load: reload, start a workout, log a set', a
   await page.getByRole('button', { name: /^Start / }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
 
-  const card = page.getByTestId('exercise-card').first();
-  await expect(card.getByTestId('set-row').first()).toBeVisible();
-  await card.getByLabel('Set 1 entry', { exact: true }).fill('100 x 8');
-  await card.getByLabel('Set 1 entry', { exact: true }).press('Enter');
-  await expect(card.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
+  const row = exerciseRow(page, 0);
+  await expect(row).toBeVisible();
+  await logRow(row, '100', '8');
+  await expectLogged(row);
 
-  // Still offline: a deep-link reload serves the app shell and the logged set persisted.
+  // Still offline: a deep-link reload serves the app shell and the logged entry persisted.
   await page.reload();
-  const reloaded = page.getByTestId('exercise-card').first();
-  await expect(reloaded.getByTestId('set-row').first()).toHaveAttribute('data-completed', 'true');
-  await expect(reloaded.getByLabel('Set 1 entry', { exact: true })).toHaveValue('100 x 8');
+  const reloaded = exerciseRow(page, 0);
+  await expectLogged(reloaded);
+  await expect(weightField(reloaded)).toHaveValue('100');
+  await expect(repsField(reloaded)).toHaveValue('8');
 });

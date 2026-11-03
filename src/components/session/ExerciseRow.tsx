@@ -79,13 +79,14 @@ export function ExerciseRow(props: ExerciseRowProps) {
         </h3>
         <p className="num mt-1 text-xs leading-4 text-muted">
           {target.sets} × {repRange(target)}
-          {lastSets && lastSets.length > 0 ? (
-            <span data-testid="last-line">
-              {' · '}
-              <span className="micro">Last</span> {formatLast(lastSets, settings.unit, exercise)}
-            </span>
-          ) : null}
         </p>
+        {lastSets && lastSets.length > 0 ? (
+          <p className="num text-xs leading-4 text-muted" data-testid="last-line">
+            <span className="micro">Last</span>
+            {' '}
+            {formatLast(lastSets, settings.unit, exercise)}
+          </p>
+        ) : null}
       </div>
       <div className="flex border-l border-hairline">
         <EntryFields

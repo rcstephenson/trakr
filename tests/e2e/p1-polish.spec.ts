@@ -64,15 +64,8 @@ test('every text-entry control is at least 16px (no iOS focus zoom)', async ({ p
   await check('activity form');
 
   await startWorkout(page);
-  await expect(page.getByLabel('Set 1 entry').first()).toBeVisible();
+  await expect(page.getByTestId('exercise-row').first().getByRole('textbox')).toHaveCount(2);
   await check('session');
-  await page.getByRole('button', { name: 'Note', exact: true }).first().click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await check('note sheet');
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Swap exercise' }).first().click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await check('swap sheet');
 
   expect(seen).toEqual(Object.fromEntries(Object.keys(seen).map((k) => [k, [] as string[]])));
 });
@@ -109,10 +102,13 @@ for (const scheme of ['light', 'dark'] as const) {
   test(`focus indicators reach 3:1 in ${scheme}`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme });
     await startWorkout(page);
-    const entry = page.getByLabel('Set 1 entry', { exact: true }).first();
-    await entry.focus();
-    await expect(entry).toBeFocused();
-    expect(await focusContrast(page, '[aria-label="Set 1 entry"]')).toBeGreaterThanOrEqual(3);
+    for (const which of ['first', 'last'] as const) {
+      const entry = page.getByTestId('exercise-row').first().getByRole('textbox')[which]();
+      await entry.focus();
+      await expect(entry).toBeFocused();
+      const label = await entry.getAttribute('aria-label');
+      expect(await focusContrast(page, `[aria-label="${label}"]`)).toBeGreaterThanOrEqual(3);
+    }
 
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Today', level: 1 })).toBeVisible();

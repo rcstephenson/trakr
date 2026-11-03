@@ -58,7 +58,7 @@ All colours are CSS custom properties defined in `src/styles/index.css`. Paper i
 | `--hairline` | `border-hairline`, `bg-hairline`, `divide-hairline` | `#d3d9e0` | `#232a33` | All 1px borders, dividers, rest/off segments, skeleton fill. |
 | `--hairline-strong` | `border-hairline-strong` | `#7d8794` | `#657080` | Borders of form controls (text inputs, selects, textareas, the file picker) so the field boundary reaches 3:1. Never for cards, rows or dividers. |
 | `--accent` | `bg-accent` (fill only) | `#c6ff3d` | `#c6ff3d` | The lime. Fills, ticks, bars, selection highlight. Identical in both themes. |
-| `--on-accent` | `text-on-accent` | `#0a0e14` | `#0a0c10` | Text/icons on an accent fill (collapsed-card check tile, `::selection`). |
+| `--on-accent` | `text-on-accent` | `#0a0e14` | `#0a0c10` | Text/icons on an accent fill (`::selection`). |
 | `--accent-ink` | `text-accent`, `border-accent` (remapped) | `#3d5a00` | `#c6ff3d` | Accent-coloured **text and lines**. Dark olive on Paper so it passes AA; equals the lime on Graphite. |
 | `--primary` | `bg-primary`, `border-primary` | `#0a0e14` | `#c6ff3d` | Primary button fill and selected state of the settings segmented control. |
 | `--on-primary` | `text-on-primary` | `#f8fafb` | `#0a0c10` | Text on `--primary`. |
@@ -74,7 +74,7 @@ All colours are CSS custom properties defined in `src/styles/index.css`. Paper i
 
 | Utility | Resolves to | Use |
 |---|---|---|
-| `bg-accent` | `--accent` (lime) | Fills: 2px bars, ticks, 8px squares, filled segments, check tile. |
+| `bg-accent` | `--accent` (lime) | Fills: 2px bars, ticks, 8px squares, filled segments. |
 | `text-accent` | `--accent-ink` | Accent-coloured text and icons (links, indices, logged tick). |
 | `border-accent` | `--accent-ink` | Accent outlines (segment outline, intensity swatches). |
 
@@ -221,7 +221,7 @@ There are no off-scale literals: the cycle-strip labels, the `R3` RIR badge and 
 ### 3.5 What must be mono (`.num` or `<Mono>`)
 
 Must be mono with tabular figures:
-- Anything the user logged: weights, reps, the `weight x reps` entry, RIR, set indices (`01`).
+- Anything the user logged: weights, reps (the entry fields), RIR, indices (`01`).
 - Computed data: volume, set counts, durations, pace, distances, e1RM, chart axes and tooltips.
 - Dates and times in lists and rows (`Mar 4`, `12:04`, relative-day labels).
 - Counters inside labels (`3/5 done`, `04` group counts).
@@ -254,13 +254,13 @@ Stays in the UI font: workout and exercise names in rows, button labels, titles,
 |---|---|---|
 | `rounded-card` | 8px | Cards, list containers, empty state, sheet top corners, icon tile |
 | `rounded-btn` | 6px | Buttons, text inputs, segmented controls, tooltip, stat tiles, icon boxes |
-| `rounded-chip` | 4px | Chips, schedule tiles, week-day tiles, warm-up badge, check tile |
+| `rounded-chip` | 4px | Chips, schedule tiles, week-day tiles, warm-up badge |
 | `rounded-[2px]` | 2px | Segments, intensity swatches, 8px accent squares, sheet grab handle |
 | `rounded-none` | square | The 2px selected-chip underline (a straight line; there are no pills anywhere) |
 
 Borders are always **1px** (`border`) in `border-hairline` unless a state changes the colour (`border-ink` selected, `border-danger`, `border-primary`). The only 2px strokes are accent bars/ticks (`h-0.5` / `w-0.5`), the note rule (`border-l-2 border-hairline`), and the focus outline. There are no shadows anywhere.
 
-Hairline usage: card edge, `divide-y divide-hairline` between rows in a list card, `border-t` between a card header and its rows, `divide-x` in the action strip, and the `h-px flex-1 bg-hairline` rule in `SectionLabel`.
+Hairline usage: card edge, `divide-y divide-hairline` between rows in a list card, `border-t` between a card header and its rows, and the `h-px flex-1 bg-hairline` rule in `SectionLabel`.
 
 ### 4.2 Spacing
 
@@ -269,11 +269,12 @@ Tailwind's 4px scale is unchanged. Named additions: `gutter` = 16px (`px-gutter`
 | Thing | Value |
 |---|---|
 | Screen side gutter | 16px (`px-gutter`) |
-| Gap between page sections | 20px (`gap-5`); exercise cards in a session: 12px (`gap-3`) |
+| Gap between page sections | 20px (`gap-5`); the session is a single ledger card |
 | Section label to its content | 8px (`mt-2`) |
 | Card padding | 16px (`p-4`, from `Card`); hero 20px (`p-5`); compact cards `!p-3` or `!p-0` with inner `px-3` |
 | List row | min 48px (`min-h-touch`), `px-3 py-2`, `gap-3` |
-| Set row | exactly 48px (`min-h-12`; index, input and log button are each 48x48) |
+| Exercise row (session) | min 64px (`min-h-16`): 48px inputs and log button plus a 16px caption; grows with a wrapping name |
+| History edit set row | 48px index button beside the same entry fields |
 | Page header | `px-gutter pb-2 pt-5`, min 48px |
 | Bottom space | `pb-28` (112px) on `<main>` outside sessions, `pb-8` in sessions |
 | Chip gap | 6px (`gap-1.5`); button groups 8px (`gap-2`) |
@@ -367,7 +368,7 @@ Don't make chips pills, add icons beyond 18px (`TypeChips` pairs an 18px icon wi
 
 ### 5.4 Sheet (`Sheet.tsx`)
 
-Purpose: modal bottom drawer for secondary flows (swap, note, finish summary, set options, import). Props: `open`, `onClose`, `title` (required, becomes `aria-label` and the visible `h2`), `children`.
+Purpose: modal bottom drawer for secondary flows (finish summary, discard confirm, History set options, import). Props: `open`, `onClose`, `title` (required, becomes `aria-label` and the visible `h2`), `children`.
 
 Anatomy:
 
@@ -443,7 +444,7 @@ Output: `01 / THIS WEEK ──────────── 3/4 done`. The inde
 
 ### 5.10 SegmentedBar (`SegmentedBar.tsx`)
 
-A row of equal-width segments used as a level meter. Props: `states?`, `value?`, `total?`, `label` (required), `className`. `role="img"` with `aria-label={label}` (e.g. "3 of 5 sets logged"). Container: `flex items-end gap-1`; each segment `flex-1 rounded-[2px] border`.
+A row of equal-width segments used as a level meter (exercises logged on the session screen). Props: `states?`, `value?`, `total?`, `label` (required), `className`. `role="img"` with `aria-label={label}` (e.g. "3 of 8 exercises logged"). Container: `flex items-end gap-1`; each segment `flex-1 rounded-[2px] border`.
 
 | State | Classes | Meaning |
 |---|---|---|
@@ -456,7 +457,7 @@ A row of equal-width segments used as a level meter. Props: `states?`, `value?`,
 Two modes: `value`/`total` produces `on` then `off` segments (sets logged, workouts this week). `states` gives explicit per-slot states and wins (7-day cycle). The lime fill has an `--accent-ink` outline so it stays visible on Paper. State is carried by height and fill, not colour alone.
 
 ```tsx
-<SegmentedBar value={completedCount} total={rowCount} label={`${completedCount} of ${rowCount} sets logged`} />
+<SegmentedBar value={loggedCount} total={total} label={`${loggedCount} of ${total} exercises logged`} />
 <SegmentedBar states={['done','done','rest','current','off','rest','off']} label="Seven day schedule" />
 ```
 
@@ -489,62 +490,60 @@ Two modes: `value`/`total` produces `on` then `off` segments (sets logged, worko
 
 `SectionLabel index={n}`. Index counts sections on the page, starting at 1; History groups by week and indexes each group (`gi + 1`). The content follows after `mt-2`. The count/summary slot is mono.
 
-### 6.2 Exercise card (session)
+### 6.2 Exercise ledger (session)
+
+The session is **one table**: exercise on the left, the user's entry on the right. Each exercise has ONE weight field and ONE reps field that apply to all of its sets (SPEC 6.1).
 
 ```
-┌──────────────────────────────────────────────────────┐
-│ 01 · BARBELL BENCH PRESS                    4 × 6–8  │  px-3 pt-3
-│ LAST: 135 x 8 · 135 x 8 · 135 x 7                    │  .num text-xs muted
-│ ▰▰▰▱                                                 │  SegmentedBar mt-3
-├──────────────────────────────────────────────────────┤
-│ 01  135 x 8                                        ✓ │  set rows (6.3)
-│ 02  135 x 8                                        ✓ │
-│ 03  135 x 7                                      ( ↵ )│
-├──────────────────────────────────────────────────────┤
-│  + ADD SET  │   ⇄ SWAP EXERCISE    │  ✉ NOTE         │  action strip (6.4)
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ EXERCISE · 3 / 8 LOGGED                    WEIGHT / REPS │  px-3 pt-3, micro
+│ ▰▰▰▱▱▱▱▱                                                 │  SegmentedBar, mx-3 mt-2 mb-3
+├────────────────────────┬──────────┬─────────┬────────────┤
+│ 01 Barbell Bench Press │   135    │    8    │     ✓      │  row (6.3)
+│ 4 × 6–8                │    LB    │   REPS  │            │
+│ LAST 135 x 8           │          │         │            │
+├────────────────────────┼──────────┼─────────┼────────────┤
+│ 02 Incline Dumbbell…   │  weight  │  reps   │    ( ↵ )   │
+└────────────────────────┴──────────┴─────────┴────────────┘
+                     Discard workout   (ghost, danger text)
 ```
 
-- Container: `Card className="!p-0"`.
-- Title: `h3` `font-mono text-xs font-semibold uppercase leading-5 tracking-wide text-ink`; the `01 ·` prefix is `text-accent` (`aria-hidden`).
-- Target (`4 × 6–8`): `num shrink-0 text-xs text-muted`, en dash for ranges.
-- Last line: `num mt-1 text-xs text-muted` with a `micro` "Last:" prefix. Data only, no advice.
-- Optional note: `mt-1.5 border-l-2 border-hairline pl-2 text-xs text-ink`.
-- Rows list: `ul.mt-2.border-t.border-hairline`.
-- **Collapsed** (all sets logged): one 48px button row with a 28px lime check tile (`h-7 w-7 rounded-chip bg-accent text-on-accent`, 16px/3 check), mono uppercase name with the index in muted, and a one-line `num text-xs text-muted` summary. Tap expands.
+- Container: `Card className="!p-0 overflow-hidden"` inside `px-gutter pb-6 pt-3`; the card's `overflow-hidden` also makes the global focus ring draw inset. Rows live in `ul.border-t.border-hairline`.
+- Header: `micro` `Exercise · <num text-ink>3</num> / 8 logged` on the left, `micro` `Weight / reps` on the right, then the `SegmentedBar` (`value` = exercises with at least one stored set, `total` = exercises, label `3 of 8 exercises logged`). There is no per-card or per-set bar any more.
+- Row: `li.group.relative.grid.min-h-16.grid-cols-[minmax(0,42fr)_minmax(0,58fr)].border-t.border-hairline.first:border-t-0`. Minimum height 64px (a 48px input plus its 16px caption); taller when the name wraps.
+- **Column 1 (exercise, 42%)**: `py-2.5 pl-3 pr-2`. Name `h3` `text-sm font-semibold leading-[18px] tracking-tight text-ink [overflow-wrap:anywhere]`, preceded by the mono index (`num mr-1.5 text-xs font-medium text-muted`, `01`). The name **wraps and is never truncated** (a 33-character name takes three lines at 360px). Under it, `num mt-1 text-xs text-muted` shows the target `3 × 6–10`, then (when there is history) `Last <value>` on its own line (`data-testid="last-line"`, `micro` "Last" + a non-breaking space + the value): `105 x 9` when last time's working sets were identical (`bw x 12`, `+25 x 8`, `12 reps` for the other loads), otherwise the grouped list (`135 lb × 8 · 145 lb × 6`). Data only.
+- **Column 2 (entry, 58%)**: `flex border-l border-hairline`, holding the entry fields (6.3).
+- Focused row: `group-focus-within` shows the 2px `--accent-ink` bar at the row's left edge and the focused field gets the inset 2px ring. Logged rows are marked only by the tick (and the `data-logged` attribute): no fill, no colour change.
+- Sets, swap, note, per-set numbering, per-set options and the collapsed card were removed. The only other things on the screen are the sticky header (back, `SESSION` label, workout name, **Finish**) and the ghost danger **Discard workout** button below the table.
 
-### 6.3 Ledger set row
+### 6.3 Entry fields (weight + reps)
+
+`EntryFields` (`src/components/session/EntryFields.tsx`) is the whole control. It is also used per set in History edit mode.
 
 ```
- ▌ 02 │ 135 x 8                              │  ↵  │      focused row: ring on the field + 2px bar at far left
-   ^48px   ^ single text input (mono, 18px)    ^48px
- ▌    │ 100 lb × 8                                   │      preview caption (micro, mono)
+ ┌───────────┬───────────┐┌────┐
+ │   62.5    │    10     ││ ↵  │   inputs 48px high; button 48x48
+ └───────────┴───────────┘└────┘
+      LB          REPS             caption row (micro, one line, 16px)
 ```
-
-One 48px-high line per set: `li.group.relative.flex.min-h-12.items-start.border-t.border-hairline.first:border-t-0`.
 
 | Part | Spec |
 |---|---|
-| Index button | 48x48, `num text-xs font-medium text-muted`, shows `01`..; opens set options (`aria-label="Set N options"`). Warm-up shows a `W` badge (`rounded-chip border border-pr px-1 font-semibold text-ink`); RIR shows `R3` under it (`text-micro`). |
-| Entry input | **One** `type="text"` field holding `weight x reps`. `num h-12 w-full bg-transparent px-2 text-base font-medium`; `placeholder:font-normal placeholder:text-muted`; the global focus ring is kept but drawn **inset** (`focus-visible:outline-offset-[-2px]`) so it stays inside the 48px cell. Placeholder `weight x reps` (`reps` for load type `none`). Attributes: `inputMode="text" enterKeyHint="done" autoCapitalize="off" autoCorrect="off" autoComplete="off" spellCheck={false}`, `aria-label="Set N entry"`. Selects its text on focus. |
-| Focus | Inset 2px `--accent-ink` ring around the entry field (6.96 to 7.89:1 on Paper, lime on Graphite) plus a 2px left bar (`absolute inset-y-0 left-0 hidden w-0.5 bg-accent-ink group-focus-within:block`) as the secondary flourish. Selected text and caret also show focus. |
-| Logged | Right cell is a 48px button with a `Check` (22px, stroke 3, `text-accent`), `aria-pressed`, `aria-label="Un-log set N"`. Tapping un-logs. Text is `text-ink`. |
-| Unlogged with history prefill | Text is `text-muted` until edited (prefill is not a value yet). Right cell is `CornerDownLeft` (20px, `text-muted`, left hairline), `aria-label="Log set N"`, disabled at 30% opacity when the entry is invalid. |
-| Edited logged row | Right cell switches to the log icon (`Update set N`) until saved. |
-| Preview / hint caption | Appears only after the user edits and the field is non-empty. `num -mt-2 px-1 pb-1.5 text-micro uppercase tracking-micro`, `text-muted` with the parsed preview (`100 lb × 8`, `12 reps`), or `text-danger` with the hint (`weight x reps`). |
-| Invalid | Input text becomes `text-danger`, the row gets `bg-raised`, the input has `aria-invalid`, the hint line appears, logging is disabled. Never guess a value. |
+| Weight field | `type="text"` `inputMode="decimal"` `enterKeyHint="next"`; `num h-12 w-full min-w-0 bg-transparent px-1 text-center text-lg font-medium` (18px, never under 16px so iOS does not zoom); placeholder `weight` (`placeholder:text-sm font-normal text-muted`); `aria-label="<Exercise> weight"`. Accepts `135`, `62.5`, `100kg`, `+25`, `bw` per load type (SPEC 6.1). Not rendered for load `none`. |
+| Reps field | `type="text"` `inputMode="numeric"` `enterKeyHint="done"`, same classes plus `border-l border-hairline` between the two fields; placeholder `reps`; `aria-label="<Exercise> reps"`. For load `none` it is the only field and takes the full width. |
+| Common attributes | `autoCapitalize="off" autoCorrect="off" autoComplete="off" spellCheck={false}`. Both select their text on focus. |
+| Log button | 48x48, `border-l border-hairline`. Unlogged or edited: `CornerDownLeft` 20px, `text-muted`, `aria-label="Log <Exercise>"` / `"Update <Exercise>"`, disabled at 30% when the pair is invalid. Logged and unedited: `Check` 22px stroke 3, `text-accent`, `aria-pressed`, `aria-label="Un-log <Exercise>"`; tapping deletes all the exercise's sets. |
+| Caption row | `num truncate text-micro uppercase tracking-micro px-1 pb-1`, always one line so rows do not jump. Default: two centred labels under the fields, `LB`/`KG` (the display unit) and `REPS` (`aria-hidden`). After an edit with valid values the parsed preview replaces them (`100 lb × 8`, `BW × 8`, `12 reps`, muted). An invalid non-empty field shows its hint instead, `text-danger` (`weight (e.g. 135)`, `+25, or bw`, `whole reps (e.g. 8)`), `role="status"`. |
+| Prefill | The previous session's first working set, shown in `text-muted` in BOTH fields until either is edited or the pair is logged. No history: empty fields with placeholders. |
+| Invalid | The offending field's text becomes `text-danger` and gets `aria-invalid`; the hint appears in the caption row; logging is disabled. Never guess. |
 
-Keyboard flow: see [8.5](#85-keyboard-flow-on-the-logging-screen).
+**Focus order and keys:** weight, then reps, then the log button, then the next row. Enter in weight moves to reps; Enter in reps logs (or rewrites, for a logged row); logging a new exercise then moves focus to the next row's first field (see 8.5).
 
-### 6.4 Three-cell action strip
+**Fit:** at 360px the entry column is about 190px: two fields of about 67px each plus the 48px button. `135.5` and `100` fit at 18px with no clipping (guarded in `tests/e2e/r3-single-entry.spec.ts`).
 
-```
-├───────────────┬─────────────────────────┬─────────────┤
-│  + ADD SET    │   ⇄ SWAP EXERCISE       │  ✉ NOTE     │
-└───────────────┴─────────────────────────┴─────────────┘
-```
+### 6.4 Add-set cell (History edit mode only)
 
-Container: `flex divide-x divide-hairline border-t border-hairline`. Each cell: `inline-flex min-h-touch flex-1 items-center justify-center gap-1.5 whitespace-nowrap font-mono text-micro font-medium uppercase tracking-micro text-ink active:bg-bg`, with a 14px lucide icon. The middle cell is wider (`!flex-[1.7]`). The same single-cell recipe (`Add set`) is reused full width in History edit mode.
+Container `border-t border-hairline`, one full-width cell: `inline-flex min-h-touch w-full items-center justify-center gap-1.5 font-mono text-micro font-medium uppercase tracking-micro text-ink active:bg-bg` with a 14px `Plus`. The session screen no longer has an action strip.
 
 ### 6.5 Today hero and 7-day cycle strip
 
@@ -586,7 +585,7 @@ A list container (`divide-y divide-hairline overflow-hidden rounded-card border 
 
 Today's "Recent" rows use a mono two-digit index (`01`) instead of the icon box and a right-aligned mono relative day.
 
-Read-only session detail: exercise card with mono header and set lines `num min-h-[44px] text-base` — index (`w-10 text-center text-xs text-muted`), `135 lb × 8` (`font-medium`), `RIR n` micro, and a right-aligned `PR` marker (amber `Trophy` icon + `PR` in ink). Warm-up lines are `text-muted`.
+Read-only session detail: exercise card with mono header and set lines `num min-h-[44px] text-base`. Identical working sets collapse into one line `3 × 100 lb × 8` (`font-medium`, no index); warm-ups and legacy differing sets keep one line each with an index (`w-10 text-center text-xs text-muted`), `135 lb × 8`, `RIR n` micro. A right-aligned `PR` marker (amber `Trophy` icon + `PR` in ink) appears when any of the line's sets set a record. Warm-up lines are `text-muted`. Edit mode lists per-set rows (48px index button + the entry fields), with Add set and the set options sheet.
 
 ### 6.8 Stat tiles
 
@@ -690,7 +689,7 @@ Global, keyboard-only (`:focus-visible`; text inputs always match). `--accent-in
 ### 8.3 Labelling rules
 
 - Icon-only buttons need `aria-label` (`Import program`, `Back to Today`, `Un-log set 2`) and icons carry `aria-hidden="true"`.
-- Inputs need a label: visible `micro` `<label htmlFor>` (forms), `aria-label` (set rows: `Set 2 entry`), or an `sr-only` span (search).
+- Inputs need a label: visible `micro` `<label htmlFor>` (forms), `aria-label` (entry fields: `Bench Press weight`, `Bench Press reps`), or an `sr-only` span (search).
 - Groups of toggles: `role="group"` + `aria-label` (chips), `role="radiogroup"` + `role="radio"` + `aria-checked` (segmented controls), `aria-pressed` for toggle buttons.
 - Visual-only graphics get a text equivalent: `SegmentedBar` and charts are `role="img"` with a descriptive `aria-label`; decorative marks (`/`, accent squares, rules, ticks) are `aria-hidden`.
 - Dialogs: `role="dialog" aria-modal="true" aria-label={title}`.
@@ -711,12 +710,11 @@ Global, keyboard-only (`:focus-visible`; text inputs always match). `--accent-in
 
 ### 8.5 Keyboard flow on the logging screen
 
-1. Focus lands in a set's entry field; its content is selected so typing replaces it.
-2. **Enter** logs the row exactly as shown (prefill included), when valid. Repeating last session is one keypress.
-3. Logging set N moves focus to the next unlogged row in the same card, keeping the soft keyboard up. If that row has no history prefill it is pre-filled with the set just logged.
-4. When a card completes, the next incomplete card scrolls into view (instantly under reduced motion) and focus moves to its first unlogged row; when the last card completes, focus is dropped and the Finish button stays in the sticky header.
-5. Logged rows stay editable: edit then Enter to update in place. Tapping the check un-logs.
-6. Escape closes any sheet and focus returns to the control that opened it.
+1. Focus lands in an exercise's weight field (reps for load `none`); its content is selected so typing replaces it.
+2. **Enter in weight** moves to reps (selected). **Enter in reps** logs the exercise exactly as shown (prefill included), when both fields are valid. Repeating last session is two keypresses.
+3. Logging a new exercise writes all of its sets and moves focus straight to the next exercise's first field (the soft keyboard stays up); the next row scrolls to the middle of the screen (instantly under reduced motion). After the last exercise, focus is dropped and the Finish button stays in the sticky header.
+4. Logged rows stay editable: change a field then press Enter in reps (or the button) to rewrite all the sets; focus stays put. Tapping the check un-logs (deletes all the exercise's sets).
+5. Escape closes any sheet and focus returns to the control that opened it.
 
 ### 8.6 Touch targets and one-hand use
 
@@ -735,14 +733,14 @@ Global, keyboard-only (`:focus-visible`; text inputs always match). `--accent-in
 | Tab bar | 20 | 1.75 inactive / 2.25 active | Plus labels |
 | Row/list icons in a 36px box | 18 | 2 | `Dumbbell`, activity glyphs |
 | Chevron affordance | 16 | 2 | `ChevronRight`, `text-muted` |
-| Action strip, `+` | 14 | 2 | With mono labels |
+| History edit `Add set`, `+` | 14 | 2 | With a mono label |
 | Log arrow | 20 | 2 | `CornerDownLeft` |
 | Logged tick | 22 | 3 | `Check`, `text-accent` |
-| Week/collapsed-card check | 14 / 16 | 3 | On ink / lime tiles |
+| Week-strip check | 14 | 3 | On ink tiles |
 | Header icon buttons | 20 | 2 | In 48px buttons (`Upload`, `Download`, `Repeat`, `Settings`) |
 | Empty-state icon | 24 | 2 | In a 48px tile |
 
-Meanings: `Check` = done/logged; `CornerDownLeft` = commit this entry; `Plus` = add; `ArrowLeftRight` = swap; `MessageSquare` = note; `ChevronRight` = opens; `ChevronLeft` / `ArrowLeft` = back; `ChevronDown` = expand; `Trophy` = record (amber); `GripVertical` = drag; `Trash2` = delete; `Pencil` = edit; `Upload` / `Download` = import / export; `Repeat` = switch program; `Dumbbell` = workout; `Footprints`, `Bike`, `Waves`, `PersonStanding`, `Mountain`, `Users`, `Activity` = activity types (a sport uses `Trophy`). Colour: `text-muted` at rest, `text-ink` when actionable in a strip, `text-accent` for the logged tick and accent links. Always `aria-hidden` beside text.
+Meanings: `Check` = done/logged; `CornerDownLeft` = commit this entry; `Plus` = add; `ChevronRight` = opens; `ChevronLeft` / `ArrowLeft` = back; `ChevronDown` = expand; `Trophy` = record (amber); `GripVertical` = drag; `Trash2` = delete; `Pencil` = edit; `Upload` / `Download` = import / export; `Repeat` = switch program; `Dumbbell` = workout; `Footprints`, `Bike`, `Waves`, `PersonStanding`, `Mountain`, `Users`, `Activity` = activity types (a sport uses `Trophy`). Colour: `text-muted` at rest, `text-ink` when actionable in a strip, `text-accent` for the logged tick and accent links. Always `aria-hidden` beside text.
 
 ### 9.2 App icon
 
@@ -795,12 +793,12 @@ Write labels in normal case in source and let `.micro` / `uppercase` do the shou
 
 | Context | Format | Example |
 |---|---|---|
-| Typing / editing a set (canonical) | `weight x reps` with a lowercase `x` and spaces | `135 x 8`, `62.5 x 10`, `bw x 12`, `12` (reps only) |
+| Typing / editing an entry | Two separate fields, no separator to type | weight `135`, `62.5`, `+25`, `bw`; reps `8` |
 | Read views (history, preview, finish, charts) | Weight with unit, multiplication sign `×` | `105 lb × 9`, `100 kg × 5`, `12 reps` |
 | Per-hand load | Unit + ` ea` | `30 lb ea` |
 | Bodyweight plus | `BW` / `BW + 25 lb` | |
 | Target | Sets `×` reps with an en dash range | `4 × 6–8` |
-| Previous session line | Canonical entries joined by ` · ` | `LAST: 135 x 8 · 135 x 8 · 135 x 7` |
+| Previous session line | `LAST` plus one entry when the sets were identical; otherwise the sets joined by ` · ` | `LAST 135 x 8`; `LAST 135 lb × 8 · 145 lb × 6` |
 | Volume | Thousands separator, unit | `12,480 lb` |
 | Duration (activities) | `45m`, `1h 05m` | |
 | Finish-summary duration | `m:ss` or `h:mm:ss` | `52:10` |
@@ -810,7 +808,7 @@ Write labels in normal case in source and let `.micro` / `uppercase` do the shou
 | Counters | Zero-padded 2-digit indices, `n/total` | `04`, `3/5` |
 | Meta lines | Parts joined with ` · ` | `Mon, Mar 4 · 52m · 18 sets` |
 
-Rule of thumb: the *input* grammar is the compact ASCII `x`; every *display* of a stored set uses `×`. Dates and numbers are always mono.
+Rule of thumb: nothing is typed with an `x` any more; the compact `LAST 105 x 9` line is a read-only display, and every other display of a stored set uses `×` (`3 × 100 lb × 8` in History for identical sets). Dates and numbers are always mono.
 
 ### 10.3 Emoji and symbols
 
@@ -823,7 +821,7 @@ Rule of thumb: the *input* grammar is the compact ASCII `x`; every *display* of 
 | Empty screen | Title states the absence; description says what fills it; at most one action | `Nothing logged yet` / `Your finished workouts and activities will show up here.` |
 | Empty inline | A `micro` line | `Nothing to show for this filter.`, `No data`, `No sessions in this range.` |
 | Missing prerequisite | Say what to do, one link | `No workouts available` / `Import or create a program to get started.` |
-| Invalid input | Show the expected form, not blame | `weight x reps`, `reps (e.g. 12)`, `added x reps, or bw x reps` |
+| Invalid input | Show the expected form, not blame | `weight (e.g. 135)`, `+25, or bw`, `whole reps (e.g. 8)` |
 | Confirm | Title is the question; message states consequence; buttons are verbs | `Delete item?` / `This cannot be undone.` / `Delete` + `Cancel` |
 | Positive state | Plain, no cheering | `New version available`, `Workout summary` |
 
@@ -841,8 +839,8 @@ No exclamation marks, no "Oops", no second-person pep talk, no advice about weig
 | 4 | Use 4px-radius rectangular `Chip`s. | Use pill chips or `rounded-full` buttons. |
 | 5 | Set every weight, rep, date, duration and count in `.num` / `<Mono>`. | Put numbers in the Geist UI font, or mix proportional digits into a data column. |
 | 6 | Write the label in sentence case and let `.micro` uppercase it. | Type `THIS WEEK` or Title Case in source. |
-| 7 | Keep a single `weight x reps` text input per set. | Add steppers, +/- buttons, or separate weight and reps fields. |
-| 8 | Show last session's numbers as plain data (`LAST: 135 x 8`). | Suggest weights, show "try +5 lb", deload hints, or streak nagging. |
+| 7 | Keep one weight field and one reps field per exercise, both text inputs with number keypads. | Add steppers, +/- buttons, a combined `weight x reps` box, or per-set rows on the session screen. |
+| 8 | Show last session's numbers as plain data (`LAST 135 x 8`). | Suggest weights, show "try +5 lb", deload hints, or streak nagging. |
 | 9 | Show elapsed values only as recorded stats (`52:10` on finish). | Add a running clock, rest timer or countdown. |
 | 10 | Make every control at least 48x48px (`min-h-touch`). | Ship a 32px icon button because the glyph is small; pad the hit area instead. |
 | 11 | Use Chart colours from tokens (`var(--accent-ink)`, `var(--hairline)`, `var(--muted)`). | Hard-code hex in components, or add chart gradients and area fills. |

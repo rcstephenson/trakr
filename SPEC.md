@@ -95,7 +95,7 @@ trakr/
 │   ├── components/
 │   │   ├── ui/                   # primitives: Button, Card, Sheet, Chip, TabBar, EmptyState
 │   │   ├── today/                # Today screen pieces
-│   │   ├── session/              # ExerciseCard, SetRow (single text entry), sheets
+│   │   ├── session/              # ExerciseRow, EntryFields (weight + reps), FinishSheet, discard dialog
 │   │   ├── history/              # feed, session summary
 │   │   ├── charts/               # ProgressChart, Sparkline
 │   │   ├── activity/             # activity form pieces
@@ -112,7 +112,7 @@ trakr/
 │   │   ├── rotation.ts           # next workout in the schedule
 │   │   ├── stats.ts              # e1RM, volume, PRs
 │   │   ├── units.ts              # lb/kg conversion and formatting
-│   │   ├── setEntry.ts           # parse/format the single "weight x reps" text entry
+│   │   ├── setEntry.ts           # parse/format the weight and reps entry fields
 │   │   ├── activity.ts           # pace and activity formatting
 │   │   └── markdownImport.ts     # parse markdown tables → Program
 │   ├── hooks/                    # useActiveSession, useLastPerformance, useSettings ...
@@ -217,7 +217,7 @@ Implemented by F02 in `src/db/repositories/` and `src/hooks/`; every UI feature 
 | `programs` | `getActive()`, `list()`, `get(id)`, `save(program, { activate? })` (also upserts its exercises into the catalog), `setActive(id)`, `remove(id)` |
 | `exercises` | `list()`, `get(id)`, `upsert(exercise)` |
 | `sessions` | `start(programId, workoutId, { startedAt? })` → `Session` (snapshots targets; `startedAt` ISO defaults to now, used to log a past day; throws if a session is already active), `get(id)`, `getActive()`, `list({ from?, to?, status? })`, `update(id, patch)`, `swapExercise(id, slotIndex, exerciseId)`, `finish(id)` (a session started on an earlier local day gets `finishedAt = startedAt`, so rotation/History use the chosen day), `discard(id)`, `remove(id)` (also deletes its sets) |
-| `sets` | `add(input)`, `update(id, patch)`, `remove(id)`, `listBySession(sessionId)`, `listByExercise(exerciseId)` |
+| `sets` | `add(input)`, `update(id, patch)`, `remove(id)`, `listBySession(sessionId)`, `listByExercise(exerciseId)`, `replaceExerciseSets({ sessionId, slotIndex, exerciseId, count, weight, unit, reps })` (deletes the slot's sets and writes `count` identical working sets in one transaction), `removeExerciseSets(sessionId, slotIndex, exerciseId)` |
 | `history` | `lastPerformance(exerciseId, { excludeSessionId? })` → `{ session, sets }` or `null` (§5.2) |
 | `activities` | `add(input)`, `get(id)`, `update(id, patch)`, `remove(id)`, `list({ from?, to? })` |
 | `settings` | `get()` (merged with defaults), `update(patch)` |
@@ -265,7 +265,7 @@ Bottom tab bar (always visible except during an active session, where it is hidd
 | Route | Screen | Purpose |
 |---|---|---|
 | `/` | Today | Hero card: selected workout (default: the rotation's next) with a tile selector of all the program's workouts (`NEXT` marks the rotation), a **Day** control (Today / Yesterday / date picker, no future dates) and a large **Start <Workout>** button (**Log <Workout> · Oct 28** for a past day); **+ Log activity**. If a session is active, the hero becomes **Resume** with a **Discard** action (confirm) and the selector is hidden. Below: this week's strip (Mon–Sun dots: done/rest/upcoming), last 3 entries. |
-| `/session/:id` | Active session | Vertical list of exercise cards (§6.1). Sticky header: workout name, Finish (no running clock). |
+| `/session/:id` | Active session | Two-column ledger: exercise, then one weight + reps entry per exercise (§6.1). Sticky header: workout name, Finish (no running clock). |
 | `/history` | History | Reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
 | `/history/session/:id` | Session detail | Read-only summary (sets, volume, PRs) with Edit mode to fix mistakes; Delete. |
 | `/progress` | Exercises | Searchable list of exercises with a sparkline of top-set weight and last-performed date. |
@@ -277,41 +277,47 @@ Bottom tab bar (always visible except during an active session, where it is hidd
 
 ### 6.1 Active session — the core interaction
 
-Each exercise is a card. **Each set is ONE text input** holding `weight x reps`, no separate weight and reps fields, no steppers:
+The session screen is a two-column ledger inside one card. **Each exercise has ONE entry, a weight field and a reps field, that applies to all of its sets.** Column 1 is the exercise, column 2 is the user's entry. There is no per-set UI.
 
 ```
-┌──────────────────────────────────────────────┐
-│ 05 · CABLE LATERAL RAISE          5 × 12–20  │
-│ LAST  15×20 · 15×20 · 15×18 · 15×17 · 15×16  │  ← last session, data only
-│ ▰▰▰▱▱                                        │  ← sets logged (segmented bar)
-│ ──────────────────────────────────────────── │
-│ 1  15 x 20                              ✓    │  ← logged: signal tick, editable
-│ 2  15 x 20                              ✓    │
-│ 3  15 x 18                          ( ↵ )    │  ← prefilled from last, muted
-│ 4  weight x reps                              │  ← no history: placeholder
-│ + Add set     ⇄ Swap exercise     ⋯ Note     │
-└──────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│ EXERCISE · 3 / 8 LOGGED                WEIGHT / REPS │
+│ ▰▰▰▱▱▱▱▱                                            │  ← exercises logged (segmented bar)
+├───────────────────────┬────────────────────────────┤
+│ 01 Barbell Bench      │  ┌──────┬──────┐           │
+│    Press              │  │ 135  │  8   │  ✓        │  ← logged: tick, still editable
+│ 4 × 6–8 · LAST 135 x 8│  └──────┴──────┘           │
+│                       │    LB     REPS             │
+├───────────────────────┼────────────────────────────┤
+│ 02 Incline Dumbbell   │  ┌──────┬──────┐           │
+│    or Barbell Press   │  │ 60   │  10  │ ( ↵ )     │  ← prefilled from last time, muted
+│ 3 × 8–10 · LAST 60 x 10│ └──────┴──────┘           │
+├───────────────────────┼────────────────────────────┤
+│ 03 Core / Leg Raise   │  ┌─────────────┐            │
+│ 3 × 12–15             │  │    reps     │  ( ↵ )     │  ← load none: reps only
+└───────────────────────┴────────────────────────────┘
+                 Discard workout
 ```
 
-**Entry grammar** (`domain/setEntry.ts`, pure and unit-tested):
-- `parseSetEntry(text, { load, unit })` → `{ ok: true, weight, reps, unit } | { ok: false, hint }`; `formatSetEntry(weight, reps)` → canonical `"135 x 8"`.
-- Separator between weight and reps is `x`, `X`, `×`, `*` or whitespace, with optional spaces: `135x8`, `135 x 8`, `135 8`, `62.5x10`, `60×12` are all the same kind of entry.
-- Weight is a non-negative number with an optional `.` decimal; reps is an integer ≥ 1. An optional `lb` or `kg` suffix on the weight (`100kg x 5`) is converted to the display unit.
-- Load type: `total` and `per-hand` need `weight x reps`. `bodyweight-plus`: `+25 x 8` or `25 x 8` means 25 added; `bw x 12`, `0 x 12` or just `12` means bodyweight. `none` (core work): reps only (`12`) is the normal entry; the stored weight is 0.
-- Anything else is invalid: the row shows a short mono hint (`weight x reps`) and does not log. Never guess.
+**Entry rules** (`domain/setEntry.ts`, pure and unit-tested). `parseWeightReps(weightText, repsText, { load, unit })` → `{ ok: true, weight, reps, unit } | { ok: false, field, hint }`; `formatWeightText(weight, load)` and `formatRepsText(reps)` produce the canonical field text for prefill.
+- **Weight** is a non-negative number with an optional `.` decimal (`135`, `62.5`) and an optional `lb` or `kg` suffix (`100kg`) that is converted to the display unit. Max 10000.
+- **Reps** is a whole number from 1 to 999.
+- Load type: `total` and `per-hand` need a weight. `bodyweight-plus`: `+25` or `25` means 25 added; `bw`, `0` or an empty weight means bodyweight. `none` (core work): the weight field is not shown; only reps; the stored weight is 0.
+- Anything else is invalid: a short mono hint in danger colour appears under the field (`weight (e.g. 135)`, `+25, or bw`, `whole reps (e.g. 8)`) and logging is disabled. Never guess.
 
 **Behaviour**
-- The input is a normal text field: `inputMode="text"`, `enterKeyHint="done"`, `autoCapitalize="off"`, `autoCorrect="off"`, `spellCheck={false}`, mono font. (Phone number pads have no `x`; the text keyboard's number row plus a space is the fast path.)
-- Rows are prefilled with exactly what was logged for that set last session, formatted canonically (or empty with the placeholder `weight x reps` if no history). No adjustment is applied. Prefilled text is muted until edited or logged.
-- **Enter (or tapping the ↵ / ✓ button) logs the set as shown.** Repeating last session is one keypress. As the user types, a small mono preview of the parsed value (`100 lb × 8`) or the hint is shown; invalid text disables logging.
-- Logging set N moves focus to the next unlogged row's input, so a full exercise can be entered without leaving the keyboard. If that row has no history prefill, it is prefilled with the set just logged.
-- Logged rows stay editable: change the text and press Enter to update the stored set in place. Tapping the ✓ on a logged row un-logs (deletes) it.
-- Tapping the set number opens options: mark warm-up, set RIR, delete.
-- A card collapses to a one-line summary when all its sets are logged; the next incomplete card scrolls into view.
-- Swap exercise: choose from `alternatives` or the catalog; history shown is for the swapped-in exercise.
-- Every change persists immediately to IndexedDB (no Save button). Reloading resumes the session (an un-logged draft in a row is not persisted).
+- Both fields are `type="text"` with `inputMode="decimal"` (weight) and `inputMode="numeric"` (reps), `enterKeyHint="next"` / `"done"`, `autoComplete="off"`, `autoCorrect="off"`, `spellCheck={false}`, mono 18px. There are no separator characters to type, so the number pad is enough. Both select their text on focus.
+- **One entry, N sets.** The number of sets is the session target's `sets` (`session.targets[slot].sets`, at least 1). Logging writes that many identical `SetEntry` rows (same weight, reps, unit, `isWarmup: false`, sequential `setIndex`, same slot and exercise) in one transaction via `sets.replaceExerciseSets`. Volume, e1RM, PRs, History, Progress, Last performance and backups read these rows unchanged.
+- Rows are prefilled with the previous session's **first working set**, formatted canonically (weight and reps), muted until edited or logged. No history means empty fields with the placeholders `lb`/`kg` and `reps`. No adjustment is applied.
+- **Flow:** Enter in weight moves to reps. Enter in reps (or the ↵ button) logs the exercise and moves focus to the next exercise's first field, scrolling it into view, so a whole workout is typed without leaving the keyboard. After the last exercise, focus is dropped (Finish stays in the header).
+- Logged rows stay editable: change either field and press Enter in reps (or the button) to rewrite all N sets in place (`replaceExerciseSets` deletes and rewrites in one transaction, so there are no duplicates or orphans). Tapping the ✓ un-logs: it deletes all of the exercise's sets (the typed numbers stay in the fields).
+- Sessions with older data (differing sets, warm-ups) show the first working set as the entry and the exercise as logged; an edit normalises it to N identical sets.
+- While the user edits, a small mono preview of the parsed value (`100 lb × 8`) or the hint replaces the `LB` / `REPS` caption under the fields.
+- Under each exercise name: the target (`3 × 6–10`) and a compact `LAST` line from the previous completed session: `LAST 105 x 9` when its working sets were identical, otherwise the sets joined by ` · ` (`135 lb × 8 · 145 lb × 6`). Data only, no advice.
+- There is no Add set, no Swap exercise, no per-exercise Note, no warm-up/RIR flags and no per-set numbering on this screen. (`sessions.swapExercise` remains in the repository API but no screen calls it; legacy `Exercise N: …` lines in `Session.notes` are still displayed by History.)
+- Every change persists immediately to IndexedDB (no Save button). Reloading resumes the session (unlogged typing is not persisted).
 - The session screen has **no running clock**. Finish opens a summary sheet (sets, volume, PRs 🏆, and the plain recorded duration) → marks the session completed. Duration is hidden when under a minute (and for backfilled sessions). **Discard workout** (session screen bottom, Finish sheet when empty, Today Resume hero) opens a confirm ("Discard this workout?" – N logged sets will be deleted / Nothing logged yet) and calls `sessions.remove`.
-- Session detail (History) edit mode uses the same single-input row.
+- Session detail (History): the read view shows an exercise's identical working sets as one line (`3 × 100 lb × 8`, with the PR trophy); warm-ups and legacy differing sets list one row each. Edit mode keeps per-set rows (index, weight and reps fields, with the options sheet for warm-up and delete, and Add set) as an error-fixing editor.
 
 ### 6.2 Screen awake
 - There are no timers anywhere in the app. Keep the screen awake during an open session via the Wake Lock API where supported (needs HTTPS, so it works once deployed).
@@ -353,7 +359,7 @@ Theme: `system` by default; both themes are first-class. Primary buttons are ink
 - 1px hairline borders instead of shadows. Depth comes from the `--bg` → `--surface` → `--raised` steps. No drop shadows, no gradients except the page grid below.
 - Radii are small: cards 8px, inputs and buttons 6px, chips 4px (rectangular, not pills; the selected-chip underline is a square-ended 2px line). Segmented controls come in three sanctioned forms: chip row, joined radio group, inverted radio group (see `docs/design-system.md` 6.11).
 - Page background carries a faint dot grid (24px pitch; a 1px dot at 9% ink, which reads as roughly 4–5% overall) like graph paper; cards sit on top as solid surfaces.
-- Section headers are indexed micro-labels (`01 / UPPER A`), set rows are ledger lines with a mono index on the left, and the focused row has a 2px accent bar on its left edge plus an inset 2px focus ring.
+- Section headers are indexed micro-labels (`01 / UPPER A`), exercise rows are ledger lines (exercise left, entry right) with a mono index on the name, and the focused row has a 2px accent bar on its left edge plus an inset 2px focus ring.
 - Progress is shown with thin segmented bars (sets logged per exercise, workouts per week, the 7-day schedule) rather than plain counters.
 - Tab bar: mono labels, a 2px accent tick above the active tab (drawn in `--accent-ink`, so it is visible on Paper and lime on Graphite). Today's hero shows the next workout name in large display type over the 7-day cycle strip with the next slot highlighted.
 - Charts: 1.5px accent line, no area fill, hollow dots, hairline grid, mono axes, tooltip as a small ledger card.
@@ -425,7 +431,7 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 
 #### F05 · Active session logging
 - **Depends on:** F04
-- **Scope:** §6.1 entirely: ExerciseCard, SetRow with the single `weight x reps` text entry, prefill from last performance, Enter to log, add/delete set, warm-up flag, RIR, swap exercise, per-exercise note, autosave, collapse completed cards, Finish summary sheet with PRs, discard empty session, Wake Lock. (Rebuilt in R1a; the original stepper UI is superseded.)
+- **Scope:** §6.1 entirely: exercise rows, prefill from last performance, Enter to log, autosave, Finish summary sheet with PRs, discard empty session, Wake Lock. (Rebuilt in R1a and again in R3; the original stepper UI and the per-set UI are superseded.)
 - **Done when:** E2E: start Upper A, log all sets with 1-tap on prefilled values, reload mid-session and resume with data intact, finish, see summary; a second Upper A session shows "Last: …" and prefills its rows from the first session.
 
 #### F06 · ~~Rest timer~~ (removed)
@@ -470,7 +476,7 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 
 ### Redesign round (R1) — after F12, before the final QA
 
-Product changes requested after the first build: a distinctive look ("Signal", §7), no timers, and one text entry per set (§6.1).
+Product changes requested after the first build: a distinctive look ("Signal", §7), no timers, and one text entry per set (§6.1; later changed to one weight + reps entry per exercise in R3).
 
 #### R1a · Logging rework: single text entry, no timers
 - **Depends on:** F12 merged.
@@ -484,12 +490,17 @@ Product changes requested after the first build: a distinctive look ("Signal", �
 
 #### R1c · Restyle all remaining screens
 - **Depends on:** R1a and R1b merged.
-- **Scope:** apply §7 to Session (exercise cards, set rows, finish sheet), History feed and session detail, Progress list and charts, Activity form, Program overview and editor, Settings, import/export sheets. No behaviour changes. Delete the unused `Stepper` primitive.
+- **Scope:** apply §7 to Session (exercise rows, finish sheet), History feed and session detail, Progress list and charts, Activity form, Program overview and editor, Settings, import/export sheets. No behaviour changes. Delete the unused `Stepper` primitive.
 - **Done when:** every screen reviewed via screenshots at 390 px in both themes; tests green; no hard-coded colours outside the token layer.
 
 #### R2 · Pick any workout for any day; cancel/clear
 - **Scope:** Today tile selector + day control (backfill via `sessions.start(..., { startedAt })`, `finish` sets `finishedAt = startedAt` for past days), discard confirm for sessions (session screen, Resume hero, empty Finish sheet), Cancel/Clear/back-arrow confirms on the activity form. Removes the `WorkoutPicker` sheet.
 - **Done when:** unit tests for backfill/rotation/duration pass; `tests/e2e/r2-pick-and-cancel.spec.ts` green.
+
+#### R3 · One entry per exercise, two-column exercise rows
+- **Depends on:** R2.
+- **Scope:** the session screen becomes a two-column ledger (exercise | entry) with ONE weight field and ONE reps field per exercise that applies to all of the target's sets (§6.1). Weight and reps are separate text inputs (no `x` to type): `domain/setEntry.ts` now exposes `parseWeightReps` / `formatWeightText` / `formatRepsText` (the single `weight x reps` parser is removed). New `sets.replaceExerciseSets` / `sets.removeExerciseSets` write, rewrite and delete the N identical sets in one transaction (additive to §4.4). Removes Add set, Swap exercise, Note, the per-set options sheet and per-set numbering from the session screen (`SwapSheet`, `NoteSheet`, `SetRow`, `ExerciseCard`, `useProgramById`, `writeSlotNote`); History read view shows identical working sets as `3 × 100 lb × 8`, History edit mode keeps per-set rows using the same two-field control. No data-model change.
+- **Done when:** unit tests cover the weight/reps rules, the N-sets write/rewrite/delete (fake-indexeddb), first-set prefill, the compact LAST and History lines; e2e covers a whole workout by keyboard with N sets stored per exercise, edit rewrites all sets, un-log, load `none`, long names at 360 px, and the absence of Add set / Swap / Note; screenshots reviewed at 360/390/430 in both themes.
 
 ### Later (optional)
 
@@ -506,7 +517,7 @@ Product changes requested after the first build: a distinctive look ("Signal", �
 
 ## 10. Dependency Graph
 
-Built so far (all merged): F00–F05, F07–F12 (F06 was built then removed). Remaining:
+Built so far (all merged): F00–F05, F07–F12 (F06 was built then removed), R1a–R1c, R2. R3 (one entry per exercise) follows R2. Remaining:
 
 ```
 F12 ─┬─► R1a (logging rework, no timers) ─┐
@@ -519,6 +530,7 @@ F12 ─┬─► R1a (logging rework, no timers) ─┐
 | 9 | R1c | R1a, R1b |
 | 10 | F13 | R1c |
 | 11 | R2 | F13 |
+| 12 | R3 | R2 |
 
 ---
 

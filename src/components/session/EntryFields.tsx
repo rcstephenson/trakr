@@ -31,7 +31,7 @@ function previewText(parsed: ParsedEntry, load: LoadType): string {
 }
 
 const inputBase =
-  'num h-12 w-full min-w-0 bg-transparent px-1 text-center text-lg font-medium placeholder:font-normal placeholder:text-muted focus-visible:outline-offset-[-2px]';
+  'num h-12 w-full min-w-0 bg-transparent px-1 text-center text-lg font-medium placeholder:text-sm placeholder:font-normal placeholder:text-muted focus-visible:outline-offset-[-2px]';
 
 /**
  * The single entry for an exercise (SPEC 6.1): a weight field and a reps field side by side, a
@@ -104,7 +104,7 @@ export function EntryFields(props: EntryFieldsProps) {
               spellCheck={false}
               aria-label={`${label} weight`}
               aria-invalid={weightBad || undefined}
-              placeholder={unit}
+              placeholder="weight"
               value={weightText}
               onChange={(e) => setW(e.target.value)}
               onFocus={(e) => e.currentTarget.select()}
