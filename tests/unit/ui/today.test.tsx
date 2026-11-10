@@ -52,9 +52,14 @@ describe('Today', () => {
 
     fireEvent.click(screen.getByRole('radio', { name: /Lower B/ }));
     expect(screen.getByRole('heading', { name: 'Lower B' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Yesterday' }));
+
+    const picker = screen.getByLabelText('Pick a date') as HTMLInputElement;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = yesterday.toISOString().slice(0, 10);
+    fireEvent.change(picker, { target: { value: yesterdayKey } });
     expect(screen.getByRole('button', { name: /^Log Lower B · / })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Today' }));
+    fireEvent.change(picker, { target: { value: picker.max } });
     expect(screen.getByRole('button', { name: 'Start Lower B' })).toBeInTheDocument();
   });
 

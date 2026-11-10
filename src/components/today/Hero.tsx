@@ -3,58 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import * as sessionsRepo from '../../db/repositories/sessions';
 import type { Session } from '../../domain/types';
 import { useSessionSets } from '../../hooks/useSessionSets';
-import { formatShortDate, fromDateKey, toDateKey } from '../../lib/dates';
+import { formatShortDate, fromDateKey } from '../../lib/dates';
 import { numInputClass } from '../activity/fields';
 import { DiscardWorkoutDialog } from '../session/DiscardWorkoutDialog';
-import { Button, buttonClass, Card, Chip, Mono, SegmentedBar, type SegmentState } from '../ui';
-
-/** One slot of the program's repeating schedule (a workout or `rest`). */
-export interface CycleSlot {
-  id: string;
-  /** Short label under the segment, e.g. `UA` or `REST`. */
-  label: string;
-}
-
-/** `Upper A` -> `UA`; `rest` -> `REST`. */
-export function slotLabel(id: string, name?: string): string {
-  if (id === 'rest') return 'REST';
-  const words = (name ?? id).split(/[\s-]+/).filter(Boolean);
-  return words
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 3)
-    .toUpperCase();
-}
-
-/** The 7-day schedule as segments: slots before `nextIndex` are done, the next one is lit. */
-function CycleStrip({ cycle, nextIndex }: { cycle: CycleSlot[]; nextIndex: number }) {
-  const states: SegmentState[] = cycle.map((slot, i) => {
-    if (slot.id === 'rest') return 'rest';
-    if (i === nextIndex) return 'current';
-    return i < nextIndex ? 'done' : 'off';
-  });
-  const next = cycle[nextIndex];
-  return (
-    <div data-testid="cycle-strip">
-      <SegmentedBar
-        states={states}
-        label={`Schedule: ${cycle.map((c) => c.label).join(', ')}${next ? `; next is ${next.label}` : ''}`}
-      />
-      <ol className="mt-1.5 flex gap-1" aria-hidden="true">
-        {cycle.map((slot, i) => (
-          <li
-            key={i}
-            className={`micro flex-1 text-center ${
-              i === nextIndex ? '!text-ink font-semibold' : ''
-            }`}
-          >
-            {slot.label}
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
+import { Button, buttonClass, Card, Mono } from '../ui';
 
 export interface WorkoutOption {
   id: string;
@@ -74,15 +26,6 @@ export interface NextUpHeroProps {
   onDayChange: (dayKey: string) => void;
   starting: boolean;
   onStart: () => void;
-  cycle?: CycleSlot[];
-  /** Index of the next slot within `cycle`; -1 when unknown. */
-  nextIndex?: number;
-}
-
-function yesterdayKey(todayKey: string): string {
-  const d = fromDateKey(todayKey) ?? new Date();
-  d.setDate(d.getDate() - 1);
-  return toDateKey(d);
 }
 
 export function NextUpHero({
@@ -95,12 +38,9 @@ export function NextUpHero({
   onDayChange,
   starting,
   onStart,
-  cycle,
-  nextIndex = -1,
 }: NextUpHeroProps) {
   const selected = workouts.find((w) => w.id === selectedId) ?? workouts[0];
   if (!selected) return null;
-  const yesterday = yesterdayKey(todayKey);
   const isToday = dayKey === todayKey;
   const day = fromDateKey(dayKey);
   const startLabel = isToday
@@ -121,7 +61,6 @@ export function NextUpHero({
           {selected.exerciseCount === 1 ? 'exercise' : 'exercises'}
         </p>
       </div>
-      {cycle && cycle.length > 0 ? <CycleStrip cycle={cycle} nextIndex={nextIndex} /> : null}
 
       <div role="radiogroup" aria-label="Workout" className="grid grid-cols-2 gap-2">
         {workouts.map((w) => {
@@ -161,27 +100,19 @@ export function NextUpHero({
         })}
       </div>
 
-      <div role="group" aria-label="Day" className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
         <p className="micro">Day</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <Chip selected={isToday} onClick={() => onDayChange(todayKey)}>
-            Today
-          </Chip>
-          <Chip selected={dayKey === yesterday} onClick={() => onDayChange(yesterday)}>
-            Yesterday
-          </Chip>
-          <input
-            type="date"
-            aria-label="Pick a date"
-            value={dayKey}
-            max={todayKey}
-            onChange={(e) => {
-              // Ignore a cleared field and any future date typed by hand.
-              if (e.target.value && e.target.value <= todayKey) onDayChange(e.target.value);
-            }}
-            className={`${numInputClass} !w-auto min-w-[9.5rem] flex-1`}
-          />
-        </div>
+        <input
+          type="date"
+          aria-label="Pick a date"
+          value={dayKey}
+          max={todayKey}
+          onChange={(e) => {
+            // Ignore a cleared field and any future date typed by hand.
+            if (e.target.value && e.target.value <= todayKey) onDayChange(e.target.value);
+          }}
+          className={`${numInputClass} !w-auto min-w-[9.5rem]`}
+        />
       </div>
 
       <Button fullWidth disabled={starting} onClick={onStart} className="min-h-[56px] text-base">

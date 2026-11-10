@@ -32,7 +32,7 @@ export function WeekStrip({ today, sessions, activities, target, index }: WeekSt
       >
         This week
       </SectionLabel>
-      <Card className="mt-2 p-3">
+      <Card className="mt-1.5 p-2">
         <ol className="flex justify-between gap-1">
           {days.map((day, i) => {
             const workout = sessions.some((s) => isSameDay(new Date(s.startedAt), day));
@@ -52,7 +52,7 @@ export function WeekStrip({ today, sessions, activities, target, index }: WeekSt
                 data-state={state}
                 data-today={isToday}
                 aria-label={`${day.toLocaleDateString('en-US', { weekday: 'long' })}${isToday ? ' (today)' : ''}: ${description}`}
-                className="flex min-h-touch flex-1 flex-col items-center justify-center gap-1.5"
+                className="flex flex-1 flex-col items-center gap-1"
               >
                 <span
                   className={`micro ${isToday ? '!text-ink font-semibold' : ''}`}
@@ -63,7 +63,7 @@ export function WeekStrip({ today, sessions, activities, target, index }: WeekSt
                 <span
                   aria-hidden="true"
                   className={[
-                    'flex h-7 w-7 items-center justify-center rounded-chip border',
+                    'flex h-5 w-5 items-center justify-center rounded-chip border',
                     state === 'workout'
                       ? 'border-ink bg-ink text-bg'
                       : state === 'activity'
@@ -71,22 +71,18 @@ export function WeekStrip({ today, sessions, activities, target, index }: WeekSt
                         : 'border-hairline bg-transparent',
                   ].join(' ')}
                 >
-                  {state === 'workout' ? <Check size={14} strokeWidth={3} /> : null}
+                  {state === 'workout' ? <Check size={11} strokeWidth={3} /> : null}
                   {state === 'activity' ? (
-                    <span className="h-1.5 w-1.5 rounded-[1px] bg-ink" />
+                    <span className="h-1 w-1 rounded-[1px] bg-ink" />
                   ) : null}
                 </span>
-                <span
-                  className={`h-0.5 w-4 ${isToday ? 'bg-ink' : 'bg-transparent'}`}
-                  aria-hidden="true"
-                />
               </li>
             );
           })}
         </ol>
         {target ? (
           <SegmentedBar
-            className="mt-2"
+            className="mt-1.5"
             value={Math.min(done, target)}
             total={target}
             label={`${Math.min(done, target)} of ${target} workouts this week`}

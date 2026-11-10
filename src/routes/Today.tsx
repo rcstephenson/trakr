@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { NextUpHero, ResumeHero, slotLabel } from '../components/today/Hero';
+import { NextUpHero, ResumeHero } from '../components/today/Hero';
 import { buildRecent, RecentList } from '../components/today/RecentList';
 import { TodaySkeleton } from '../components/today/TodaySkeleton';
 import { useStartWorkout } from '../components/today/useStartWorkout';
@@ -58,10 +58,6 @@ export default function Today() {
   const todayKey = toDateKey(today);
   const selected = program?.workouts.find((w) => w.id === picked) ?? next;
 
-  const cycle = program?.schedule.map((id) => ({
-    id,
-    label: slotLabel(id, program.workouts.find((w) => w.id === id)?.name),
-  }));
   const target = program?.schedule.filter((id) => id !== 'rest').length;
 
   let hero;
@@ -90,8 +86,6 @@ export default function Today() {
             day === todayKey ? undefined : { startedAt: noonIso(day) ?? undefined },
           )
         }
-        cycle={cycle}
-        nextIndex={program.schedule.indexOf(next.id)}
       />
     );
   } else {
@@ -117,6 +111,13 @@ export default function Today() {
           .replace(',', '')}
       />
       <div className="flex flex-col gap-5 px-gutter pb-6">
+        <WeekStrip
+          index={1}
+          target={target}
+          today={today}
+          sessions={completed.filter((s) => inWeek(s.startedAt))}
+          activities={activities.filter((a) => inWeek(a.startedAt))}
+        />
         {hero}
         {active ? (
           <p className="micro -mt-2 text-center">
@@ -126,13 +127,6 @@ export default function Today() {
         <Link to="/activity/new" className={buttonClass('secondary', true)}>
           + Log activity
         </Link>
-        <WeekStrip
-          index={1}
-          target={target}
-          today={today}
-          sessions={completed.filter((s) => inWeek(s.startedAt))}
-          activities={activities.filter((a) => inWeek(a.startedAt))}
-        />
         <RecentList index={2} entries={buildRecent(completed, activities)} />
       </div>
     </>

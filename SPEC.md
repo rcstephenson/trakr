@@ -264,9 +264,9 @@ Bottom tab bar (always visible except during an active session, where it is hidd
 
 | Route | Screen | Purpose |
 |---|---|---|
-| `/` | Today | Hero card: selected workout (default: the rotation's next) with a tile selector of all the program's workouts (`NEXT` marks the rotation), a **Day** control (Today / Yesterday / date picker, no future dates) and a large **Start <Workout>** button (**Log <Workout> · Oct 28** for a past day); **+ Log activity**. If a session is active, the hero becomes **Resume** with a **Discard** action (confirm) and the selector is hidden. Below: this week's strip (Mon–Sun dots: done/rest/upcoming), last 3 entries. |
+| `/` | Today | This week's strip (Mon–Sun tiles: workout/activity/none) at the top, then the hero card: selected workout (default: the rotation's next) with a tile selector of all the program's workouts (`NEXT` marks the rotation), a **Day** date picker (defaults to today, no future dates) and a large **Start <Workout>** button (**Log <Workout> · Oct 28** for a past day); **+ Log activity**. If a session is active, the hero becomes **Resume** with a **Discard** action (confirm) and the selector is hidden. Below: last 3 entries. |
 | `/session/:id` | Active session | Two-column ledger: exercise, then one weight + reps entry per exercise (§6.1). Sticky header: workout name, Finish (no running clock). |
-| `/history` | History | Reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
+| `/history` | History | A 6-week contribution grid (Mon–Sun columns, GitHub-style) at the top, then the reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
 | `/history/session/:id` | Session detail | Read-only summary (sets, volume, PRs) with Edit mode to fix mistakes; Delete. |
 | `/progress` | Exercises | Searchable list of exercises with a sparkline of top-set weight and last-performed date. |
 | `/progress/:exerciseId` | Exercise progress | Line chart (metric toggle: Top weight / e1RM / Volume; range: 1M / 3M / 1Y / All), PR cards, table of past sessions. |
@@ -360,8 +360,8 @@ Theme: `system` by default; both themes are first-class. Primary buttons are ink
 - Radii are small: cards 8px, inputs and buttons 6px, chips 4px (rectangular, not pills; the selected-chip underline is a square-ended 2px line). Segmented controls come in three sanctioned forms: chip row, joined radio group, inverted radio group (see `docs/design-system.md` 6.11).
 - Page background carries a faint dot grid (24px pitch; a 1px dot at 9% ink, which reads as roughly 4–5% overall) like graph paper; cards sit on top as solid surfaces.
 - Section headers are indexed micro-labels (`01 / UPPER A`), exercise rows are ledger lines (exercise left, entry right) with a mono index on the name, and the focused row has a 2px accent bar on its left edge plus an inset 2px focus ring.
-- Progress is shown with thin segmented bars (sets logged per exercise, workouts per week, the 7-day schedule) rather than plain counters.
-- Tab bar: mono labels, a 2px accent tick above the active tab (drawn in `--accent-ink`, so it is visible on Paper and lime on Graphite). Today's hero shows the next workout name in large display type over the 7-day cycle strip with the next slot highlighted.
+- Progress is shown with thin segmented bars (sets logged per exercise, workouts per week) rather than plain counters.
+- Tab bar: mono labels, a 2px accent tick above the active tab (drawn in `--accent-ink`, so it is visible on Paper and lime on Graphite). Today's hero shows the next workout name in large display type; the calendar week's workout/activity tiles live in the single "This week" strip below the hero, not duplicated as a rotation schedule.
 - Charts: 1.5px accent line, no area fill, hollow dots, hairline grid, mono axes, tooltip as a small ledger card.
 
 ### Interaction

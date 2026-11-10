@@ -63,8 +63,8 @@ test('a workout logged for yesterday sits on that day and leaves next up alone',
   // Backfill Upper B for yesterday. It is older than today's Upper A, so the latest workout is
   // still Upper A and Lower A stays next.
   await page.getByRole('radio', { name: /Upper B/ }).click();
-  await page.getByRole('button', { name: 'Yesterday' }).click();
   const y = yesterday();
+  await page.getByLabel('Pick a date').fill(y.toISOString().slice(0, 10));
   await page.getByRole('button', { name: `Log Upper B · ${shortLabel(y)}` }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
   await logOneSet(page);
@@ -93,7 +93,8 @@ test('the date picker accepts a past day and caps at today', async ({ page }) =>
   await expect(picker).toHaveAttribute('max', /^\d{4}-\d{2}-\d{2}$/);
   await picker.fill('2020-03-04');
   await expect(page.getByRole('button', { name: 'Log Upper A · Mar 4' })).toBeVisible();
-  await page.getByRole('button', { name: 'Today' }).click();
+  const todayKey = await picker.getAttribute('max');
+  await picker.fill(todayKey ?? '');
   await expect(page.getByRole('button', { name: 'Start Upper A' })).toBeVisible();
 });
 

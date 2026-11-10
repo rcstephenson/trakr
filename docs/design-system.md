@@ -184,7 +184,7 @@ Both are self-hosted through npm (`@fontsource-variable/geist`, `@fontsource-var
 | `text-xl` | 24px / 30px | Page title (`PageHeader`), sheet title, PR card value |
 | `text-display` | 40px / 42px | Next-workout name on the Today hero (with `tracking-tighter`, weight 600) |
 
-There are no off-scale literals: the cycle-strip labels, the `R3` RIR badge and the `/dev/ui` swatch captions use `micro` (11px). Do not add `text-[Npx]`.
+There are no off-scale literals: the week-strip day letters, the `R3` RIR badge and the `/dev/ui` swatch captions use `micro` (11px). Do not add `text-[Npx]`.
 
 ### 3.3 Weights and tracking
 
@@ -545,15 +545,13 @@ The session is **one table**: exercise on the left, the user's entry on the righ
 
 Container `border-t border-hairline`, one full-width cell: `inline-flex min-h-touch w-full items-center justify-center gap-1.5 font-mono text-micro font-medium uppercase tracking-micro text-ink active:bg-bg` with a 14px `Plus`. The session screen no longer has an action strip.
 
-### 6.5 Today hero and 7-day cycle strip
+### 6.5 Today hero
 
 ```
 ┌─────────────────────────────────────────────┐
 │ ■ NEXT UP                                   │  ■ = 8px lime square (rounded-[2px])
 │ Upper B                                     │  text-display font-semibold tracking-tighter
 │ 9 EXERCISES                                 │  micro, count in <Mono text-ink>
-│ ▰▰ ▱ ▰▰▰ ▱ ▱                                │  SegmentedBar states (done/rest/current/off)
-│ UA REST UB …                                │  micro labels, next one !text-ink
 │ ┌─────────────────────────────────────────┐ │
 │ │                 Start                   │ │  primary, min-h-[56px], text-base
 │ └─────────────────────────────────────────┘ │
@@ -561,7 +559,7 @@ Container `border-t border-hairline`, one full-width cell: `inline-flex min-h-to
 └─────────────────────────────────────────────┘
 ```
 
-`Card tone="raised" className="flex flex-col gap-5 p-5"`. Cycle strip: `SegmentedBar` `states` (rest = `rest`, next = `current`, earlier = `done`, later = `off`) with a label row of `micro` abbreviations (`UA`, `REST`; 11px, `aria-hidden`, the bar carries the accessible text). The **Resume** variant adds a 2px lime left bar (`absolute inset-y-0 left-0 w-0.5 bg-accent`, extra `pl-6`) and the label `In progress · started 12:04` (static time; no running clock).
+`Card tone="raised" className="flex flex-col gap-5 p-5"`. The **Resume** variant adds a 2px lime left bar (`absolute inset-y-0 left-0 w-0.5 bg-accent`, extra `pl-6`) and the label `In progress · started 12:04` (static time; no running clock). The hero has no rotation-schedule strip of its own — the calendar week's logged/not-logged state lives once, in the "This week" strip below (6.6).
 
 ### 6.6 Week strip tiles
 
@@ -631,6 +629,12 @@ These three are the sanctioned set and are deliberately different (filter vs. mo
 
 Horizontal scroller (`flex gap-1 overflow-x-auto px-gutter`) of `min-w-[68px]` tiles: workout day = `border-ink bg-raised text-ink` with a 2px lime top bar; rest day = `border-dashed border-hairline text-muted`. Contents: `micro` "Day n" over a `text-sm font-semibold` name. Workout cards in Program use a bordered header row (`border-b border-hairline`) with an accent index and an accent mono "Edit" link.
 
+### 6.14 Activity grid (`ActivityGrid.tsx`, top of History)
+
+A GitHub-contribution-style grid: 6 columns (weeks, oldest to newest) of 7 rows (Mon-Sun), each day one cell. `SectionLabel` ("Last 6 weeks") with a `<Mono>logged</Mono>/<Mono>total</Mono> days` action, over `Card className="mt-2 p-3"`. A `micro` day-letter column (`M T W T F S S`, `aria-hidden`) sits left of the grid; weeks are laid out `flex flex-1 justify-between` so the 6 columns span the card.
+
+Each cell is `h-6 w-6 rounded-[2px]`, reusing the Week-strip (6.6) state fills: `none` = `border border-hairline bg-transparent`; `activity` = `border border-ink bg-transparent`; `workout` = `border border-ink bg-ink` (wins when a day has both). No icons at this density — state reads by fill alone, same principle as a `SegmentedBar`. Today's cell additionally gets `border-2 border-accent-ink` in place of its normal border (the 2px accent-ink motif used for focus rings and the tab-bar tick), overriding rather than stacking with the state border. A micro legend (`Activity`, `Workout` swatches, no "nothing logged" swatch — blank cells are self-explanatory) sits bottom-right, `aria-hidden` since each cell already carries its own `aria-label` ("Wednesday, Jan 15 (today): workout done").
+
 ---
 
 ## 7. Data visualisation
@@ -663,7 +667,7 @@ Colours are theme-correct automatically because the chart uses CSS variables as 
 
 ### 7.3 Meters
 
-Counters are rendered as `SegmentedBar`s (sets per exercise, workouts per week, 7-day cycle) rather than percentage rings or plain numbers; the number sits beside it in mono (`3/5`).
+Counters are rendered as `SegmentedBar`s (sets per exercise, workouts per week) rather than percentage rings or plain numbers; the number sits beside it in mono (`3/5`).
 
 ---
 

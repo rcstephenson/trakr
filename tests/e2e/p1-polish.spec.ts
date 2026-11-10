@@ -31,7 +31,6 @@ test('every text-entry control is at least 16px (no iOS focus zoom)', async ({ p
   };
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Yesterday' }).click();
   await expect(page.getByLabel('Pick a date')).toBeVisible();
   await check('today');
 
