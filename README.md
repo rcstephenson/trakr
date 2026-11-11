@@ -39,6 +39,16 @@ Dev-only demo routes (`/dev/ui`, `/dev/seed`) exist in `npm run dev` and are exc
 
 Trakr is static files, so any HTTPS static host works (HTTPS is required for service workers and installation). The app uses `BrowserRouter`, so the host must fall back to `index.html` for unknown paths. `public/_redirects` does this for Cloudflare Pages and Netlify.
 
+### GitHub Pages
+
+`.github/workflows/deploy.yml` builds and deploys on every push to `main` (or run it by hand from the Actions tab). The site is served from a sub-path, `https://<user>.github.io/<repo>/`, so the workflow builds with `BASE_PATH=/<repo>/`; Vite's `base`, the manifest `start_url`/`scope`, the service worker fallback and the router `basename` all follow it. GitHub Pages has no rewrites, so the workflow copies `index.html` to `404.html` to keep deep links and refreshes working.
+
+1. Push the repository to GitHub. On a free account the repository must be public to use Pages.
+2. Repository Settings, Pages, Source: **GitHub Actions**.
+3. Push to `main`. The Actions tab shows the deploy and its URL when it finishes.
+
+To check a sub-path build locally: `BASE_PATH=/trakr/ npm run build && npm run preview`, then open `http://localhost:4173/trakr/`.
+
 ### Cloudflare Pages
 
 1. Push the repository to GitHub/GitLab.

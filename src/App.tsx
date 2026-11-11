@@ -38,7 +38,7 @@ function Layout() {
 export default function App() {
   useApplyTheme();
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Today />} />

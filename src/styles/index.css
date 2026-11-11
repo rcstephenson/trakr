@@ -21,6 +21,11 @@
   --accent-ink: #3d5a00;
   --pr: #b86e00;
   --danger: #c62839;
+  /* Activity-grid cells: empty, gym workout (electric blue), other activity (magenta), both (violet). */
+  --grid-empty: #e4e9ee;
+  --grid-workout: #1f6bff;
+  --grid-activity: #e8388a;
+  --grid-both: #8250f0;
   /* Primary buttons: ink on paper (light), accent fill (dark). */
   --primary: #0a0e14;
   --on-primary: #f8fafb;
@@ -41,6 +46,10 @@
   --accent-ink: #c6ff3d;
   --pr: #ffb84d;
   --danger: #ff6b7a;
+  --grid-empty: #1a2029;
+  --grid-workout: #3d8bff;
+  --grid-activity: #ff5fa2;
+  --grid-both: #a07cff;
   --primary: #c6ff3d;
   --on-primary: #0a0c10;
   --scrim: rgb(0 0 0 / 0.65);

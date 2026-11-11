@@ -265,7 +265,7 @@ Bottom tab bar (always visible except during an active session, where it is hidd
 |---|---|---|
 | `/` | Today | This week's strip (Mon–Sun tiles: workout/activity/none) at the top, then the hero card: selected workout (default: the rotation's next) with a tile selector of all the program's workouts (`NEXT` marks the rotation), a **Day** date picker (defaults to today, no future dates) and a large **Start <Workout>** button (**Log <Workout> · Oct 28** for a past day); **+ Log activity**. If a session is active, the hero becomes **Resume** with a **Discard** action (confirm) and the selector is hidden. Below: last 3 entries. |
 | `/session/:id` | Active session | Two-column ledger: exercise, then one weight + reps entry per exercise (§6.1). Sticky header: workout name, Finish (no running clock). |
-| `/history` | History | A 6-week contribution grid (Mon–Sun columns, GitHub-style) at the top, then the reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
+| `/history` | History | A 14-week contribution grid (Mon–Sun columns, GitHub-style) at the top, then the reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
 | `/history/session/:id` | Session detail | Read-only summary (sets, volume, PRs) with Edit mode to fix mistakes; Delete. |
 | `/progress` | Exercises | Searchable list of exercises with a sparkline of top-set weight and last-performed date. |
 | `/progress/:exerciseId` | Exercise progress | Line chart (metric toggle: Top weight / e1RM / Volume; range: 1M / 3M / 1Y / All), PR cards, table of past sessions. |

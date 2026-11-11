@@ -2,20 +2,41 @@ import type { Activity, Session } from '../../domain/types';
 import { isSameDay, startOfWeek, weekDays } from '../../lib/dates';
 import { Card, Mono, SectionLabel } from '../ui';
 
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
 export interface ActivityGridProps {
   today: Date;
   sessions: Pick<Session, 'startedAt'>[];
   activities: Pick<Activity, 'startedAt'>[];
-  /** Columns shown, oldest to newest (default 6). */
+  /** Columns shown, oldest to newest (default 14). */
   weeks?: number;
 }
 
-type DayState = 'workout' | 'activity' | 'none';
+type DayState = 'workout' | 'activity' | 'both' | 'none';
 
-/** GitHub-style contribution grid: `weeks` columns of Mon-Sun, filled per day logged. */
-export function ActivityGrid({ today, sessions, activities, weeks = 6 }: ActivityGridProps) {
+const CELL_FILL: Record<DayState, string> = {
+  none: 'bg-grid-empty',
+  workout: 'bg-grid-workout',
+  activity: 'bg-grid-activity',
+  both: 'bg-grid-both',
+};
+
+const LEGEND: { state: DayState; label: string }[] = [
+  { state: 'workout', label: 'Gym' },
+  { state: 'activity', label: 'Other' },
+  { state: 'both', label: 'Both' },
+];
+
+const DESCRIPTION: Record<DayState, string> = {
+  none: 'nothing logged',
+  workout: 'workout done',
+  activity: 'activity logged',
+  both: 'workout done and activity logged',
+};
+
+/**
+ * GitHub-style contribution grid: `weeks` columns of Mon-Sun. Gym workouts are blue, other
+ * activities magenta, and a day with both is violet.
+ */
+export function ActivityGrid({ today, sessions, activities, weeks = 14 }: ActivityGridProps) {
   const firstWeekStart = startOfWeek(today);
   firstWeekStart.setDate(firstWeekStart.getDate() - 7 * (weeks - 1));
   const columns = Array.from({ length: weeks }, (_, w) => {
@@ -25,8 +46,11 @@ export function ActivityGrid({ today, sessions, activities, weeks = 6 }: Activit
   });
 
   const stateOf = (day: Date): DayState => {
-    if (sessions.some((s) => isSameDay(new Date(s.startedAt), day))) return 'workout';
-    if (activities.some((a) => isSameDay(new Date(a.startedAt), day))) return 'activity';
+    const workout = sessions.some((s) => isSameDay(new Date(s.startedAt), day));
+    const activity = activities.some((a) => isSameDay(new Date(a.startedAt), day));
+    if (workout && activity) return 'both';
+    if (workout) return 'workout';
+    if (activity) return 'activity';
     return 'none';
   };
 
@@ -45,64 +69,44 @@ export function ActivityGrid({ today, sessions, activities, weeks = 6 }: Activit
       >
         {`Last ${weeks} weeks`}
       </SectionLabel>
-      <Card className="mt-2 p-3">
-        <div className="flex gap-1.5">
-          <ol className="flex flex-col gap-1.5" aria-hidden="true">
-            {DAY_LABELS.map((l, i) => (
-              <li key={i} className="micro flex h-6 w-3 items-center justify-center">
-                {l}
-              </li>
-            ))}
-          </ol>
-          <div className="flex flex-1 justify-between">
-            {columns.map((week, wi) => (
-              <ol key={wi} className="flex flex-col items-center gap-1.5">
-                {week.map((day, di) => {
-                  const state = stateOf(day);
-                  const isToday = isSameDay(day, today);
-                  const description =
-                    state === 'workout'
-                      ? 'workout done'
-                      : state === 'activity'
-                        ? 'activity logged'
-                        : 'nothing logged';
-                  const label = day.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'short',
-                    day: 'numeric',
-                  });
-                  return (
-                    <li
-                      key={di}
-                      data-testid="activity-grid-day"
-                      data-state={state}
-                      aria-label={`${label}${isToday ? ' (today)' : ''}: ${description}`}
-                      className={[
-                        'h-6 w-6 rounded-[2px]',
-                        state === 'workout' ? 'bg-ink' : 'bg-transparent',
-                        isToday
-                          ? 'border-2 border-accent-ink'
-                          : state === 'none'
-                            ? 'border border-hairline'
-                            : 'border border-ink',
-                      ].join(' ')}
-                    />
-                  );
-                })}
-              </ol>
-            ))}
-          </div>
-        </div>
-        <div className="mt-2 flex items-center justify-end gap-3" aria-hidden="true">
-          <span className="micro flex items-center gap-1">
-            <span className="h-3 w-3 rounded-[2px] border border-ink bg-transparent" />
-            Activity
-          </span>
-          <span className="micro flex items-center gap-1">
-            <span className="h-3 w-3 rounded-[2px] border border-ink bg-ink" />
-            Workout
-          </span>
-        </div>
+      <Card className="mt-2 !p-3">
+        {/* Separate rounded squares, GitHub-contribution style. */}
+        <ol
+          className="grid grid-flow-col grid-rows-7 gap-[3px]"
+          style={{ gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` }}
+        >
+          {days.map((day) => {
+            const state = stateOf(day);
+            const isToday = isSameDay(day, today);
+            const label = day.toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'short',
+              day: 'numeric',
+            });
+            return (
+              <li
+                key={day.toISOString()}
+                data-testid="activity-grid-day"
+                data-state={state}
+                aria-label={`${label}${isToday ? ' (today)' : ''}: ${DESCRIPTION[state]}`}
+                className={[
+                  'aspect-square rounded-[3px]',
+                  CELL_FILL[state],
+                  isToday ? 'outline outline-1 outline-offset-1 outline-ink' : '',
+                ].join(' ')}
+              />
+            );
+          })}
+        </ol>
+        {/* Decorative key: each cell already carries its own aria-label. */}
+        <ul className="mt-2 flex items-center justify-end gap-3" aria-hidden="true">
+          {LEGEND.map(({ state, label }) => (
+            <li key={state} className="micro flex items-center gap-1">
+              <span className={`h-2.5 w-2.5 rounded-[2px] ${CELL_FILL[state]}`} />
+              {label}
+            </li>
+          ))}
+        </ul>
       </Card>
     </section>
   );

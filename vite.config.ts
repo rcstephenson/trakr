@@ -2,7 +2,12 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Public base path. '/' for root hosts (dev, Cloudflare Pages); the GitHub Pages workflow sets
+// BASE_PATH=/trakr/ because the site is served from https://<user>.github.io/trakr/.
+const base = process.env.BASE_PATH ?? '/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -14,8 +19,8 @@ export default defineConfig({
         description: 'Log gym workouts and track progress.',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         // Graphite --bg (src/styles/index.css): the splash/launch colour is dark.
         theme_color: '#0A0C10',
         background_color: '#0A0C10',
@@ -32,7 +37,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2,webmanifest}'],
-        navigateFallback: '/index.html',
+        navigateFallback: `${base}index.html`,
         cleanupOutdatedCaches: true,
       },
     }),

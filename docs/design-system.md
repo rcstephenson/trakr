@@ -631,9 +631,18 @@ Horizontal scroller (`flex gap-1 overflow-x-auto px-gutter`) of `min-w-[68px]` t
 
 ### 6.14 Activity grid (`ActivityGrid.tsx`, top of History)
 
-A GitHub-contribution-style grid: 6 columns (weeks, oldest to newest) of 7 rows (Mon-Sun), each day one cell. `SectionLabel` ("Last 6 weeks") with a `<Mono>logged</Mono>/<Mono>total</Mono> days` action, over `Card className="mt-2 p-3"`. A `micro` day-letter column (`M T W T F S S`, `aria-hidden`) sits left of the grid; weeks are laid out `flex flex-1 justify-between` so the 6 columns span the card.
+A GitHub-contribution-style grid: 14 columns (weeks, oldest to newest) of 7 rows (Mon-Sun), each day one cell. `SectionLabel` ("Last 14 weeks") with a `<Mono>logged</Mono>/<Mono>total</Mono> days` action, over `Card className="mt-2 !p-3"`. The grid has no day or month labels. A right-aligned `micro` legend sits under it (`Gym`, `Other`, `Both`, each with a 10px `rounded-[2px]` swatch; no swatch for empty days). It is `aria-hidden` because each cell carries its own `aria-label`.
 
-Each cell is `h-6 w-6 rounded-[2px]`, reusing the Week-strip (6.6) state fills: `none` = `border border-hairline bg-transparent`; `activity` = `border border-ink bg-transparent`; `workout` = `border border-ink bg-ink` (wins when a day has both). No icons at this density — state reads by fill alone, same principle as a `SegmentedBar`. Today's cell additionally gets `border-2 border-accent-ink` in place of its normal border (the 2px accent-ink motif used for focus rings and the tab-bar tick), overriding rather than stacking with the state border. A micro legend (`Activity`, `Workout` swatches, no "nothing logged" swatch — blank cells are self-explanatory) sits bottom-right, `aria-hidden` since each cell already carries its own `aria-label` ("Wednesday, Jan 15 (today): workout done").
+The cells are separate rounded squares: one `<ol>` is a CSS grid (`grid-flow-col grid-rows-7`, `repeat(weeks, minmax(0,1fr))` columns, `gap-[3px]`), each cell `aspect-square rounded-[3px]` and scaling with the card width (~21px at 375px). Each cell is filled from the dedicated grid tokens by day state:
+
+| State | Token / class | Paper | Graphite |
+|---|---|---|---|
+| `none` (nothing logged) | `bg-grid-empty` | `#e4e9ee` | `#1a2029` |
+| `workout` (gym session) | `bg-grid-workout` (electric blue, pairs with the lime) | `#1f6bff` | `#3d8bff` |
+| `activity` (any other activity) | `bg-grid-activity` (magenta) | `#e8388a` | `#ff5fa2` |
+| `both` (session and activity) | `bg-grid-both` (violet, between the two) | `#8250f0` | `#a07cff` |
+
+The grid tokens are used only here. Today's cell gets a 1px `outline-ink` ring with a 1px offset, drawn into the gap. Colour is not the only carrier: each cell has its own `aria-label` ("Wednesday, Jan 15 (today): workout done and activity logged").
 
 ---
 
