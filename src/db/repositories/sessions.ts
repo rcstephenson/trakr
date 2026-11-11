@@ -110,14 +110,54 @@ export async function swapExercise(
 }
 
 /**
- * Completes a session. A backdated session (started on an earlier local day) gets
- * `finishedAt = startedAt`, so ordering, rotation and History all use the chosen day.
+ * Records a slot as skipped (a null log): deletes any sets of the slot's exercise and adds the slot
+ * to `skippedSlots`, in one transaction.
+ */
+export async function skipSlot(id: string, slotIndex: number, exerciseId: string): Promise<void> {
+  await db.transaction('rw', db.sessions, db.sets, async () => {
+    const session = await db.sessions.get(id);
+    if (!session) throw new Error(`Session not found: ${id}`);
+    await db.sets
+      .where('sessionId')
+      .equals(id)
+      .filter((s) => s.slotIndex === slotIndex && s.exerciseId === exerciseId)
+      .delete();
+    const skipped = new Set(session.skippedSlots ?? []);
+    skipped.add(slotIndex);
+    await db.sessions.update(id, { skippedSlots: [...skipped].sort((a, b) => a - b) });
+  });
+}
+
+/** Clears a slot's skipped mark (it is unlogged again, or about to be logged). */
+export async function unskipSlot(id: string, slotIndex: number): Promise<void> {
+  await db.transaction('rw', db.sessions, async () => {
+    const session = await db.sessions.get(id);
+    if (!session?.skippedSlots?.includes(slotIndex)) return;
+    await db.sessions.update(id, {
+      skippedSlots: session.skippedSlots.filter((s) => s !== slotIndex),
+    });
+  });
+}
+
+/**
+ * Completes a session. Every slot with no logged sets is recorded as skipped. A backdated session
+ * (started on an earlier local day) gets `finishedAt = startedAt`, so ordering, rotation and
+ * History all use the chosen day.
  */
 export async function finish(id: string): Promise<Session> {
-  const session = await db.sessions.get(id);
-  if (!session) throw new Error(`Session not found: ${id}`);
-  const finishedAt = isBackdated(session) ? session.startedAt : nowIso();
-  return update(id, { status: 'completed', finishedAt });
+  return db.transaction('rw', db.sessions, db.sets, async () => {
+    const session = await db.sessions.get(id);
+    if (!session) throw new Error(`Session not found: ${id}`);
+    const sets = await db.sets.where('sessionId').equals(id).toArray();
+    const loggedSlots = new Set(sets.map((s) => s.slotIndex));
+    const skippedSlots = session.targets
+      .map((t) => t.slotIndex)
+      .filter((slot) => !loggedSlots.has(slot));
+    const finishedAt = isBackdated(session) ? session.startedAt : nowIso();
+    const patch = { status: 'completed' as const, finishedAt, skippedSlots };
+    await db.sessions.update(id, patch);
+    return { ...session, ...patch };
+  });
 }
 
 export function discard(id: string): Promise<Session> {

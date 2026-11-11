@@ -89,6 +89,14 @@ export default function SessionDetail() {
     .filter(([slot]) => !groups.some((g) => g.slotIndex === Number(slot)))
     .map(([slot, text]) => `Exercise ${Number(slot) + 1}: ${text}`);
   const notes = [...freeNotes(session.notes), ...orphanNotes];
+  // Skipped (null-logged) exercises: listed skips whose slot has no sets.
+  const skipped = session.targets
+    .filter(
+      (t) =>
+        (session.skippedSlots ?? []).includes(t.slotIndex) &&
+        !groups.some((g) => g.slotIndex === t.slotIndex),
+    )
+    .map((t) => ({ slot: t.slotIndex, name: exercises.get(t.exerciseId)?.name ?? t.exerciseId }));
 
   async function remove() {
     if (!id) return;
@@ -137,6 +145,20 @@ export default function SessionDetail() {
             />
           );
         })}
+
+        {!editing && skipped.length > 0 ? (
+          <Card data-testid="detail-skipped">
+            <SectionLabel className="mb-2">Skipped</SectionLabel>
+            <ul>
+              {skipped.map((s) => (
+                <li key={s.slot} className="flex items-baseline gap-1.5 text-sm text-muted">
+                  <span className="num text-xs">{String(s.slot + 1).padStart(2, '0')}</span>
+                  {s.name}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
 
         {notes.length > 0 ? (
           <Card>

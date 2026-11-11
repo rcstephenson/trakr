@@ -1,3 +1,4 @@
+import * as sessionsRepo from '../../db/repositories/sessions';
 import * as setsRepo from '../../db/repositories/sets';
 import { formatRepsText, formatWeightText } from '../../domain/setEntry';
 import type { Exercise, Session, SessionTarget, SetEntry, Settings } from '../../domain/types';
@@ -38,16 +39,28 @@ export function ExerciseRow(props: ExerciseRowProps) {
     (s) => s.slotIndex === slot && s.exerciseId === target.exerciseId,
   );
   const logged = entrySet(slotSets);
+  const skipped = !logged && (session.skippedSlots ?? []).includes(slot);
   const pre = prefillFromLast(lastSets, settings.unit);
 
-  const source = logged ? { weight: weightInUnit(logged, settings.unit), reps: logged.reps } : pre;
+  // A skipped row shows empty fields; a logged one its values; otherwise last time's prefill.
+  const source = logged
+    ? { weight: weightInUnit(logged, settings.unit), reps: logged.reps }
+    : skipped
+      ? null
+      : pre;
   const baseWeight = source ? formatWeightText(source.weight, load) : '';
   const baseReps = source ? formatRepsText(source.reps) : '';
 
+  async function skip() {
+    if (!logged && !skipped) props.onLogged(slot);
+    await sessionsRepo.skipSlot(session.id, slot, target.exerciseId);
+  }
+
   async function submit(parsed: ParsedEntry) {
-    const wasLogged = !!logged;
+    const wasDone = !!logged || skipped;
     // Move on right away so the keyboard stays up; the write lands a moment later.
-    if (!wasLogged) props.onLogged(slot);
+    if (!wasDone) props.onLogged(slot);
+    if (skipped) await sessionsRepo.unskipSlot(session.id, slot);
     await setsRepo.replaceExerciseSets({
       sessionId: session.id,
       slotIndex: slot,
@@ -65,6 +78,7 @@ export function ExerciseRow(props: ExerciseRowProps) {
       data-testid="exercise-row"
       data-slot={slot}
       data-logged={!!logged}
+      data-skipped={skipped}
     >
       <span
         aria-hidden="true"
@@ -98,6 +112,9 @@ export function ExerciseRow(props: ExerciseRowProps) {
           completed={!!logged}
           onSubmit={(p) => void submit(p)}
           onUnlog={() => void setsRepo.removeExerciseSets(session.id, slot, target.exerciseId)}
+          skipped={skipped}
+          onSkip={() => void skip()}
+          onUnskip={() => void sessionsRepo.unskipSlot(session.id, slot)}
         />
       </div>
     </li>

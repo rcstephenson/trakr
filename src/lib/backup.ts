@@ -32,6 +32,7 @@ const SessionSchema = z.object({
       kind: z.enum(['compound', 'isolation']),
     }),
   ),
+  skippedSlots: z.array(z.number()).optional(),
 });
 
 const SetSchema = z.object({

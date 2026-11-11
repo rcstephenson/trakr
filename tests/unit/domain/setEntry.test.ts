@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatRepsText, formatWeightText, parseWeightReps } from '../../../src/domain/setEntry';
+import {
+  formatRepsText,
+  formatWeightText,
+  isSkipEntry,
+  parseWeightReps,
+} from '../../../src/domain/setEntry';
 import type { LoadType, Unit } from '../../../src/domain/types';
 
 const p = (w: string, r: string, load: LoadType = 'total', unit: Unit = 'lb') =>
@@ -93,6 +98,31 @@ describe('parseWeightReps: reps', () => {
   it('reports weight before reps when both are bad', () => {
     const r = p('', '');
     expect(r).toMatchObject({ ok: false, field: 'weight' });
+  });
+});
+
+describe('isSkipEntry', () => {
+  it('treats x in either field (any case, padded) as a skip', () => {
+    expect(isSkipEntry('x', '', 'total')).toBe(true);
+    expect(isSkipEntry(' X ', '8', 'total')).toBe(true);
+    expect(isSkipEntry('135', 'x', 'total')).toBe(true);
+    expect(isSkipEntry('', 'x', 'none')).toBe(true);
+  });
+
+  it('treats every shown field blank as a skip', () => {
+    expect(isSkipEntry('', '', 'total')).toBe(true);
+    expect(isSkipEntry('  ', ' ', 'per-hand')).toBe(true);
+    expect(isSkipEntry('', '', 'bodyweight-plus')).toBe(true);
+    // Load none has no weight field, so only reps counts.
+    expect(isSkipEntry('135', '', 'none')).toBe(true);
+  });
+
+  it('is not a skip when anything real is entered', () => {
+    expect(isSkipEntry('135', '', 'total')).toBe(false);
+    expect(isSkipEntry('', '8', 'total')).toBe(false);
+    expect(isSkipEntry('135', '8', 'total')).toBe(false);
+    expect(isSkipEntry('bw', '', 'bodyweight-plus')).toBe(false);
+    expect(isSkipEntry('xx', '', 'total')).toBe(false);
   });
 });
 

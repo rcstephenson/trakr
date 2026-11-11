@@ -92,10 +92,18 @@ export default function Session() {
   }
 
   const exercises = new Map(catalog.map((e) => [e.id, e]));
-  const loggedCount = session.targets.filter((t) =>
-    sets.some((x) => x.slotIndex === t.slotIndex && x.exerciseId === t.exerciseId),
+  const hasSets = (slot: number) => sets.some((x) => x.slotIndex === slot);
+  // A skip is an entry too (a null log), so it counts towards the progress bar.
+  const loggedCount = session.targets.filter(
+    (t) =>
+      sets.some((x) => x.slotIndex === t.slotIndex && x.exerciseId === t.exerciseId) ||
+      (session.skippedSlots ?? []).includes(t.slotIndex),
   ).length;
   const total = session.targets.length;
+  // Every slot without sets is recorded as skipped on Finish.
+  const toSkip = session.targets
+    .filter((t) => !hasSets(t.slotIndex))
+    .map((t) => exercises.get(t.exerciseId)?.name ?? t.exerciseId);
 
   async function finish() {
     if (!id || busy) return;
@@ -189,6 +197,7 @@ export default function Session() {
         open={finishOpen}
         onClose={() => setFinishOpen(false)}
         sets={sets}
+        skipped={toSkip}
         exercises={exercises}
         unit={settings.unit}
         durationMs={durationMs}

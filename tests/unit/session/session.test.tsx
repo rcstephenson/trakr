@@ -137,6 +137,86 @@ describe('Session screen (one entry per exercise)', () => {
     expect(within(row).getByRole('button', { name: /^Un-log/ })).toBeInTheDocument();
   });
 
+  it('x in weight + Enter records a skip (no sets) and moves to the next exercise', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const row = await renderSession(s.id);
+    const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
+    const weight = within(row).getByLabelText(`${name} weight`);
+    fireEvent.change(weight, { target: { value: 'x' } });
+    expect(within(row).getByTestId('entry-caption')).toHaveTextContent('skip');
+    fireEvent.keyDown(weight, { key: 'Enter' });
+
+    await waitFor(async () => expect((await sessions.get(s.id))?.skippedSlots).toEqual([0]));
+    expect(await setsRepo.listBySession(s.id)).toHaveLength(0);
+    expect(await within(row).findByRole('button', { name: `Un-skip ${name}` })).toBeInTheDocument();
+    expect(row).toHaveAttribute('data-skipped', 'true');
+    expect(within(row).getByTestId('entry-caption')).toHaveTextContent('skipped');
+    const nextRow = screen.getAllByTestId('exercise-row')[1];
+    expect(within(nextRow).getAllByRole('textbox')[0]).toHaveFocus();
+    expect(screen.getByLabelText(/^1 of \d+ exercises logged$/)).toBeInTheDocument();
+  });
+
+  it('blank fields + the button skip; logging values afterwards clears the skip', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const row = await renderSession(s.id);
+    const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
+    enter(row, name, '', '');
+    fireEvent.click(within(row).getByRole('button', { name: `Skip ${name}` }));
+    await waitFor(async () => expect((await sessions.get(s.id))?.skippedSlots).toEqual([0]));
+
+    fireEvent.keyDown(enter(row, name, '100', '8'), { key: 'Enter' });
+    await waitFor(async () =>
+      expect(await setsRepo.listBySession(s.id)).toHaveLength(s.targets[0].sets),
+    );
+    expect((await sessions.get(s.id))?.skippedSlots).toEqual([]);
+    expect(await within(row).findByRole('button', { name: `Un-log ${name}` })).toBeInTheDocument();
+  });
+
+  it('the skipped mark un-skips', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    await sessions.skipSlot(s.id, 0, s.targets[0].exerciseId);
+    const row = await renderSession(s.id);
+    const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
+    fireEvent.click(await within(row).findByRole('button', { name: `Un-skip ${name}` }));
+    await waitFor(async () => expect((await sessions.get(s.id))?.skippedSlots).toEqual([]));
+  });
+
+  it('skipping a logged exercise deletes its sets', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const t = s.targets[0];
+    await setsRepo.replaceExerciseSets({
+      sessionId: s.id,
+      slotIndex: 0,
+      exerciseId: t.exerciseId,
+      count: t.sets,
+      weight: 100,
+      unit: 'lb',
+      reps: 8,
+    });
+    await sessions.skipSlot(s.id, 0, t.exerciseId);
+    expect(await setsRepo.listBySession(s.id)).toHaveLength(0);
+    expect((await sessions.get(s.id))?.skippedSlots).toEqual([0]);
+  });
+
+  it('finish records every exercise without sets as skipped', async () => {
+    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const t = s.targets[1];
+    await setsRepo.replaceExerciseSets({
+      sessionId: s.id,
+      slotIndex: 1,
+      exerciseId: t.exerciseId,
+      count: t.sets,
+      weight: 100,
+      unit: 'lb',
+      reps: 8,
+    });
+    const done = await sessions.finish(s.id);
+    const expected = s.targets.map((x) => x.slotIndex).filter((i) => i !== 1);
+    expect(done.status).toBe('completed');
+    expect(done.skippedSlots).toEqual(expected);
+    expect((await sessions.get(s.id))?.skippedSlots).toEqual(expected);
+  });
+
   it('has no timer UI', async () => {
     const s = await sessions.start('v-taper-upper-lower', 'upper-a');
     await renderSession(s.id);

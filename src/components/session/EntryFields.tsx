@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, CornerDownLeft } from 'lucide-react';
-import { parseWeightReps, type WeightRepsResult } from '../../domain/setEntry';
+import { Check, CornerDownLeft, Minus } from 'lucide-react';
+import { isSkipEntry, parseWeightReps, type WeightRepsResult } from '../../domain/setEntry';
 import { formatWeight } from '../../domain/units';
 import type { LoadType, Unit } from '../../domain/types';
 
@@ -19,6 +19,12 @@ export interface EntryFieldsProps {
   onSubmit: (parsed: ParsedEntry) => void;
   /** Called by the tick on a logged entry. */
   onUnlog: () => void;
+  /** The exercise is recorded as skipped. Only used where skipping is offered (`onSkip`). */
+  skipped?: boolean;
+  /** Submitting `x` or a blank entry records a skip. Without it, those entries are just invalid. */
+  onSkip?: () => void;
+  /** Called by the skipped mark to clear the skip. */
+  onUnskip?: () => void;
 }
 
 function previewText(parsed: ParsedEntry, load: LoadType): string {
@@ -60,19 +66,31 @@ export function EntryFields(props: EntryFieldsProps) {
   const dirty = weightDirty || repsDirty;
   const muted = !completed && w === null && r === null && (baseWeight !== '' || baseReps !== '');
 
+  const skipped = !!props.skipped && !completed;
+  const canSkip = !!props.onSkip;
   const opts = { load, unit };
   const parsed = parseWeightReps(weightText, repsText, opts);
   const weightRes = parseWeightReps(weightText, '1', opts);
   const repsRes = parseWeightReps('0', repsText, opts);
-  const weightBad = hasWeight && weightDirty && weightText.trim() !== '' && !weightRes.ok;
-  const repsBad = repsDirty && repsText.trim() !== '' && !repsRes.ok;
+  const isX = (t: string) => canSkip && t.trim().toLowerCase() === 'x';
+  // A skip entry: `x` in either field, or every field blank. A row that is already skipped can't
+  // be skipped again (its blank fields just show the skipped state).
+  const skipEntry = canSkip && !skipped && isSkipEntry(weightText, repsText, load);
+  const weightBad =
+    hasWeight && weightDirty && weightText.trim() !== '' && !isX(weightText) && !weightRes.ok;
+  const repsBad = repsDirty && repsText.trim() !== '' && !isX(repsText) && !repsRes.ok;
   const hint =
     weightBad && !weightRes.ok ? weightRes.hint : repsBad && !repsRes.ok ? repsRes.hint : null;
-  const showLogButton = !completed || dirty;
+  const showLogButton = (!completed && !skipped) || dirty;
 
   function submit() {
-    if (!parsed.ok) return;
-    props.onSubmit(parsed);
+    if (skipEntry) {
+      props.onSkip?.();
+    } else if (parsed.ok) {
+      props.onSubmit(parsed);
+    } else {
+      return;
+    }
     setW(null);
     setR(null);
   }
@@ -111,7 +129,9 @@ export function EntryFields(props: EntryFieldsProps) {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  repsEl.current?.focus();
+                  // `x` in weight skips straight away; anything else moves on to reps.
+                  if (isX(weightText)) submit();
+                  else repsEl.current?.focus();
                 }
               }}
               className={`${inputBase} ${wrapper} ${tone(weightBad)}`}
@@ -148,8 +168,12 @@ export function EntryFields(props: EntryFieldsProps) {
         >
           {hint ? (
             hint
+          ) : dirty && skipEntry ? (
+            'skip'
           ) : dirty && parsed.ok ? (
             previewText(parsed, load)
+          ) : skipped ? (
+            'skipped'
           ) : (
             <span className="flex" aria-hidden="true">
               {hasWeight ? <span className="flex-1 text-center">{unit}</span> : null}
@@ -162,11 +186,25 @@ export function EntryFields(props: EntryFieldsProps) {
         <button
           type="button"
           onClick={submit}
-          disabled={!parsed.ok}
-          aria-label={completed ? `Update ${label}` : `Log ${label}`}
+          disabled={!parsed.ok && !skipEntry}
+          aria-label={skipEntry ? `Skip ${label}` : completed ? `Update ${label}` : `Log ${label}`}
           className="inline-flex h-12 w-12 shrink-0 items-center justify-center border-l border-hairline text-muted disabled:opacity-30"
         >
           <CornerDownLeft size={20} aria-hidden="true" />
+        </button>
+      ) : skipped ? (
+        <button
+          type="button"
+          onClick={() => {
+            setW(null);
+            setR(null);
+            props.onUnskip?.();
+          }}
+          aria-label={`Un-skip ${label}`}
+          aria-pressed
+          className="inline-flex h-12 w-12 shrink-0 items-center justify-center border-l border-hairline text-muted"
+        >
+          <Minus size={22} strokeWidth={3} aria-hidden="true" />
         </button>
       ) : (
         <button

@@ -86,6 +86,19 @@ export function parseWeightReps(
   return { ok: true, weight, reps, unit };
 }
 
+const SKIP_MARK = 'x';
+
+/**
+ * True when the entry means "skipped" (a null log, no sets): either field is `x`, or every field
+ * the load type shows is blank (load `none` has no weight field, so only reps counts).
+ */
+export function isSkipEntry(weightText: string, repsText: string, load: LoadType): boolean {
+  const w = weightText.trim().toLowerCase();
+  const r = repsText.trim().toLowerCase();
+  if (r === SKIP_MARK || (load !== 'none' && w === SKIP_MARK)) return true;
+  return r === '' && (load === 'none' || w === '');
+}
+
 function num(n: number): string {
   return String(Number(n.toFixed(2)));
 }

@@ -9,6 +9,8 @@ export interface FinishSheetProps {
   open: boolean;
   onClose: () => void;
   sets: SetEntry[];
+  /** Names of the exercises with no sets, which Finish records as skipped. */
+  skipped?: string[];
   exercises: Map<string, Exercise>;
   unit: Unit;
   durationMs: number;
@@ -111,6 +113,16 @@ export function FinishSheet(props: FinishSheetProps) {
                   );
                 })}
               </ul>
+            </section>
+          ) : null}
+          {props.skipped && props.skipped.length > 0 ? (
+            <section aria-label="Skipped exercises" className="mb-4">
+              <SectionLabel as="h3" className="mb-2">
+                Skipped
+              </SectionLabel>
+              <p className="text-sm text-muted" data-testid="finish-skipped">
+                {props.skipped.join(', ')}
+              </p>
             </section>
           ) : null}
           <div className="flex flex-col gap-2">

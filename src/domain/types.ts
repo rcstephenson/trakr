@@ -80,6 +80,12 @@ export interface Session {
   notes?: string;
   bodyweight?: number;
   targets: SessionTarget[];
+  /**
+   * Slot indexes recorded as skipped (a null log: no sets). Set by entering `x` or a blank entry,
+   * and for every still-unlogged slot when the session is finished. A slot that has sets is never
+   * treated as skipped, even if it is listed here.
+   */
+  skippedSlots?: number[];
 }
 
 export interface SetEntry {
