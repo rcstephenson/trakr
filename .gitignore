@@ -1,8 +1,31 @@
+# Dependencies and build output
 node_modules
 dist
+*.tsbuildinfo
+
+# Test output
+coverage
 playwright-report
 test-results
+blob-report
+playwright/.cache
+
+# Local config and secrets
 *.local
-.DS_Store
-coverage
+.env
+.env.*
+!.env.example
+
+# Claude Code: per-machine settings and agent worktrees
+.claude/settings.local.json
 .claude/worktrees/
+
+# Logs
+*.log
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -97,10 +97,10 @@
 
 ## Nutrition
 
-Lean bulk is the right call here — muscle mass is the limiting factor for a "ripped" look, not body fat.
+A lean bulk is the right call here — muscle mass is the limiting factor for a "ripped" look, not body fat.
 
 - **Calories:** ~250–350 above maintenance per day
-- **Rate of gain:** 0.25–0.5% of body weight per month (~0.4–0.8 lb)
-- **Protein:** 115–160 g/day (1.6–2.2 g/kg)
+- **Rate of gain:** 0.25–0.5% of body weight per month
+- **Protein:** 1.6–2.2 g per kg of body weight per day
 
 If you're newer to lifting, eating at maintenance can build muscle while losing fat, just more slowly.

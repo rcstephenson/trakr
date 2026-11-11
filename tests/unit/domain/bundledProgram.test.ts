@@ -96,6 +96,6 @@ describe('bundled v-taper-upper-lower program', () => {
     ]) {
       expect(notes).toContain(h);
     }
-    expect(notes).toContain('**Lifter:**');
+    expect(notes).toContain('**Goal:**');
   });
 });
