@@ -1,6 +1,6 @@
-# Trakr Agent Playbook
+# trakr Agent Playbook
 
-How to build Trakr with parallel Sonnet coding agents. The product and technical source of truth is [SPEC.md](../SPEC.md); the agents live in [.claude/agents/](../.claude/agents/).
+How to build trakr with parallel Sonnet coding agents. The product and technical source of truth is [SPEC.md](../SPEC.md); the agents live in [.claude/agents/](../.claude/agents/).
 
 ## The agents
 

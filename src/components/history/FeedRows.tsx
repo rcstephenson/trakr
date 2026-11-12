@@ -18,7 +18,16 @@ function dayLabel(iso: string): string {
   });
 }
 
-export function SessionRow({ session, unit }: { session: Session; unit: Unit }) {
+export function SessionRow({
+  session,
+  unit,
+  programName,
+}: {
+  session: Session;
+  unit: Unit;
+  /** Shown under the stats when sessions span more than one program. */
+  programName?: string;
+}) {
   const sets = useSessionSets(session.id);
   const minutes = sessionMinutes(session);
   const totals = sets ? sessionTotals(sets, unit) : null;
@@ -37,6 +46,11 @@ export function SessionRow({ session, unit }: { session: Session; unit: Unit }) 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-ink">{session.workoutName}</p>
           <p className="num truncate text-xs text-muted">{parts.join(' · ')}</p>
+          {programName ? (
+            <p className="micro truncate" data-testid="session-program">
+              {programName}
+            </p>
+          ) : null}
         </div>
         <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
       </div>

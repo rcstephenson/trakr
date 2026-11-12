@@ -1,9 +1,10 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import bundled from '../../../programs/v-taper-upper-lower.json';
+import bundled from '../../../programs/5day-upperlower-rev2.json';
 import { db } from '../../../src/db/schema';
 import { ensureSeeded } from '../../../src/db/seed';
 import * as history from '../../../src/db/repositories/history';
+import * as programs from '../../../src/db/repositories/programs';
 import * as sessions from '../../../src/db/repositories/sessions';
 import {
   buildChartPoints,
@@ -11,7 +12,13 @@ import {
   computeRecords,
   topSetOf,
 } from '../../../src/components/charts/chartData';
-import { clearDemoData, generateDemoData, seedDemoData } from '../../../src/dev/demoData';
+import {
+  DEMO_PREVIOUS_PROGRAM_ID,
+  buildPreviousDemoProgram,
+  clearDemoData,
+  generateDemoData,
+  seedDemoData,
+} from '../../../src/dev/demoData';
 import { estimate1RM, exerciseSessionMetrics } from '../../../src/domain/stats';
 import type { Program } from '../../../src/domain/types';
 import { convert } from '../../../src/domain/units';
@@ -25,11 +32,12 @@ beforeEach(async () => {
 });
 
 describe('demo generator', () => {
-  it('produces ~6 months at 3-4 sessions per week with small increases', () => {
+  it('produces ~6 months following the schedule (some days missed) with small increases', () => {
     const data = generateDemoData(program, NOW);
     const weeks = 182 / 7;
-    expect(data.sessions.length).toBeGreaterThan(weeks * 2.8);
-    expect(data.sessions.length).toBeLessThan(weeks * 4.1);
+    const perWeek = program.schedule.filter((s) => s !== 'rest').length;
+    expect(data.sessions.length).toBeGreaterThan(weeks * perWeek * 0.7);
+    expect(data.sessions.length).toBeLessThan(weeks * perWeek * 1.02);
     expect(data.activities.length).toBeGreaterThan(0);
     const bench = data.sessions
       .flatMap((s) => s.sets)
@@ -39,6 +47,29 @@ describe('demo generator', () => {
 
   it('is deterministic', () => {
     expect(generateDemoData(program, NOW)).toEqual(generateDemoData(program, NOW));
+  });
+
+  it('includes tennis among the demo activities', () => {
+    expect(generateDemoData(program, NOW).activities.map((a) => a.type)).toContain('tennis');
+  });
+
+  it('splits sessions across a previous program, then the active one, with continuous progress', () => {
+    const previous = buildPreviousDemoProgram(program);
+    expect(previous.id).toBe(DEMO_PREVIOUS_PROGRAM_ID);
+    expect(previous.workouts.length).toBe(program.workouts.length - 1);
+    const data = generateDemoData(program, NOW, 8, previous);
+    const ids = data.sessions.map((s) => s.programId);
+    const switchAt = ids.indexOf(program.id);
+    expect(switchAt).toBeGreaterThan(10);
+    expect(ids.slice(0, switchAt).every((id) => id === previous.id)).toBe(true);
+    expect(ids.slice(switchAt).every((id) => id === program.id)).toBe(true);
+    // The active program restarts its rotation at its first workout after the switch.
+    expect(data.sessions[switchAt].workoutId).toBe(program.schedule[0]);
+    // Weight progress for a shared exercise carries across the switch.
+    const bench = data.sessions
+      .flatMap((s) => s.sets)
+      .filter((s) => s.exerciseId === 'barbell-bench-press' && !s.isWarmup);
+    expect(bench[bench.length - 1].weight).toBeGreaterThan(bench[0].weight);
   });
 });
 
@@ -125,5 +156,19 @@ describe('chart data with seeded history', () => {
     const left = await sessions.list();
     expect(left.map((s) => s.id)).toEqual([own.id]);
     expect(await db.sets.count()).toBe(0);
+  });
+
+  it('seeds a demo previous program, keeps the real one active, and clears it again', async () => {
+    await ensureSeeded();
+    await seedDemoData({ withPreviousProgram: true });
+    expect((await programs.getActive())?.id).toBe(program.id);
+    expect(await programs.get(DEMO_PREVIOUS_PROGRAM_ID)).not.toBeNull();
+    const byProgram = new Set((await sessions.list()).map((s) => s.programId));
+    expect(byProgram).toEqual(new Set([program.id, DEMO_PREVIOUS_PROGRAM_ID]));
+
+    await clearDemoData();
+    expect(await programs.get(DEMO_PREVIOUS_PROGRAM_ID)).toBeNull();
+    expect(await sessions.list()).toEqual([]);
+    expect((await programs.getActive())?.id).toBe(program.id);
   });
 });

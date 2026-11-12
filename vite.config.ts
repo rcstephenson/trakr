@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icons/apple-touch-icon.png', 'icons/icon.svg'],
       manifest: {
-        name: 'Trakr',
-        short_name: 'Trakr',
+        name: 'trakr',
+        short_name: 'trakr',
         description: 'Log gym workouts and track progress.',
         display: 'standalone',
         orientation: 'portrait',

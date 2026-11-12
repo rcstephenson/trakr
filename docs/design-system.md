@@ -1,6 +1,6 @@
-# Trakr design system: "Signal"
+# trakr design system: "Signal"
 
-The visual language of Trakr, a mobile-first workout-logging PWA. This sheet documents what the code does today, so the look can be reproduced and extended by people and by coding agents.
+The visual language of trakr, a mobile-first workout-logging PWA. This sheet documents what the code does today, so the look can be reproduced and extended by people and by coding agents.
 
 - **Source of truth:** the code. Where it disagrees with `SPEC.md` §7, this document follows the code and lists the difference in [Spec drift](#13-spec-drift).
 - **Rationale:** `SPEC.md` §7 (design), §6.1 (logging screen), §1 (data, not advice; no timers).
@@ -776,12 +776,12 @@ Files in `public/icons/`: `icon.svg` (favicon), `icon-192.png`, `icon-512.png`, 
 
 | Setting | Value | Source |
 |---|---|---|
-| `name` / `short_name` | Trakr | `vite.config.ts` |
+| `name` / `short_name` | trakr | `vite.config.ts` |
 | `display` / `orientation` | `standalone` / `portrait` | `vite.config.ts` |
 | `theme_color`, `background_color` | `#0A0C10` (Graphite bg) | `vite.config.ts` |
 | `<meta name="theme-color">` | Two tags: `#eef1f4` for `(prefers-color-scheme: light)`, `#0a0c10` for `dark` | `index.html` |
 | Runtime | `applyTheme()` rewrites every theme-color tag to the applied `--bg`, so the status bar follows the in-app toggle, not only the OS | `src/lib/theme.ts` |
-| iOS | `apple-mobile-web-app-capable`, status bar `default`, title Trakr | `index.html` |
+| iOS | `apple-mobile-web-app-capable`, status bar `default`, title trakr | `index.html` |
 
 ---
 

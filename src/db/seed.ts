@@ -1,5 +1,5 @@
-import bundled from '../../programs/v-taper-upper-lower.json';
-import { DEFAULT_SETTINGS, type Program } from '../domain/types';
+import { DEFAULT_SETTINGS } from '../domain/types';
+import { DEFAULT_PROGRAM } from './bundled';
 import { db } from './schema';
 import * as programs from './repositories/programs';
 
@@ -11,7 +11,7 @@ import * as programs from './repositories/programs';
 export async function ensureSeeded(): Promise<boolean> {
   return db.transaction('rw', db.programs, db.exercises, db.settings, async () => {
     if ((await db.programs.count()) > 0) return false;
-    await programs.save(bundled as unknown as Program, { activate: true });
+    await programs.save(DEFAULT_PROGRAM, { activate: true });
     if (!(await db.settings.get('app'))) await db.settings.put({ key: 'app', ...DEFAULT_SETTINGS });
     return true;
   });

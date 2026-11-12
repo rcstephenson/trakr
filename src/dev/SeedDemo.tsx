@@ -5,6 +5,7 @@ import { clearDemoData, seedDemoData } from './demoData';
 export default function SeedDemo() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [withPrevious, setWithPrevious] = useState(true);
 
   const run = async (task: () => Promise<string>) => {
     setBusy(true);
@@ -27,11 +28,20 @@ export default function SeedDemo() {
             Generates about 6 months of completed sessions following the active program, plus a few
             activities. Existing demo data is replaced; your own data is never touched.
           </p>
+          <label className="flex min-h-touch items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={withPrevious}
+              onChange={(e) => setWithPrevious(e.target.checked)}
+              className="h-5 w-5 accent-[var(--accent-ink)]"
+            />
+            Put the first 3 months under a demo previous program
+          </label>
           <Button
             disabled={busy}
             onClick={() =>
               run(async () => {
-                const r = await seedDemoData();
+                const r = await seedDemoData({ withPreviousProgram: withPrevious });
                 return `Created ${r.sessions} sessions, ${r.sets} sets, ${r.activities} activities.`;
               })
             }

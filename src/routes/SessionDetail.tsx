@@ -17,6 +17,8 @@ import {
 } from '../components/ui';
 import * as sessionsRepo from '../db/repositories/sessions';
 import { formatDuration } from '../domain/activity';
+import { programLabel } from '../domain/programHistory';
+import { usePrograms } from '../hooks/usePrograms';
 import { useSession } from '../hooks/useSession';
 import { useSessionSets } from '../hooks/useSessionSets';
 import { useSettings } from '../hooks/useSettings';
@@ -40,6 +42,7 @@ export default function SessionDetail() {
   const sets = useSessionSets(id);
   const settings = useSettings();
   const catalog = useExerciseCatalog();
+  const programs = usePrograms();
   const prIds = usePrSetIds(session, sets, settings?.unit ?? 'lb');
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -60,7 +63,7 @@ export default function SessionDetail() {
       </>
     );
   }
-  if (!session || !sets || !settings || !catalog) {
+  if (!session || !sets || !settings || !catalog || !programs) {
     return (
       <>
         <BackLink />
@@ -82,7 +85,11 @@ export default function SessionDetail() {
     day: 'numeric',
     year: 'numeric',
   });
-  const subtitle = [date, minutes !== null ? formatDuration(minutes) : null]
+  const subtitle = [
+    date,
+    minutes !== null ? formatDuration(minutes) : null,
+    programLabel(programs, session.programId),
+  ]
     .filter(Boolean)
     .join(' · ');
   const orphanNotes = Object.entries(slotNotes)

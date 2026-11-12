@@ -37,9 +37,9 @@ async function finishWithOneSet(page: Page) {
   await expect(page).toHaveURL(/\/$/);
 }
 
-test('Today lists all four workouts, marks NEXT, and starts a non-next one', async ({ page }) => {
+test('Today lists all five workouts, marks NEXT, and starts a non-next one', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('radio')).toHaveCount(4);
+  await expect(page.getByRole('radio')).toHaveCount(5);
   await expect(page.getByRole('radio', { name: /Upper A/ })).toBeChecked();
   await expect(page.getByRole('radio', { name: /Upper A/ })).toContainText('NEXT');
   await expect(page.getByRole('button', { name: 'Start Upper A' })).toBeVisible();

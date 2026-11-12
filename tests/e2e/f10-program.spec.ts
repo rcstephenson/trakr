@@ -51,7 +51,7 @@ test('reordering an exercise changes the template but not an earlier session', a
   // An earlier completed session, as sessions.start would have snapshotted it.
   await putRow(page, 'sessions', {
     id: 'earlier-session',
-    programId: 'v-taper-upper-lower',
+    programId: '5day-upperlower-rev2',
     workoutId: 'upper-a',
     workoutName: 'Upper A',
     startedAt: '2026-01-01T10:00:00.000Z',

@@ -1,4 +1,4 @@
-﻿import type { Program, Session } from './types';
+import type { Program, Session } from './types';
 
 /**
  * Id of the workout that should come next (SPEC 5.1).
@@ -32,4 +32,21 @@ export function nextWorkoutId(
   const idx = order.indexOf(last.workoutId);
   if (idx === -1) return first;
   return order[(idx + 1) % order.length] ?? first;
+}
+
+/**
+ * `nextWorkoutId` scoped to one program: only that program's sessions count, so a workout id
+ * reused by another program (e.g. `upper-a`) never advances this program's rotation. A program
+ * with no sessions of its own starts at its first workout.
+ */
+export function nextWorkoutIdForProgram(
+  program: Pick<Program, 'id' | 'schedule'>,
+  completedSessions: ReadonlyArray<
+    Pick<Session, 'programId' | 'workoutId' | 'status' | 'startedAt' | 'finishedAt'>
+  >,
+): string {
+  return nextWorkoutId(
+    program,
+    completedSessions.filter((s) => s.programId === program.id),
+  );
 }

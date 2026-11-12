@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { activityIcon, formatDuration, hasDistance, pace } from '../../../src/domain/activity';
+import {
+  ACTIVITY_LABELS,
+  ACTIVITY_TYPES,
+  activityIcon,
+  formatDuration,
+  hasDistance,
+  pace,
+} from '../../../src/domain/activity';
 
 describe('pace', () => {
   it('formats 5 km in 28 min as 5:36 /km', () => {
@@ -58,5 +65,30 @@ describe('activity helpers', () => {
     expect(hasDistance('walk')).toBe(true);
     expect(hasDistance('class')).toBe(false);
     expect(hasDistance('climb')).toBe(false);
+    expect(hasDistance('tennis')).toBe(false);
+  });
+  it('supports tennis with a label and icon', () => {
+    expect(ACTIVITY_TYPES).toContain('tennis');
+    expect(ACTIVITY_LABELS.tennis).toBe('Tennis');
+    expect(activityIcon('tennis')).toBe('circle-dot');
+  });
+  it('backup schemas accept every activity type', async () => {
+    const { parseBackup } = await import('../../../src/lib/backup');
+    for (const type of ACTIVITY_TYPES) {
+      const result = parseBackup({
+        app: 'trakr',
+        backupVersion: 1,
+        exportedAt: '2026-11-11T00:00:00.000Z',
+        programs: [],
+        exercises: [],
+        sessions: [],
+        sets: [],
+        activities: [
+          { id: `a-${type}`, type, startedAt: '2026-11-11T10:00:00.000Z', durationMin: 60 },
+        ],
+        settings: { unit: 'lb', theme: 'system' },
+      });
+      expect(result.ok, type).toBe(true);
+    }
   });
 });

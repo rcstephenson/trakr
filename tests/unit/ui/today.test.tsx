@@ -27,7 +27,7 @@ describe('Today', () => {
   });
 
   it('shows Lower A after a completed Upper A', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     await sessions.finish(s.id);
     renderToday();
     expect(await screen.findByRole('heading', { name: 'Lower A' })).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('Today', () => {
   });
 
   it('shows Resume with an active session', async () => {
-    await sessions.start('v-taper-upper-lower', 'upper-a');
+    await sessions.start('5day-upperlower-rev2', 'upper-a');
     renderToday();
     expect(await screen.findByRole('link', { name: 'Resume Upper A' })).toBeInTheDocument();
   });
@@ -47,7 +47,7 @@ describe('Today', () => {
     renderToday();
     expect(await screen.findByRole('radio', { name: /Upper A/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: /Upper A/ })).toHaveTextContent('NEXT');
-    expect(screen.getAllByRole('radio')).toHaveLength(4);
+    expect(screen.getAllByRole('radio')).toHaveLength(5);
     expect(screen.getByRole('button', { name: 'Start Upper A' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('radio', { name: /Lower B/ }));
@@ -64,7 +64,7 @@ describe('Today', () => {
   });
 
   it('hides the selector while a session is active and offers Discard', async () => {
-    await sessions.start('v-taper-upper-lower', 'upper-a');
+    await sessions.start('5day-upperlower-rev2', 'upper-a');
     renderToday();
     expect(await screen.findByRole('button', { name: 'Discard workout' })).toBeInTheDocument();
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();

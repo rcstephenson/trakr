@@ -9,7 +9,7 @@ import { nextWorkoutId } from '../../../src/domain/rotation';
 import { buildFeed, sessionMinutes } from '../../../src/components/history/feed';
 import { noonIso, toDateKey } from '../../../src/lib/dates';
 
-const PID = 'v-taper-upper-lower';
+const PID = '5day-upperlower-rev2';
 
 function daysAgoKey(n: number): string {
   const d = new Date();

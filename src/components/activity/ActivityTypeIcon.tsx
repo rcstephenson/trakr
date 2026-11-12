@@ -1,6 +1,7 @@
 import {
   Activity as ActivityGlyph,
   Bike,
+  CircleDot,
   Footprints,
   Mountain,
   PersonStanding,
@@ -18,6 +19,7 @@ const COMPONENTS: Record<ActivityIconName, LucideIcon> = {
   waves: Waves,
   'person-standing': PersonStanding,
   mountain: Mountain,
+  'circle-dot': CircleDot,
   trophy: Trophy,
   users: Users,
   activity: ActivityGlyph,

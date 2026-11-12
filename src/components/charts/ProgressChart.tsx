@@ -15,6 +15,8 @@ export interface ProgressChartProps {
   metric: Metric;
   metricLabel: string;
   unit: Unit;
+  /** Resolves a program id to a name; the tooltip shows it when given (multi-program history). */
+  programName?: (programId: string) => string;
 }
 
 const dayFmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
@@ -36,14 +38,16 @@ interface TipProps {
   payload?: ReadonlyArray<{ payload: ChartPoint }>;
   metric: Metric;
   unit: Unit;
+  programName?: (programId: string) => string;
 }
 
-function InspectTooltip({ active, payload, metric, unit }: TipProps) {
+function InspectTooltip({ active, payload, metric, unit, programName }: TipProps) {
   if (!active || !payload?.length) return null;
   const point = payload[0].payload;
   return (
     <div className="num max-w-[220px] rounded-btn border border-ink bg-raised p-2.5 text-xs">
       <p className="micro">{fullFmt.format(point.t)}</p>
+      {programName ? <p className="micro">{programName(point.programId)}</p> : null}
       <p className="mt-0.5 text-base font-semibold text-ink">
         {formatMetricValue(metric, point, unit)}
       </p>
@@ -55,7 +59,13 @@ function InspectTooltip({ active, payload, metric, unit }: TipProps) {
 }
 
 /** Line chart of one metric over time. Tap or drag a point to inspect it. */
-export function ProgressChart({ points, metric, metricLabel, unit }: ProgressChartProps) {
+export function ProgressChart({
+  points,
+  metric,
+  metricLabel,
+  unit,
+  programName,
+}: ProgressChartProps) {
   const data = points as ChartPoint[];
   return (
     <div
@@ -96,6 +106,7 @@ export function ProgressChart({ points, metric, metricLabel, unit }: ProgressCha
                 payload={p.payload as unknown as TipProps['payload']}
                 metric={metric}
                 unit={unit}
+                programName={programName}
               />
             )}
           />

@@ -6,7 +6,7 @@ import { TodaySkeleton } from '../components/today/TodaySkeleton';
 import { useStartWorkout } from '../components/today/useStartWorkout';
 import { WeekStrip } from '../components/today/WeekStrip';
 import { buttonClass, EmptyState, PageHeader } from '../components/ui';
-import { nextWorkoutId } from '../domain/rotation';
+import { nextWorkoutIdForProgram } from '../domain/rotation';
 import { useActiveProgram } from '../hooks/useActiveProgram';
 import { useActiveSession } from '../hooks/useActiveSession';
 import { useActivities } from '../hooks/useActivities';
@@ -49,7 +49,7 @@ export default function Today() {
   let nextId: string | null = null;
   if (program) {
     try {
-      nextId = nextWorkoutId(program, completed);
+      nextId = nextWorkoutIdForProgram(program, completed);
     } catch {
       nextId = null;
     }

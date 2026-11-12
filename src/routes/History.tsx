@@ -4,7 +4,9 @@ import { ActivityGrid } from '../components/history/ActivityGrid';
 import { ActivityRow, SessionRow } from '../components/history/FeedRows';
 import { buildFeed, type FeedFilter } from '../components/history/feed';
 import { Button, Chip, EmptyState, Mono, PageHeader, SectionLabel } from '../components/ui';
+import { filterSessionsByProgram, programIdsOf, programLabel } from '../domain/programHistory';
 import { useActivities } from '../hooks/useActivities';
+import { usePrograms } from '../hooks/usePrograms';
 import { useSessions } from '../hooks/useSessions';
 import { useSettings } from '../hooks/useSettings';
 
@@ -22,12 +24,25 @@ export default function History() {
   const settings = useSettings();
   const [filter, setFilter] = useState<FeedFilter>('all');
 
+  const programs = usePrograms();
+  // null = all programs. Activities belong to no program, so they are hidden while one is picked.
+  const [programId, setProgramId] = useState<string | null>(null);
+
+  const programIds = useMemo(() => programIdsOf(sessions ?? []), [sessions]);
+  const multiProgram = programIds.length > 1;
+  const shownSessions = useMemo(
+    () => (sessions ? filterSessionsByProgram(sessions, programId) : []),
+    [sessions, programId],
+  );
   const groups = useMemo(
-    () => (sessions && activities ? buildFeed(sessions, activities, filter) : []),
-    [sessions, activities, filter],
+    () =>
+      sessions && activities
+        ? buildFeed(shownSessions, programId === null ? activities : [], filter)
+        : [],
+    [sessions, activities, shownSessions, programId, filter],
   );
 
-  if (!sessions || !activities || !settings) {
+  if (!sessions || !activities || !settings || !programs) {
     return <PageHeader title="History" />;
   }
 
@@ -56,6 +71,18 @@ export default function History() {
               </Chip>
             ))}
           </div>
+          {multiProgram ? (
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by program">
+              <Chip selected={programId === null} onClick={() => setProgramId(null)}>
+                All programs
+              </Chip>
+              {programIds.map((id) => (
+                <Chip key={id} selected={programId === id} onClick={() => setProgramId(id)}>
+                  {programLabel(programs, id)}
+                </Chip>
+              ))}
+            </div>
+          ) : null}
           {groups.length === 0 ? (
             <p className="micro py-8 text-center">Nothing to show for this filter.</p>
           ) : (
@@ -71,7 +98,15 @@ export default function History() {
                   {g.items.map((item) => (
                     <li key={item.key}>
                       {item.kind === 'session' ? (
-                        <SessionRow session={item.session} unit={settings.unit} />
+                        <SessionRow
+                          session={item.session}
+                          unit={settings.unit}
+                          programName={
+                            multiProgram
+                              ? programLabel(programs, item.session.programId)
+                              : undefined
+                          }
+                        />
                       ) : (
                         <ActivityRow activity={item.activity} />
                       )}

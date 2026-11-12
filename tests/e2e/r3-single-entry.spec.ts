@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import {
   exerciseRow,
@@ -137,6 +139,17 @@ test('no Add set, Swap exercise, Note or per-set options on the session screen',
 test('load none rows have a reps field only; bodyweight-plus takes +25 and bw', async ({
   page,
 }) => {
+  // The bundled program has no bodyweight-plus exercise in its workouts, so import the frozen
+  // 4-day program, whose Upper B starts with a Pull-Up.
+  await page.goto('/program');
+  await page.getByRole('button', { name: 'Import program' }).click();
+  await page.getByLabel('Program file').setInputFiles({
+    name: 'workout_A.program.json',
+    mimeType: 'application/json',
+    buffer: readFileSync(resolve(process.cwd(), 'tests/fixtures/workout_A.program.json')),
+  });
+  await page.getByRole('button', { name: 'Save program' }).click();
+  await expect(page.getByRole('button', { name: 'Switch program' })).toBeVisible();
   await page.goto('/');
   await page.getByRole('radio', { name: /Upper B/ }).click();
   await page.getByRole('button', { name: /^Start / }).click();
@@ -151,7 +164,7 @@ test('load none rows have a reps field only; bodyweight-plus takes +25 and bw', 
 
 test('load none (core work) shows only a reps field', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('radio', { name: /Lower A/ }).click();
+  await page.getByRole('radio', { name: /Lower B/ }).click();
   await page.getByRole('button', { name: /^Start / }).click();
   const core = page.getByTestId('exercise-row').filter({ hasText: 'Core / Leg Raise' });
   await expect(core.getByRole('textbox')).toHaveCount(1);

@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../../src/db/schema';
 import { ensureSeeded } from '../../../src/db/seed';
+import * as programs from '../../../src/db/repositories/programs';
 import * as sessions from '../../../src/db/repositories/sessions';
 import * as sets from '../../../src/db/repositories/sets';
 import * as activities from '../../../src/db/repositories/activities';
@@ -21,7 +22,8 @@ async function wipe() {
 async function seedVaried() {
   await ensureSeeded();
   await settings.update({ unit: 'kg', theme: 'dark' });
-  const s1 = await sessions.start('v-taper-upper-lower', 'upper-a');
+  const program = (await programs.getActive())!;
+  const s1 = await sessions.start(program.id, program.workouts[0].id);
   await sets.add({
     sessionId: s1.id,
     exerciseId: 'barbell-bench-press',

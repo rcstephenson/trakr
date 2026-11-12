@@ -122,7 +122,7 @@ export function NextUpHero({
   );
 }
 
-/** `12:04` in the user's locale, 24h. Static: Trakr never shows a running clock. */
+/** `12:04` in the user's locale, 24h. Static: trakr never shows a running clock. */
 export function formatStartedAt(startedAt: string): string {
   return new Date(startedAt).toLocaleTimeString([], {
     hour: '2-digit',

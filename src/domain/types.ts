@@ -28,6 +28,8 @@ export interface WorkoutItem {
   notes: string;
   /** Exercise ids that may be swapped into this slot. */
   alternatives: string[];
+  /** A primary lift of the workout (shown in bold on the Program screen). */
+  primary?: boolean;
 }
 
 export interface WorkoutTemplate {
@@ -106,7 +108,7 @@ export interface SetEntry {
 }
 
 export type ActivityType =
-  'run' | 'cycle' | 'swim' | 'climb' | 'sport' | 'class' | 'walk' | 'other';
+  'run' | 'cycle' | 'swim' | 'climb' | 'tennis' | 'sport' | 'class' | 'walk' | 'other';
 
 export interface Activity {
   id: string;

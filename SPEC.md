@@ -1,4 +1,4 @@
-# Trakr — Product & Technical Specification
+# trakr — Product & Technical Specification
 
 A mobile-first web app for logging gym workouts against a predefined program, tracking weight/rep progression per exercise, and logging other activities (runs, sports, classes).
 
@@ -71,7 +71,7 @@ No backend in v1.
 trakr/
 ├── SPEC.md
 ├── programs/                     # canonical program definitions (seed data)
-│   └── v-taper-upper-lower.json
+│   └── 5day-upperlower-rev2.json   # the one bundled program
 ├── workouts/                     # original source material
 │   └── workout_A.md              # also the markdown-import test fixture
 ├── public/
@@ -205,7 +205,7 @@ Notes:
 
 ### 4.3 Backup format
 
-`trakr-backup-YYYY-MM-DD.json`: `{ "app": "trakr", "backupVersion": 1, "exportedAt": ..., "programs": [...], "exercises": [...], "sessions": [...], "sets": [...], "activities": [...], "settings": {...} }`. Validated with Zod on import. Import modes: **replace all** or **merge** (upsert by id).
+`trakr-backup-YYYY-MM-DD.json`: `{ "app": "trakr", "backupVersion": 1, "exportedAt": ..., "programs": [...], "exercises": [...], "sessions": [...], "sets": [...], "activities": [...], "settings": {...} }`. Export now writes the compact `backupVersion: 2` format described in `docs/backup-format.md`; import accepts both v1 (the shape above) and v2. Validated with Zod on import. Import modes: **replace all** or **merge** (upsert by id).
 
 ### 4.4 Repository & hook API (shared contract)
 
@@ -434,7 +434,7 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 - **Done when:** E2E: start Upper A, log all sets with 1-tap on prefilled values, reload mid-session and resume with data intact, finish, see summary; a second Upper A session shows "Last: …" and prefills its rows from the first session.
 
 #### F06 · ~~Rest timer~~ (removed)
-- Dropped by product decision: Trakr has no timers. Built once, then deleted in R1a.
+- Dropped by product decision: trakr has no timers. Built once, then deleted in R1a.
 
 #### F07 · History & session detail/edit
 - **Depends on:** F05 (reuses its SetRow for edit mode)
@@ -454,7 +454,7 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 #### F10 · Program view, editor & import
 - **Depends on:** F01, F02
 - **Scope:** `/program` overview with notes rendered from markdown; `/program/edit/:workoutId` editor (reorder, add/remove/edit items, create custom exercise); import a program `.json` (Zod-validated, friendly errors); `domain/markdownImport.ts` that parses markdown in the `workout_A.md` table format into a Program (preview before saving); export program JSON; switch active program.
-- **Done when:** importing `workouts/workout_A.md` through the UI produces a program equivalent to `programs/v-taper-upper-lower.json` (unit test compares them); editing a template doesn't alter past sessions.
+- **Done when:** importing `workouts/workout_A.md` through the UI produces a program equivalent to `tests/fixtures/workout_A.program.json` (the frozen conversion of that file; unit test compares them); editing a template doesn't alter past sessions.
 
 #### F11 · Settings & backup
 - **Depends on:** F02
@@ -465,7 +465,7 @@ Each feature lists dependencies, scope, and acceptance criteria. Features in the
 
 #### F12 · PWA, offline & deployment
 - **Depends on:** F04–F11
-- **Scope:** `vite-plugin-pwa` manifest (name "Trakr", theme color = accent, icons incl. maskable), precache app shell, update prompt ("New version — reload"), deploy config for Cloudflare Pages (or Netlify) with SPA fallback, README with install-to-home-screen instructions for iOS/Android.
+- **Scope:** `vite-plugin-pwa` manifest (name "trakr", theme color = accent, icons incl. maskable), precache app shell, update prompt ("New version — reload"), deploy config for Cloudflare Pages (or Netlify) with SPA fallback, README with install-to-home-screen instructions for iOS/Android.
 - **Done when:** Lighthouse PWA installable; E2E in offline mode can start and log a session; production URL serves over HTTPS.
 
 #### F13 · QA & polish pass

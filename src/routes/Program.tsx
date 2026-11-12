@@ -5,10 +5,14 @@ import { Download, Repeat, Settings as SettingsIcon, Upload } from 'lucide-react
 import { EmptyState, PageHeader } from '../components/ui';
 import { NotesSection, SchedulePills, WorkoutCard } from '../components/program/ProgramOverview';
 import { ImportSheet } from '../components/program/ImportSheet';
+import { ProgramHistory } from '../components/program/ProgramHistory';
 import { SwitchSheet } from '../components/program/SwitchSheet';
 import { downloadProgram } from '../components/program/programFiles';
 import { useActiveProgram } from '../hooks/useActiveProgram';
+import { useSessions } from '../hooks/useSessions';
 import * as programsRepo from '../db/repositories/programs';
+
+const COMPLETED = { status: 'completed' } as const;
 
 const iconBtn =
   'inline-flex min-h-touch min-w-touch items-center justify-center rounded-btn text-ink active:bg-surface';
@@ -16,6 +20,7 @@ const iconBtn =
 export default function Program() {
   const program = useActiveProgram();
   const all = useLiveQuery(() => programsRepo.list(), []);
+  const sessions = useSessions(COMPLETED);
   const [importing, setImporting] = useState(false);
   const [switching, setSwitching] = useState(false);
 
@@ -78,6 +83,7 @@ export default function Program() {
               <WorkoutCard key={w.id} index={i + 1} program={program} workout={w} />
             ))}
             {program.notes ? <NotesSection notes={program.notes} /> : null}
+            <ProgramHistory programs={all ?? []} sessions={sessions ?? []} />
           </div>
         </div>
       )}
@@ -87,7 +93,12 @@ export default function Program() {
         existingIds={(all ?? []).map((p) => p.id)}
         onSaved={() => undefined}
       />
-      <SwitchSheet open={switching} onClose={() => setSwitching(false)} programs={all ?? []} />
+      <SwitchSheet
+        open={switching}
+        onClose={() => setSwitching(false)}
+        programs={all ?? []}
+        sessions={sessions ?? []}
+      />
     </>
   );
 }

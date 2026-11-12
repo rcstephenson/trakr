@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { markdownImport, splitExerciseNames } from '../../../src/domain/markdownImport';
 import { parseProgram } from '../../../src/domain/programSchema';
 import type { Program } from '../../../src/domain/types';
-import bundled from '../../../programs/v-taper-upper-lower.json';
+// The program workout_A.md converts to: the original 4-day plan, as first bundled. The bundled
+// program has since been revised (5 days), so the converter is checked against this snapshot.
+import bundled from '../../fixtures/workout_A.program.json';
 
 const md = readFileSync(resolve(process.cwd(), 'workouts/workout_A.md'), 'utf8');
 

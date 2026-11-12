@@ -33,7 +33,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('shows one weight and one reps field per exercise and none of the old actions', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const row = await renderSession(s.id);
     const rows = screen.getAllByTestId('exercise-row');
     expect(rows).toHaveLength(s.targets.length);
@@ -45,7 +45,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('uses text inputs with numeric keyboards', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const row = await renderSession(s.id);
     const [weight, reps] = within(row).getAllByRole('textbox');
     expect(weight).toHaveAttribute('inputmode', 'decimal');
@@ -55,7 +55,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('Enter in weight moves to reps; Enter in reps writes N identical sets and moves to the next exercise', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const row = await renderSession(s.id);
     const target = s.targets[0];
     const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
@@ -79,7 +79,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('shows a hint for invalid text and does not log', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const row = await renderSession(s.id);
     const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
     const reps = enter(row, name, 'abc', '8');
@@ -90,7 +90,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('editing a logged entry rewrites all its sets; the tick un-logs them all', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const row = await renderSession(s.id);
     const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
     fireEvent.keyDown(enter(row, name, '100', '8'), { key: 'Enter' });
@@ -110,7 +110,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('treats a legacy slot with differing sets as logged, showing the first working set', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const t = s.targets[0];
     await setsRepo.add({
       sessionId: s.id,
@@ -138,7 +138,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('x in weight + Enter records a skip (no sets) and moves to the next exercise', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const row = await renderSession(s.id);
     const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
     const weight = within(row).getByLabelText(`${name} weight`);
@@ -157,7 +157,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('blank fields + the button skip; logging values afterwards clears the skip', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const row = await renderSession(s.id);
     const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
     enter(row, name, '', '');
@@ -173,7 +173,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('the skipped mark un-skips', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     await sessions.skipSlot(s.id, 0, s.targets[0].exerciseId);
     const row = await renderSession(s.id);
     const name = row.querySelector('h3')!.textContent!.replace(/^\d+/, '');
@@ -182,7 +182,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('skipping a logged exercise deletes its sets', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const t = s.targets[0];
     await setsRepo.replaceExerciseSets({
       sessionId: s.id,
@@ -199,7 +199,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('finish records every exercise without sets as skipped', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     const t = s.targets[1];
     await setsRepo.replaceExerciseSets({
       sessionId: s.id,
@@ -218,7 +218,7 @@ describe('Session screen (one entry per exercise)', () => {
   });
 
   it('has no timer UI', async () => {
-    const s = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const s = await sessions.start('5day-upperlower-rev2', 'upper-a');
     await renderSession(s.id);
     expect(screen.queryByLabelText(/elapsed/i)).toBeNull();
     expect(screen.queryByText(/rest/i)).toBeNull();

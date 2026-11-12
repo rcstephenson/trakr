@@ -57,7 +57,7 @@ export function FinishSheet(props: FinishSheetProps) {
   });
 
   const empty = sets.length === 0;
-  // No timers in Trakr: a zero / sub-minute duration (e.g. a backfilled session) is just noise.
+  // No timers in trakr: a zero / sub-minute duration (e.g. a backfilled session) is just noise.
   const showDuration = props.durationMs >= 60_000;
 
   return (

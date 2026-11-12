@@ -5,6 +5,7 @@ import { ensureSeeded } from '../db/seed';
 import { ProgramSchema, ExerciseSchema } from '../domain/programSchema';
 import { DEFAULT_SETTINGS, type Backup } from '../domain/types';
 import { nowIso, toDateKey } from './dates';
+import { decodeBackupV2, encodeBackupV2, serializeBackupV2, type BackupData } from './backupV2';
 
 const unit = z.enum(['lb', 'kg']);
 
@@ -51,7 +52,7 @@ const SetSchema = z.object({
 
 const ActivitySchema = z.object({
   id: z.string().min(1),
-  type: z.enum(['run', 'cycle', 'swim', 'climb', 'sport', 'class', 'walk', 'other']),
+  type: z.enum(['run', 'cycle', 'swim', 'climb', 'tennis', 'sport', 'class', 'walk', 'other']),
   title: z.string().optional(),
   startedAt: z.string(),
   durationMin: z.number().optional(),
@@ -79,6 +80,9 @@ export const BackupSchema = z.object({
   settings: SettingsSchema,
 });
 
+/** Table contents shared by every backup version (the v1 schema minus its version tag). */
+const BackupDataSchema = BackupSchema.omit({ backupVersion: true });
+
 export type ImportMode = 'replace' | 'merge';
 
 export interface BackupSummary {
@@ -95,9 +99,13 @@ export interface BackupSummary {
 }
 
 export type ParseBackupResult =
-  { ok: true; backup: Backup; summary: BackupSummary } | { ok: false; errors: string[] };
+  | { ok: true; version: 1 | 2; backup: BackupData; summary: BackupSummary }
+  | { ok: false; errors: string[] };
 
-/** Builds the SPEC 4.3 backup object from every table. */
+/**
+ * Builds the full-fidelity (v1-shaped) snapshot of every table. This is the in-memory form both
+ * export and tests use; files are written with `encodeBackupV2` (see `exportBackupText`).
+ */
 export async function exportBackup(): Promise<Backup> {
   return db.transaction(
     'r',
@@ -139,7 +147,7 @@ function formatIssuePath(path: PropertyKey[]): string {
     .replace(/^\./, '');
 }
 
-export function summarizeBackup(backup: Backup): BackupSummary {
+export function summarizeBackup(backup: BackupData): BackupSummary {
   const stamps = [...backup.sessions, ...backup.activities].map((x) => x.startedAt).sort();
   return {
     counts: {
@@ -164,15 +172,26 @@ export function parseBackup(json: unknown): ParseBackupResult {
       return { ok: false, errors: ['This file is not valid JSON.'] };
     }
   }
-  const result = BackupSchema.safeParse(value);
+  const version = (value as { backupVersion?: unknown } | null)?.backupVersion;
+  if (value !== null && typeof value === 'object' && version !== 1 && version !== 2) {
+    const shown = version === undefined ? 'missing' : JSON.stringify(version);
+    return { ok: false, errors: [`backupVersion: ${shown} is not supported (expected 1 or 2)`] };
+  }
+  let candidate: unknown = value;
+  if (version === 2) {
+    const decoded = decodeBackupV2(value);
+    if (!decoded.ok) return decoded;
+    candidate = decoded.data;
+  }
+  const result = (version === 2 ? BackupDataSchema : BackupSchema).safeParse(candidate);
   if (!result.success) {
     const errors = result.error.issues
       .slice(0, 8)
       .map((i) => `${formatIssuePath(i.path) || 'backup'}: ${i.message}`);
     return { ok: false, errors };
   }
-  const backup = result.data as Backup;
-  return { ok: true, backup, summary: summarizeBackup(backup) };
+  const backup = result.data as BackupData;
+  return { ok: true, version: version === 2 ? 2 : 1, backup, summary: summarizeBackup(backup) };
 }
 
 /**
@@ -225,6 +244,14 @@ export async function importBackup(json: unknown, mode: ImportMode): Promise<Bac
         if (!(await db.settings.get('app')))
           await db.settings.put({ key: 'app', ...backup.settings });
       }
+      // v2 derives set ids from position, so a merged session replaces its existing sets rather
+      // than adding a second copy next to differently-id'd local ones.
+      if (parsed.version === 2) {
+        await db.sets
+          .where('sessionId')
+          .anyOf(backup.sessions.map((s) => s.id))
+          .delete();
+      }
       await db.exercises.bulkPut(backup.exercises);
       await db.sessions.bulkPut(backup.sessions);
       await db.sets.bulkPut(backup.sets);
@@ -253,6 +280,11 @@ export async function clearAllData(): Promise<void> {
   await ensureSeeded();
 }
 
+/** The backup file contents: compact v2 JSON (docs/backup-format.md). */
+export async function exportBackupText(): Promise<string> {
+  return serializeBackupV2(encodeBackupV2(await exportBackup()));
+}
+
 export function backupFileName(date: Date = new Date()): string {
   return `trakr-backup-${toDateKey(date)}.json`;
 }
@@ -261,15 +293,14 @@ export type ExportResult = 'shared' | 'downloaded' | 'cancelled';
 
 /** Exports the backup via the Web Share API when files can be shared, else downloads it. */
 export async function exportBackupFile(): Promise<ExportResult> {
-  const backup = await exportBackup();
   const name = backupFileName();
-  const text = JSON.stringify(backup, null, 2);
+  const text = await exportBackupText();
 
   if (typeof File !== 'undefined' && typeof navigator !== 'undefined' && navigator.canShare) {
     const file = new File([text], name, { type: 'application/json' });
     if (navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: 'Trakr backup' });
+        await navigator.share({ files: [file], title: 'trakr backup' });
         return 'shared';
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return 'cancelled';

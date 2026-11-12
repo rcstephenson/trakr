@@ -26,6 +26,7 @@ export const WorkoutItemSchema = z
     repMax: positiveInt.min(1, 'must be at least 1'),
     notes: z.string(),
     alternatives: z.array(slug),
+    primary: z.boolean().optional(),
   })
   .superRefine((item, ctx) => {
     if (item.repMin > item.repMax) {

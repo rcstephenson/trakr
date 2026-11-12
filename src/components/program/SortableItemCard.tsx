@@ -150,6 +150,20 @@ export function SortableItemCard({
             className="mt-1 min-h-touch w-full rounded-btn border border-hairline-strong bg-raised px-3 text-base normal-case tracking-normal text-ink"
           />
         </label>
+        <label className="mt-2 flex min-h-touch items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={item.primary === true}
+            onChange={(e) => {
+              const next = { ...item };
+              if (e.target.checked) next.primary = true;
+              else delete next.primary;
+              onChange(next);
+            }}
+            className="h-5 w-5 accent-[var(--accent-ink)]"
+          />
+          Primary lift<span className="sr-only"> for {name}</span>
+        </label>
 
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {item.alternatives.map((alt) => (

@@ -56,7 +56,7 @@ export function DataSection() {
     }
     const parsed = parseBackup(json);
     if (!parsed.ok) {
-      setStatus({ kind: 'error', text: `Not a valid Trakr backup. ${parsed.errors[0]}` });
+      setStatus({ kind: 'error', text: `Not a valid trakr backup. ${parsed.errors[0]}` });
       return;
     }
     setPending({ json, summary: parsed.summary });
@@ -109,7 +109,7 @@ export function DataSection() {
             Export
           </Button>
         </SettingsRow>
-        <SettingsRow label="Import backup" description="Restore from a Trakr backup file">
+        <SettingsRow label="Import backup" description="Restore from a trakr backup file">
           <Button variant="secondary" disabled={busy} onClick={() => fileRef.current?.click()}>
             <Upload size={18} aria-hidden="true" />
             Import

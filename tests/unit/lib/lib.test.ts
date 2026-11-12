@@ -9,7 +9,7 @@ import {
 } from '../../../src/lib/dates';
 import { applyTheme } from '../../../src/lib/theme';
 import { DEFAULT_SETTINGS, type Program } from '../../../src/domain/types';
-import stub from '../../../programs/v-taper-upper-lower.json';
+import stub from '../../../programs/5day-upperlower-rev2.json';
 
 describe('ids', () => {
   it('generates unique 26-char ULIDs', () => {
@@ -78,8 +78,8 @@ describe('theme', () => {
 describe('types and stub program', () => {
   it('imports the stub as a Program', () => {
     const program: Program = stub as Program;
-    expect(program.id).toBe('v-taper-upper-lower');
-    expect(program.workouts[0].items).toHaveLength(8);
+    expect(program.id).toBe('5day-upperlower-rev2');
+    expect(program.workouts[0].items).toHaveLength(7);
   });
 
   it('has default settings per spec', () => {

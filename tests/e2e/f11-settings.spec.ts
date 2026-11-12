@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 
 test('dark theme sets data-theme and survives a reload', async ({ page }) => {
@@ -19,7 +20,12 @@ test('unit toggle persists and export downloads a backup file', async ({ page })
 
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: /Export/ }).click();
-  expect((await download).suggestedFilename()).toMatch(/^trakr-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^trakr-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  const text = readFileSync((await file.path())!, 'utf8');
+  const backup = JSON.parse(text);
+  expect(backup).toMatchObject({ app: 'trakr', backupVersion: 2, settings: { unit: 'kg' } });
+  expect(text).not.toContain('  "'); // compact, not pretty-printed
 });
 
 test('clear all data needs two confirmations including typing DELETE', async ({ page }) => {

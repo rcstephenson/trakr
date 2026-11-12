@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "id": "my-new-program",
+  "name": "My New Program",
+  "description": "One line about the goal. Shown under the name on the Program screen.",
+  "schedule": ["workout-a", "rest", "workout-b", "rest", "workout-c", "rest", "rest"],
+  "exercises": [
+    {
+      "id": "barbell-bench-press",
+      "name": "Barbell Bench Press",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": ["chest", "triceps", "front-delts"]
+    },
+    {
+      "id": "machine-chest-press",
+      "name": "Machine Chest Press",
+      "equipment": "machine",
+      "kind": "compound",
+      "load": "total",
+      "muscles": ["chest", "triceps", "front-delts"]
+    },
+    {
+      "id": "incline-dumbbell-press",
+      "name": "Incline Dumbbell Press",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": ["chest", "front-delts", "triceps"]
+    },
+    {
+      "id": "pull-up",
+      "name": "Pull-Up",
+      "equipment": "bodyweight",
+      "kind": "compound",
+      "load": "bodyweight-plus",
+      "muscles": ["lats", "upper-back", "biceps"]
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "equipment": "cable",
+      "kind": "compound",
+      "load": "total",
+      "muscles": ["lats", "upper-back", "biceps"]
+    },
+    {
+      "id": "back-squat",
+      "name": "Back Squat",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": ["quads", "glute-max", "hamstrings"]
+    },
+    {
+      "id": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "equipment": "barbell",
+      "kind": "compound",
+      "load": "total",
+      "muscles": ["hamstrings", "glute-max", "upper-back"]
+    },
+    {
+      "id": "dumbbell-curl",
+      "name": "Dumbbell Curl",
+      "equipment": "dumbbell",
+      "kind": "isolation",
+      "load": "per-hand",
+      "muscles": ["biceps"]
+    },
+    {
+      "id": "core-leg-raise",
+      "name": "Core / Leg Raise",
+      "equipment": "bodyweight",
+      "kind": "isolation",
+      "load": "none",
+      "muscles": ["abs"]
+    }
+  ],
+  "workouts": [
+    {
+      "id": "workout-a",
+      "name": "Workout A",
+      "items": [
+        {
+          "exerciseId": "barbell-bench-press",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "Notes are shown on the exercise during a session.",
+          "alternatives": ["machine-chest-press", "incline-dumbbell-press"],
+          "primary": true
+        },
+        {
+          "exerciseId": "pull-up",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "Log added weight only (0 for bodyweight).",
+          "alternatives": ["lat-pulldown"]
+        },
+        {
+          "exerciseId": "core-leg-raise",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "workout-b",
+      "name": "Workout B",
+      "items": [
+        {
+          "exerciseId": "back-squat",
+          "sets": 3,
+          "repMin": 5,
+          "repMax": 8,
+          "notes": "",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "romanian-deadlift",
+          "sets": 3,
+          "repMin": 6,
+          "repMax": 10,
+          "notes": "",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "id": "workout-c",
+      "name": "Workout C",
+      "items": [
+        {
+          "exerciseId": "incline-dumbbell-press",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "Weight is per dumbbell.",
+          "alternatives": []
+        },
+        {
+          "exerciseId": "lat-pulldown",
+          "sets": 3,
+          "repMin": 8,
+          "repMax": 12,
+          "notes": "",
+          "alternatives": ["pull-up"]
+        },
+        {
+          "exerciseId": "dumbbell-curl",
+          "sets": 2,
+          "repMin": 10,
+          "repMax": 15,
+          "notes": "",
+          "alternatives": []
+        }
+      ]
+    }
+  ],
+  "notes": "Optional **markdown** shown at the bottom of the Program screen: the muscles each week trains and how to progress."
+}

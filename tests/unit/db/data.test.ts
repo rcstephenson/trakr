@@ -364,8 +364,8 @@ describe('ensureSeeded', () => {
     expect(await ensureSeeded()).toBe(false);
     const all = await programs.list();
     expect(all).toHaveLength(1);
-    expect(all[0].id).toBe('v-taper-upper-lower');
-    expect((await programs.getActive())?.id).toBe('v-taper-upper-lower');
+    expect(all[0].id).toBe('5day-upperlower-rev2');
+    expect((await programs.getActive())?.id).toBe('5day-upperlower-rev2');
     expect((await exercises.list()).length).toBeGreaterThan(0);
     expect(await settings.get()).toEqual(DEFAULT_SETTINGS);
   });

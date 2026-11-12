@@ -6,6 +6,7 @@ export const ACTIVITY_TYPES: readonly ActivityType[] = [
   'swim',
   'walk',
   'climb',
+  'tennis',
   'sport',
   'class',
   'other',
@@ -24,6 +25,7 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   swim: 'Swim',
   walk: 'Walk',
   climb: 'Climb',
+  tennis: 'Tennis',
   sport: 'Sport',
   class: 'Class',
   other: 'Other',
@@ -36,6 +38,7 @@ export type ActivityIconName =
   | 'waves'
   | 'person-standing'
   | 'mountain'
+  | 'circle-dot'
   | 'trophy'
   | 'users'
   | 'activity';
@@ -46,6 +49,7 @@ const ICONS: Record<ActivityType, ActivityIconName> = {
   swim: 'waves',
   walk: 'person-standing',
   climb: 'mountain',
+  tennis: 'circle-dot',
   sport: 'trophy',
   class: 'users',
   other: 'activity',

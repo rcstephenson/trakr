@@ -27,6 +27,8 @@ export interface ChartSet {
 
 export interface ChartPoint {
   sessionId: string;
+  /** Program the session was logged under. */
+  programId: string;
   /** Session start, epoch ms. */
   t: number;
   startedAt: string;
@@ -72,6 +74,7 @@ export function buildChartPoints(
     if (value === null) continue;
     points.push({
       sessionId: session.id,
+      programId: session.programId,
       t,
       startedAt: session.startedAt,
       value,
@@ -172,6 +175,7 @@ export function computeRecords(history: ReadonlyArray<Performance>, displayUnit:
 
 export interface HistoryRow {
   sessionId: string;
+  programId: string;
   startedAt: string;
   sets: ChartSet[];
   volume: number;
@@ -186,6 +190,7 @@ export function buildHistoryRows(
   return buildChartPoints(history, 'volume', displayUnit)
     .map((p) => ({
       sessionId: p.sessionId,
+      programId: p.programId,
       startedAt: p.startedAt,
       sets: p.sets,
       volume: p.value,

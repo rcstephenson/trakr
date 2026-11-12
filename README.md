@@ -1,6 +1,6 @@
-﻿# Trakr
+﻿# trakr
 
-Trakr is a local-first, mobile-first progressive web app for logging gym workouts against a predefined program and visualising your progress. It records and charts what you did; it does not give advice. Everything runs in the browser and works fully offline once installed.
+trakr is a local-first, mobile-first progressive web app for logging gym workouts against a predefined program and visualising your progress. It records and charts what you did; it does not give advice. Everything runs in the browser and works fully offline once installed.
 
 Stack: React 18, TypeScript (strict), Tailwind, Dexie (IndexedDB), Zod, Recharts, Vitest, Playwright, `vite-plugin-pwa`.
 
@@ -37,7 +37,7 @@ Dev-only demo routes (`/dev/ui`, `/dev/seed`) exist in `npm run dev` and are exc
 
 ## Deployment
 
-Trakr is static files, so any HTTPS static host works (HTTPS is required for service workers and installation). The app uses `BrowserRouter`, so the host must fall back to `index.html` for unknown paths. `public/_redirects` does this for Cloudflare Pages and Netlify.
+trakr is static files, so any HTTPS static host works (HTTPS is required for service workers and installation). The app uses `BrowserRouter`, so the host must fall back to `index.html` for unknown paths. `public/_redirects` does this for Cloudflare Pages and Netlify.
 
 ### GitHub Pages
 

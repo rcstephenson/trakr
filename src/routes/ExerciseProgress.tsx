@@ -19,7 +19,9 @@ import {
 import { Card, Chip, EmptyState, PageHeader, SectionLabel } from '../components/ui';
 import { formatWeight, roundForDisplay } from '../domain/units';
 import type { Unit } from '../domain/types';
+import { programIdsOf, programLabel } from '../domain/programHistory';
 import { useExerciseHistory } from '../hooks/useExerciseHistory';
+import { usePrograms } from '../hooks/usePrograms';
 import { useSettings } from '../hooks/useSettings';
 
 const dateFmt = new Intl.DateTimeFormat('en-US', {
@@ -71,15 +73,30 @@ function RecordCard({
 export default function ExerciseProgress() {
   const { exerciseId } = useParams();
   const settings = useSettings();
-  const history = useExerciseHistory(exerciseId);
+  const allHistory = useExerciseHistory(exerciseId);
+  const programs = usePrograms();
   const exercise = useLiveQuery(
     async () => (exerciseId ? ((await exerciseRepo.get(exerciseId)) ?? null) : null),
     [exerciseId],
   );
   const [metric, setMetric] = useState<Metric>('topWeight');
   const [range, setRange] = useState<RangeKey>('3M');
+  // null = every program. Exercise ids are shared across programs, so progress carries over.
+  const [programId, setProgramId] = useState<string | null>(null);
 
   const unit = settings?.unit ?? 'lb';
+  const programIds = useMemo(
+    () => programIdsOf((allHistory ?? []).map((h) => h.session)),
+    [allHistory],
+  );
+  const multiProgram = programIds.length > 1;
+  const history = useMemo(
+    () =>
+      allHistory && programId !== null
+        ? allHistory.filter((h) => h.session.programId === programId)
+        : allHistory,
+    [allHistory, programId],
+  );
   const points = useMemo(
     () => buildChartPoints(history ?? [], metric, unit, range),
     [history, metric, unit, range],
@@ -87,7 +104,8 @@ export default function ExerciseProgress() {
   const records = useMemo(() => computeRecords(history ?? [], unit), [history, unit]);
   const rows = useMemo(() => buildHistoryRows(history ?? [], unit), [history, unit]);
 
-  if (!settings || !history || exercise === undefined) return <PageHeader title="Progress" />;
+  if (!settings || !history || !programs || exercise === undefined)
+    return <PageHeader title="Progress" />;
 
   const title = exercise?.name ?? (history.length > 0 ? 'Exercise' : 'Exercise not found');
   const back = (
@@ -100,7 +118,9 @@ export default function ExerciseProgress() {
     </Link>
   );
 
-  if (rows.length === 0) {
+  const nameOf = (id: string) => programLabel(programs, id);
+
+  if (rows.length === 0 && programId === null) {
     return (
       <>
         {back}
@@ -156,6 +176,19 @@ export default function ExerciseProgress() {
           ))}
         </div>
 
+        {multiProgram ? (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Program">
+            <Chip selected={programId === null} onClick={() => setProgramId(null)}>
+              All programs
+            </Chip>
+            {programIds.map((id) => (
+              <Chip key={id} selected={programId === id} onClick={() => setProgramId(id)}>
+                {nameOf(id)}
+              </Chip>
+            ))}
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Range">
           {RANGES.map((r) => (
             <Chip key={r} selected={range === r} onClick={() => setRange(r)}>
@@ -176,6 +209,7 @@ export default function ExerciseProgress() {
                 metric={metric}
                 metricLabel={metricLabel}
                 unit={unit}
+                programName={multiProgram ? nameOf : undefined}
               />
             </>
           ) : (
@@ -209,6 +243,11 @@ export default function ExerciseProgress() {
                   <span className="text-ink">{shortFmt.format(new Date(row.startedAt))}</span>
                   <span className="text-muted">
                     {row.sets.map((s) => formatSet(s, unit)).join(', ')}
+                    {multiProgram ? (
+                      <span className="micro block truncate" data-testid="row-program">
+                        {nameOf(row.programId)}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="flex items-center gap-1 font-medium text-ink">
                     {formatWeight(roundForDisplay(row.volume, unit), unit, unit)}

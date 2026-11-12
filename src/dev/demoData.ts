@@ -4,7 +4,15 @@ import type { Activity, Equipment, Exercise, Program, SetEntry } from '../domain
 
 export const DEMO_MARKER = '[trakr-demo]';
 
+/** Id of the demo "previous program" installed by `seedDemoData` (removed by `clearDemoData`). */
+export const DEMO_PREVIOUS_PROGRAM_ID = 'demo-previous-program';
+
+/** Days of the 182-day demo window spent on the previous program before switching. */
+const SWITCH_DAY = 91;
+
 export interface DemoSession {
+  /** Program the session belongs to. */
+  programId: string;
   workoutId: string;
   startedAt: Date;
   sets: Array<Omit<SetEntry, 'id' | 'sessionId' | 'completedAt'> & { completedAt: Date }>;
@@ -59,25 +67,64 @@ function planFor(ex: Exercise | undefined, rand: () => number): Plan {
   return { start, inc, every: 3 + Math.floor(rand() * 3) };
 }
 
-/** Pure generator: ~6 months of sessions following the program rotation, plus a few activities. */
-export function generateDemoData(program: Program, now: Date = new Date(), seed = 8): DemoData {
+/**
+ * A demo "previous program" derived from `program`: same exercise ids (so progress carries across
+ * the switch), but without its last scheduled workout (e.g. a 4-day version of a 5-day program).
+ */
+export function buildPreviousDemoProgram(program: Program): Program {
+  const used = program.schedule.filter((s) => s !== 'rest');
+  const dropped = used.length > 2 ? used[used.length - 1] : undefined;
+  return {
+    schemaVersion: 1,
+    id: DEMO_PREVIOUS_PROGRAM_ID,
+    name: 'Previous program (demo)',
+    description: 'Demo data: an earlier version of your program.',
+    schedule: program.schedule.map((s) => (s === dropped ? 'rest' : s)),
+    exercises: program.exercises,
+    workouts: program.workouts.filter((w) => w.id !== dropped),
+  };
+}
+
+/**
+ * Pure generator: ~6 months of sessions following the program rotation, plus a few activities.
+ * With `previous`, the first ~3 months follow `previous` and the rest follow `program`; weights keep
+ * progressing across the switch for shared exercises.
+ */
+export function generateDemoData(
+  program: Program,
+  now: Date = new Date(),
+  seed = 8,
+  previous?: Program,
+): DemoData {
   const rand = mulberry32(seed);
-  const catalog = new Map(program.exercises.map((e) => [e.id, e]));
+  const catalog = new Map(
+    [...(previous?.exercises ?? []), ...program.exercises].map((e) => [e.id, e]),
+  );
   const plans = new Map<string, Plan>();
   const counts = new Map<string, number>();
-  const rotation = program.schedule.filter((s) => s !== 'rest');
-  const workouts = new Map(program.workouts.map((w) => [w.id, w]));
+  const phase = (p: Program) => ({
+    program: p,
+    rotation: p.schedule.filter((s) => s !== 'rest'),
+    workouts: new Map(p.workouts.map((w) => [w.id, w])),
+  });
+  const phases = { previous: previous ? phase(previous) : null, current: phase(program) };
 
   const out: DemoData = { sessions: [], activities: [] };
   let pointer = 0;
+  let current = phases.previous ?? phases.current;
   const first = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 182);
 
   for (let day = 0; day <= 182; day++) {
+    if (phases.previous && day === SWITCH_DAY) {
+      current = phases.current;
+      pointer = 0; // a newly switched-to program starts at its first workout
+    }
     const date = new Date(first.getFullYear(), first.getMonth(), first.getDate() + day);
     if (date.getTime() > now.getTime()) break;
-    if (program.schedule[day % program.schedule.length] === 'rest') continue;
+    const schedule = current.program.schedule;
+    if (schedule[day % schedule.length] === 'rest') continue;
     if (rand() < 0.15) continue; // missed day: the rotation is sequence-based, so it just slips.
-    const workout = workouts.get(rotation[pointer % rotation.length]);
+    const workout = current.workouts.get(current.rotation[pointer % current.rotation.length]);
     pointer += 1;
     if (!workout) continue;
 
@@ -85,7 +132,12 @@ export function generateDemoData(program: Program, now: Date = new Date(), seed 
     startedAt.setMinutes(startedAt.getMinutes() + Math.floor(rand() * 90));
     if (startedAt.getTime() > now.getTime()) continue;
     let clock = startedAt.getTime();
-    const demo: DemoSession = { workoutId: workout.id, startedAt, sets: [] };
+    const demo: DemoSession = {
+      programId: current.program.id,
+      workoutId: workout.id,
+      startedAt,
+      sets: [],
+    };
 
     workout.items.forEach((item, slotIndex) => {
       const ex = catalog.get(item.exerciseId);
@@ -138,10 +190,11 @@ export function generateDemoData(program: Program, now: Date = new Date(), seed 
   > = [
     { type: 'run', title: 'Easy run', distanceUnit: 'km', km: [3, 8] },
     { type: 'walk', title: 'Evening walk', distanceUnit: 'km', km: [2, 5] },
+    { type: 'tennis', title: 'Tennis' },
     { type: 'class', title: 'Yoga class' },
     { type: 'cycle', title: 'Bike ride', distanceUnit: 'km', km: [10, 25] },
   ];
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 15; i++) {
     const kind = kinds[i % kinds.length];
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7 - i * 14);
     date.setHours(7, 30, 0, 0);
@@ -161,31 +214,46 @@ export function generateDemoData(program: Program, now: Date = new Date(), seed 
   return out;
 }
 
-/** Deletes all demo-tagged sessions (with their sets) and activities. */
+/** Deletes all demo-tagged sessions (with their sets) and activities, and the demo program. */
 export async function clearDemoData(): Promise<{ sessions: number; activities: number }> {
   const demoSessions = (await sessions.list()).filter((s) => s.notes === DEMO_MARKER);
   for (const s of demoSessions) await sessions.remove(s.id);
   const demoActivities = (await activities.list()).filter((a) => a.notes === DEMO_MARKER);
   for (const a of demoActivities) await activities.remove(a.id);
+  const demoProgram = await programs.get(DEMO_PREVIOUS_PROGRAM_ID);
+  // Never leave the app without an active program: only remove the demo one when it isn't active.
+  if (demoProgram && demoProgram.isActive !== 1) await programs.remove(DEMO_PREVIOUS_PROGRAM_ID);
   return { sessions: demoSessions.length, activities: demoActivities.length };
 }
 
-/** Replaces any previous demo data with freshly generated history for the active program. */
-export async function seedDemoData(): Promise<{
+/**
+ * Replaces any previous demo data with freshly generated history for the active program. With
+ * `withPreviousProgram`, also installs a demo previous program (inactive) and puts the first ~3
+ * months of sessions under it, so the multi-program views (labels, filters, past programs) show.
+ */
+export async function seedDemoData(options: { withPreviousProgram?: boolean } = {}): Promise<{
   sessions: number;
   sets: number;
   activities: number;
 }> {
   const program = await programs.getActive();
   if (!program) throw new Error('No active program');
+  if (program.id === DEMO_PREVIOUS_PROGRAM_ID) {
+    throw new Error('Switch back to your real program before generating demo data');
+  }
   if (await sessions.getActive()) {
     throw new Error('Finish or discard the active session before generating demo data');
   }
   await clearDemoData();
-  const data = generateDemoData(program);
+  let previous: Program | undefined;
+  if (options.withPreviousProgram) {
+    previous = buildPreviousDemoProgram(program);
+    await programs.save(previous, { activate: false });
+  }
+  const data = generateDemoData(program, new Date(), 8, previous);
   let setCount = 0;
   for (const demo of data.sessions) {
-    const session = await sessions.start(program.id, demo.workoutId);
+    const session = await sessions.start(demo.programId, demo.workoutId);
     for (const s of demo.sets) {
       await sets.add({
         sessionId: session.id,

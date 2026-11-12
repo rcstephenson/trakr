@@ -8,22 +8,31 @@ import type { Program, WorkoutTemplate } from '../../domain/types';
 export function SchedulePills({ program }: { program: Program }) {
   const names = new Map(program.workouts.map((w) => [w.id, w.name]));
   return (
-    <ol aria-label="Weekly schedule" className="flex gap-1 overflow-x-auto px-gutter pb-1">
+    // Equal-width columns so a full week fits the screen without horizontal scrolling;
+    // workout names wrap onto two lines ("Upper / A") instead of widening the pill.
+    <ol
+      aria-label="Weekly schedule"
+      className="grid gap-0.5 px-gutter pb-1"
+      style={{ gridTemplateColumns: `repeat(${program.schedule.length}, minmax(0, 1fr))` }}
+    >
       {program.schedule.map((entry, i) => {
         const rest = entry === 'rest';
         return (
           <li
             key={i}
             className={[
-              'relative flex min-w-[68px] shrink-0 flex-col items-start rounded-chip border px-2.5 py-2',
+              'relative flex min-w-0 flex-col items-center overflow-hidden rounded-chip border px-0 py-1.5 text-center',
               rest ? 'border-dashed border-hairline text-muted' : 'border-ink bg-raised text-ink',
             ].join(' ')}
           >
             {rest ? null : (
               <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-accent-ink" />
             )}
-            <span className="micro">Day {i + 1}</span>
-            <span className="mt-0.5 whitespace-nowrap text-sm font-semibold">
+            <span className="micro" aria-hidden="true">
+              D{i + 1}
+            </span>
+            <span className="sr-only">Day {i + 1}: </span>
+            <span className="mt-0.5 w-full break-words text-[11px] font-semibold leading-tight tracking-tight">
               {rest ? 'Rest' : (names.get(entry) ?? entry)}
             </span>
           </li>
@@ -73,7 +82,10 @@ export function WorkoutCard({
             </Mono>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-medium text-ink">{nameOf(item.exerciseId)}</span>
+                <span className={`text-sm text-ink ${item.primary ? 'font-bold' : 'font-medium'}`}>
+                  {nameOf(item.exerciseId)}
+                  {item.primary ? <span className="sr-only"> (primary lift)</span> : null}
+                </span>
                 <Mono className="shrink-0 text-xs text-ink">
                   {item.sets} ×{' '}
                   {item.repMin === item.repMax ? item.repMin : `${item.repMin}–${item.repMax}`}
@@ -82,7 +94,7 @@ export function WorkoutCard({
               {item.notes ? <p className="text-xs text-muted">{item.notes}</p> : null}
               {item.alternatives.length > 0 ? (
                 <p className="text-xs text-muted">
-                  or {item.alternatives.map(nameOf).join(', or ')}
+                  alt. {item.alternatives.map(nameOf).join(', ')}
                 </p>
               ) : null}
             </div>
@@ -113,7 +125,7 @@ export function NotesSection({ notes }: { notes: string }) {
         />
       </button>
       {open ? (
-        <div className="pb-4 pt-1 text-sm text-ink [&_a]:text-accent [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:font-semibold [&_li]:mb-1 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_table]:mb-2 [&_table]:block [&_table]:overflow-x-auto [&_td]:border-b [&_td]:border-hairline [&_td]:px-2 [&_td]:py-1 [&_th]:px-2 [&_th]:text-left [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5">
+        <div className="pb-4 pt-1 text-sm leading-relaxed text-ink [&_a]:text-accent [&_em]:italic [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-semibold [&_h2:first-child]:mt-0 [&_h2]:mb-1.5 [&_h2]:mt-5 [&_h2]:border-b [&_h2]:border-hairline [&_h2]:pb-1 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-wide [&_h3]:text-muted [&_li]:mb-1 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p]:text-muted [&_strong]:font-semibold [&_strong]:text-ink [&_table]:mb-2 [&_table]:block [&_table]:overflow-x-auto [&_td]:border-b [&_td]:border-hairline [&_td]:px-2 [&_td]:py-1 [&_th]:px-2 [&_th]:text-left [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:marker:text-muted">
           <ReactMarkdown>{notes}</ReactMarkdown>
         </div>
       ) : null}

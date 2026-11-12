@@ -27,6 +27,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ['src/domain/**/*.ts', 'src/db/**/*.ts'],
     rules: { '@typescript-eslint/no-explicit-any': 'error' },
   },

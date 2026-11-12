@@ -19,7 +19,7 @@ async function seedBench(page: Page) {
       const id = `e2e-session-${i}`;
       tx.objectStore('sessions').put({
         id,
-        programId: 'v-taper-upper-lower',
+        programId: '5day-upperlower-rev2',
         workoutId: 'upper-a',
         workoutName: 'Upper A',
         startedAt,

@@ -13,7 +13,7 @@ describe('editing a template', () => {
   });
 
   it('changes the next session but not an earlier one', async () => {
-    const before = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const before = await sessions.start('5day-upperlower-rev2', 'upper-a');
     await sessions.finish(before.id);
 
     const program = (await programs.getActive())!;
@@ -22,7 +22,7 @@ describe('editing a template', () => {
     );
     await programs.save({ ...program, workouts });
 
-    const after = await sessions.start('v-taper-upper-lower', 'upper-a');
+    const after = await sessions.start('5day-upperlower-rev2', 'upper-a');
     expect(after.targets[0].exerciseId).toBe('dumbbell-curl');
     expect((await sessions.get(before.id))!.targets[0].exerciseId).toBe('barbell-bench-press');
   });

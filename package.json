@@ -53,6 +53,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "program:check": "node scripts/program-check.mjs"
   }
 }

@@ -1,4 +1,4 @@
-# Builds Trakr and publishes it to GitHub Pages at https://<user>.github.io/<repo>/.
+# Builds trakr and publishes it to GitHub Pages at https://<user>.github.io/<repo>/.
 # One-time setup: repo Settings -> Pages -> Source: "GitHub Actions".
 name: Deploy to GitHub Pages
 

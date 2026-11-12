@@ -29,3 +29,6 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Personal trakr backups (logged workouts): never commit.
+trakr-backup-*.json

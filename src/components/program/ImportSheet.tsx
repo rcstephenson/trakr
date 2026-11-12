@@ -3,6 +3,7 @@ import { Button, Sheet } from '../ui';
 import { markdownImport } from '../../domain/markdownImport';
 import { parseProgram } from '../../domain/programSchema';
 import type { Program } from '../../domain/types';
+import { BUNDLED_PROGRAMS } from '../../db/bundled';
 import * as programsRepo from '../../db/repositories/programs';
 
 type Preview =
@@ -69,6 +70,20 @@ export function ImportSheet({
     }
   };
 
+  const builtIns = BUNDLED_PROGRAMS.filter((p) => !existingIds.includes(p.id));
+
+  /** Installs a built-in program and makes it active; existing programs and sessions are kept. */
+  const addBuiltIn = async (p: Program) => {
+    setSaving(true);
+    try {
+      await programsRepo.save(p, { activate: true });
+      onSaved();
+      close();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const program = preview?.kind === 'ok' ? preview.program : null;
   const exerciseCount = program?.workouts.reduce((n, w) => n + w.items.length, 0) ?? 0;
 
@@ -88,6 +103,33 @@ export function ImportSheet({
         onChange={(e) => void onFile(e.target.files?.[0])}
         className="num mb-4 block w-full rounded-btn border border-dashed border-hairline-strong bg-bg p-3 text-xs text-ink file:mr-3 file:rounded-btn file:border file:border-hairline file:bg-raised file:px-3 file:py-2 file:font-mono file:text-xs file:uppercase file:text-ink"
       />
+
+      {builtIns.length > 0 && !preview ? (
+        <div className="mb-4" data-testid="builtin-programs">
+          <p className="micro mb-1">Built-in programs</p>
+          <ul className="flex flex-col gap-2">
+            {builtIns.map((p) => (
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-3 rounded-btn border border-hairline bg-bg px-3 py-2"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-ink">{p.name}</span>
+                  <span className="micro block">{p.workouts.length} workouts</span>
+                </span>
+                <Button
+                  variant="secondary"
+                  disabled={saving}
+                  aria-label={`Add ${p.name}`}
+                  onClick={() => void addBuiltIn(p)}
+                >
+                  Add
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {preview?.kind === 'error' ? (
         <div role="alert" className="mb-4 rounded-btn border border-danger p-3">
@@ -118,7 +160,8 @@ export function ImportSheet({
           </ul>
           {existingIds.includes(program.id) ? (
             <p className="mb-2 text-sm text-muted">
-              A program with the id “{program.id}” already exists and will be replaced.
+              A program with the id “{program.id}” already exists and will be replaced. Its logged
+              sessions stay attached to it. For a new routine, give the file a new id.
             </p>
           ) : null}
           <label className="flex min-h-touch items-center gap-3 text-sm text-ink">

@@ -26,6 +26,40 @@ describe('nextWorkoutId', () => {
   ])('after %s comes %s (skipping rest, wrapping)', (last, next) => {
     expect(nextWorkoutId(program, [done(last, 1)])).toBe(next);
   });
+  describe('bundled 5-day schedule (no trailing rest)', () => {
+    const five = {
+      schedule: ['upper-a', 'lower-a', 'rest', 'upper-b', 'lower-b', 'rest', 'full-body'],
+    };
+    it.each([
+      ['upper-a', 'lower-a'],
+      ['lower-a', 'upper-b'],
+      ['upper-b', 'lower-b'],
+      ['lower-b', 'full-body'],
+      ['full-body', 'upper-a'],
+    ])('after %s comes %s', (last, next) => {
+      expect(nextWorkoutId(five, [done(last, 1)])).toBe(next);
+    });
+    it('starts with upper-a and cycles through all five in order', () => {
+      const sessions: ReturnType<typeof done>[] = [];
+      const seen: string[] = [];
+      for (let i = 1; i <= 6; i++) {
+        const id = nextWorkoutId(five, sessions);
+        seen.push(id);
+        sessions.push(done(id, i));
+      }
+      expect(seen).toEqual(['upper-a', 'lower-a', 'upper-b', 'lower-b', 'full-body', 'upper-a']);
+    });
+    it('a skipped (discarded) day does not advance the rotation', () => {
+      const sessions = [
+        done('lower-b', 1),
+        { ...done('full-body', 2), status: 'discarded' as const },
+      ];
+      expect(nextWorkoutId(five, sessions)).toBe('full-body');
+    });
+    it('an out-of-order session continues from it', () => {
+      expect(nextWorkoutId(five, [done('upper-a', 1), done('full-body', 2)])).toBe('upper-a');
+    });
+  });
   it('uses the most recent completed session regardless of array order', () => {
     expect(nextWorkoutId(program, [done('lower-a', 5), done('upper-a', 1)])).toBe('upper-b');
   });
