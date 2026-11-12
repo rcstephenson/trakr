@@ -52,15 +52,17 @@ export default function History() {
     <>
       <PageHeader title="History" />
       {empty ? (
-        <EmptyState
-          title="Nothing logged yet"
-          description="Your finished workouts and activities will show up here."
-          action={
-            <Link to="/">
-              <Button>Start your first workout</Button>
-            </Link>
-          }
-        />
+        <div className="px-gutter pb-6">
+          <EmptyState
+            title="Nothing logged yet"
+            description="Your finished workouts and activities will show up here."
+            action={
+              <Link to="/">
+                <Button>Start your first workout</Button>
+              </Link>
+            }
+          />
+        </div>
       ) : (
         <div className="flex flex-col gap-5 px-gutter pb-6">
           <ActivityGrid today={new Date()} sessions={sessions} activities={activities} />
