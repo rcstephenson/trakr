@@ -102,6 +102,14 @@ export type ParseBackupResult =
   | { ok: true; version: 1 | 2; backup: BackupData; summary: BackupSummary }
   | { ok: false; errors: string[] };
 
+/** Dexie Cloud adds `realmId`/`owner` to synced rows; they are account-specific, not backup data. */
+function stripSyncFields<T extends object>(row: T): T {
+  const copy: Record<string, unknown> = { ...(row as Record<string, unknown>) };
+  delete copy.realmId;
+  delete copy.owner;
+  return copy as T;
+}
+
 /**
  * Builds the full-fidelity (v1-shaped) snapshot of every table. This is the in-memory form both
  * export and tests use; files are written with `encodeBackupV2` (see `exportBackupText`).
@@ -119,7 +127,7 @@ export async function exportBackup(): Promise<Backup> {
         db.activities.toArray(),
         db.settings.get('app'),
       ]);
-      const stored: Record<string, unknown> = { ...row };
+      const stored: Record<string, unknown> = { ...(row as Record<string, unknown>) };
       delete stored.key;
       const settings = {
         ...DEFAULT_SETTINGS,
@@ -129,11 +137,11 @@ export async function exportBackup(): Promise<Backup> {
         app: 'trakr',
         backupVersion: 1,
         exportedAt: nowIso(),
-        programs,
-        exercises,
-        sessions,
-        sets,
-        activities,
+        programs: programs.map(stripSyncFields),
+        exercises: exercises.map(stripSyncFields),
+        sessions: sessions.map(stripSyncFields),
+        sets: sets.map(stripSyncFields),
+        activities: activities.map(stripSyncFields),
         settings,
       } satisfies Backup;
     },

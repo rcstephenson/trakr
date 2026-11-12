@@ -6,7 +6,7 @@ Stack: React 18, TypeScript (strict), Tailwind, Dexie (IndexedDB), Zod, Recharts
 
 ## Data lives on your device
 
-All data is stored in IndexedDB on the device and browser you use. There is no server and no account. Clearing site data, uninstalling the app or switching phones loses it unless you have a backup. **Export a JSON backup regularly** from Settings, and import it to restore or move to a new device.
+All data is stored in IndexedDB on the device and browser you use. There is no server and no account unless you opt in to [cloud sync](#cloud-sync-dexie-cloud). Clearing site data, uninstalling the app or switching phones loses it unless you have a backup. **Export a JSON backup regularly** from Settings, and import it to restore or move to a new device.
 
 ## Logging a workout
 
@@ -66,6 +66,30 @@ Or with Wrangler: `npm run build && npx wrangler pages deploy dist`.
 ### Updates
 
 The service worker uses a prompt strategy. When a new version is deployed, installed users see a "New version available" toast with a Reload button. Their data is not affected.
+
+## Cloud sync (Dexie Cloud)
+
+Sync is optional and off by default. Without a configured database URL the addon is not even included in the build: no network, no sign-in, no change in behaviour. With one, the app still works fully offline; Settings gets an "Account & sync" section where you sign in by email (one-time code). Free tier: 3 production users, 100 MB, which is plenty for one person.
+
+Setup (you run these yourself; they need your email for a one-time code):
+
+1. Create the database, from the repo root: `npx dexie-cloud create`. It prints the database URL (`https://xxxx.dexie.cloud`) and writes `dexie-cloud.json` (database URL) and `dexie-cloud.key` (client secret) in the current directory. Both are git-ignored. Never commit or share them, and never put the key in the app.
+2. Allow the app origins (scheme and host only, no path):
+   ```bash
+   npx dexie-cloud whitelist http://localhost:5173
+   npx dexie-cloud whitelist https://rcstephenson.github.io
+   ```
+3. Dev: copy `.env.example` to `.env.local` and set `VITE_DEXIE_CLOUD_URL=https://xxxx.dexie.cloud`, then `npm run dev`. Restart the dev server after editing it. (`npm test` and `npm run e2e` always run with sync off.)
+4. Deploy: on GitHub, repository Settings, Secrets and variables, Actions, **Variables** tab, add `DEXIE_CLOUD_URL` with the same URL (it is public, not a secret). The next push to `main` (or a manual run of the workflow) builds with sync on.
+5. On each device: Settings, Account & sync, **Sign in to sync**, enter your email, then the code you receive. Use the same email everywhere.
+
+How your data behaves:
+
+- Data logged before you ever signed in is kept and uploaded on first sign-in; it is not duplicated (Dexie Cloud assigns objects created while signed out to your private realm at login, see [Best practices](https://dexie.org/cloud/docs/best-practices) and [Consistency](https://dexie.org/cloud/docs/consistency)). Rows use unique string ids, so a second device adds its rows alongside yours.
+- Units, theme and the next-workout pointer are per-device preferences and are not synced.
+- Deleting is shared: "Clear all data" and a "Replace" backup import delete the data from your cloud account and every signed-in device. The app says so in the confirmation when you are signed in. Export a backup first.
+- Signing out empties the local database on that device (the cloud copy stays) and resets it to the bundled program; sign in again to get everything back.
+- The first sign-in on a second device can briefly show the default program, then your data arrives.
 
 ## Install to the home screen
 

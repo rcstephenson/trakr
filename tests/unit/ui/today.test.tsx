@@ -6,6 +6,7 @@ import Today from '../../../src/routes/Today';
 import { db } from '../../../src/db/schema';
 import { ensureSeeded } from '../../../src/db/seed';
 import * as sessions from '../../../src/db/repositories/sessions';
+import { toDateKey } from '../../../src/lib/dates';
 
 function renderToday() {
   return render(
@@ -56,7 +57,8 @@ describe('Today', () => {
     const picker = screen.getByLabelText('Pick a date') as HTMLInputElement;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = yesterday.toISOString().slice(0, 10);
+    // Local date, like the picker: toISOString() is UTC and can still be "today" in the evening.
+    const yesterdayKey = toDateKey(yesterday);
     fireEvent.change(picker, { target: { value: yesterdayKey } });
     expect(screen.getByRole('button', { name: /^Log Lower B · / })).toBeInTheDocument();
     fireEvent.change(picker, { target: { value: picker.max } });

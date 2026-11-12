@@ -31,5 +31,7 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI && !process.env.E2E_PORT,
     timeout: 180_000,
+    // e2e runs the local-only app, even if .env.local configures Dexie Cloud for dev.
+    env: { VITE_DEXIE_CLOUD_URL: '' },
   },
 });

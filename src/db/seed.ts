@@ -17,6 +17,25 @@ export async function ensureSeeded(): Promise<boolean> {
   });
 }
 
+/**
+ * With cloud sync, two devices can each seed the bundled program (same ids, so rows merge rather
+ * than duplicate) while having different active programs. After a sync, keep exactly one active
+ * program, deterministically so every device converges on the same choice: a non-bundled program
+ * (the user picked it) beats the bundled default, then lowest id.
+ */
+export async function ensureSingleActiveProgram(): Promise<void> {
+  await db.transaction('rw', db.programs, async () => {
+    const active = await db.programs.where('isActive').equals(1).toArray();
+    if (active.length < 2) return;
+    active.sort(
+      (a, b) =>
+        Number(a.id === DEFAULT_PROGRAM.id) - Number(b.id === DEFAULT_PROGRAM.id) ||
+        a.id.localeCompare(b.id),
+    );
+    for (const p of active.slice(1)) await db.programs.update(p.id, { isActive: 0 });
+  });
+}
+
 /** Asks the browser not to evict our storage. Failures are ignored. */
 export async function requestPersistentStorage(): Promise<void> {
   try {

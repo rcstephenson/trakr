@@ -32,3 +32,10 @@ desktop.ini
 
 # Personal trakr backups (logged workouts): never commit.
 trakr-backup-*.json
+programs/UpperLower-5day.json
+
+# Dexie Cloud CLI client secrets: never commit.
+dexie-cloud.json
+dexie-cloud.key
+.env.local
+.env.*.local

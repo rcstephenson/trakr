@@ -9,6 +9,7 @@ import {
   type BackupSummary,
   type ImportMode,
 } from '../../lib/backup';
+import { useCloudAccount } from '../../hooks/useCloud';
 import { SettingsGroup, SettingsRow } from './SettingsGroup';
 
 interface Pending {
@@ -99,6 +100,9 @@ export function DataSection() {
   };
 
   const s = pending?.summary;
+  const { signedIn } = useCloudAccount();
+  const syncNote =
+    ' You are signed in to sync: this deletion will also sync to your cloud account and every signed-in device.';
 
   return (
     <>
@@ -128,7 +132,14 @@ export function DataSection() {
             }}
           />
         </SettingsRow>
-        <SettingsRow label="Clear all data" description="Deletes everything on this device">
+        <SettingsRow
+          label="Clear all data"
+          description={
+            signedIn
+              ? 'Deletes everything here and in your cloud account'
+              : 'Deletes everything on this device'
+          }
+        >
           <Button variant="danger" disabled={busy} onClick={() => setClearStep(1)}>
             <Trash2 size={18} aria-hidden="true" />
             Clear
@@ -171,6 +182,9 @@ export function DataSection() {
             <p className="mb-4 text-sm text-muted">
               Merge adds and updates records by id and keeps your current settings. Replace deletes
               everything on this device first.
+              {signedIn
+                ? ' You are signed in to sync: Replace also deletes the data not in this file from your cloud account and your other devices.'
+                : ''}
             </p>
             <div className="flex flex-col gap-2">
               <Button fullWidth disabled={busy} onClick={() => void runImport('merge')}>
@@ -195,7 +209,7 @@ export function DataSection() {
       <ConfirmDialog
         open={clearStep === 1}
         title="Clear all data?"
-        message="This permanently deletes your sessions, activities, programs and settings from this device. Export a backup first if you want to keep them."
+        message={`This permanently deletes your sessions, activities, programs and settings from this device. Export a backup first if you want to keep them.${signedIn ? syncNote : ''}`}
         confirmLabel="Continue"
         destructive
         onConfirm={() => setClearStep(2)}
@@ -204,7 +218,8 @@ export function DataSection() {
 
       <Sheet open={clearStep === 2} onClose={closeClear} title="Type DELETE to confirm">
         <label htmlFor="clear-confirm" className="mb-2 block text-sm text-ink">
-          Type DELETE (capital letters) to permanently erase all data.
+          Type DELETE (capital letters) to permanently erase all data
+          {signedIn ? ', including your synced cloud copy' : ''}.
         </label>
         <input
           id="clear-confirm"

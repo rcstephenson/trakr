@@ -64,7 +64,9 @@ test('a workout logged for yesterday sits on that day and leaves next up alone',
   // still Upper A and Lower A stays next.
   await page.getByRole('radio', { name: /Upper B/ }).click();
   const y = yesterday();
-  await page.getByLabel('Pick a date').fill(y.toISOString().slice(0, 10));
+  // Local date, like the picker: toISOString() is UTC and can still be "today" in the evening.
+  const yKey = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
+  await page.getByLabel('Pick a date').fill(yKey);
   await page.getByRole('button', { name: `Log Upper B · ${shortLabel(y)}` }).click();
   await expect(page).toHaveURL(/\/session\/[0-9A-Za-z]+$/);
   await logOneSet(page);
