@@ -1,7 +1,7 @@
 // Runtime side of the optional Dexie Cloud sync (config lives in ./cloud). Every function is a
 // no-op when cloud is not configured.
 import { db } from '../db/schema';
-import { ensureSeeded, ensureSingleActiveProgram } from '../db/seed';
+import { ensureSeeded, ensureSingleActiveProgram, refreshBundledPrograms } from '../db/seed';
 import { CLOUD_ENABLED } from './cloud';
 
 export type SyncDisplay = 'synced' | 'syncing' | 'offline' | 'error';
@@ -51,5 +51,7 @@ export function startCloudSync(): void {
   if (!CLOUD_ENABLED) return;
   db.cloud.events.syncComplete.subscribe(() => {
     void ensureSingleActiveProgram();
+    // A device still on an older app version may have synced old program text back down.
+    void refreshBundledPrograms();
   });
 }
