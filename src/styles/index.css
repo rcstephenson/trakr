@@ -5,7 +5,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Signal design tokens (SPEC §7). Paper = light, Graphite = dark. */
+/* Signal design tokens (docs/design-system.md). Paper = light, Graphite = dark. */
 :root,
 [data-theme='light'] {
   --bg: #eef1f4;

@@ -1,4 +1,4 @@
-// Zod schemas for the canonical program file format (SPEC 4.1) and parseProgram().
+// Zod schemas for the canonical program file format and parseProgram().
 import { z } from 'zod';
 import type { Program } from './types';
 

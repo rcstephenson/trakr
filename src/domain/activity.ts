@@ -38,7 +38,7 @@ export type ActivityIconName =
   | 'waves'
   | 'person-standing'
   | 'mountain'
-  | 'circle-dot'
+  | 'tennis-ball'
   | 'trophy'
   | 'users'
   | 'activity';
@@ -49,7 +49,7 @@ const ICONS: Record<ActivityType, ActivityIconName> = {
   swim: 'waves',
   walk: 'person-standing',
   climb: 'mountain',
-  tennis: 'circle-dot',
+  tennis: 'tennis-ball',
   sport: 'trophy',
   class: 'users',
   other: 'activity',

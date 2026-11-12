@@ -1,4 +1,4 @@
-﻿# trakr
+# trakr
 
 trakr is a local-first, mobile-first progressive web app for logging gym workouts against a predefined program and visualising your progress. It records and charts what you did; it does not give advice. Everything runs in the browser and works fully offline once installed.
 
@@ -8,9 +8,16 @@ Stack: React 18, TypeScript (strict), Tailwind, Dexie (IndexedDB), Zod, Recharts
 
 All data is stored in IndexedDB on the device and browser you use. There is no server and no account unless you opt in to [cloud sync](#cloud-sync-dexie-cloud). Clearing site data, uninstalling the app or switching phones loses it unless you have a backup. **Export a JSON backup regularly** from Settings, and import it to restore or move to a new device.
 
+## Documentation
+
+- [`SPEC.md`](SPEC.md): what the app does and how it is built.
+- [`programs/README.md`](programs/README.md): the program file format and how to add a routine.
+- [`docs/backup-format.md`](docs/backup-format.md): the backup file format.
+- [`docs/design-system.md`](docs/design-system.md): the visual language.
+
 ## Logging a workout
 
-Each exercise is one row with a weight field and a reps field (`135` and `8`; `+25` or `bw` for bodyweight exercises; reps alone for core work), and that one entry applies to all of the exercise's sets. Fields start filled with what you did last time: press Enter to log them as they are, or type over them. Enter in weight moves to reps, Enter in reps logs the exercise and moves to the next one, so a whole workout can be entered without leaving the keyboard. There are no timers and no suggestions. The screen is kept awake during a session where the browser supports the Wake Lock API, which needs HTTPS (so it works on the deployed site and `localhost`, but not over plain `http://` on a LAN address).
+Each exercise is one row with a weight field and a reps field (`135` and `8`; `+25` or `bw` for bodyweight exercises; reps alone for core work), and that one entry applies to all of the exercise's sets. Fields start filled with what you did last time: press Enter to log them as they are, or type over them. Enter in weight moves to reps, Enter in reps logs the exercise and moves to the next one, so a whole workout can be entered without leaving the keyboard. Enter `x` (or leave both fields blank) to skip an exercise. There are no timers and no suggestions. The screen is kept awake during a session where the browser supports the Wake Lock API, which needs HTTPS (so it works on the deployed site and `localhost`, but not over plain `http://` on a LAN address).
 
 ## Local development
 
@@ -37,7 +44,7 @@ Dev-only demo routes (`/dev/ui`, `/dev/seed`) exist in `npm run dev` and are exc
 
 ## Deployment
 
-trakr is static files, so any HTTPS static host works (HTTPS is required for service workers and installation). The app uses `BrowserRouter`, so the host must fall back to `index.html` for unknown paths. `public/_redirects` does this for Cloudflare Pages and Netlify.
+trakr is static files deployed to GitHub Pages (HTTPS, required for service workers and installation, is provided). The app uses `BrowserRouter`, so unknown paths must fall back to `index.html`. Another static host needs an equivalent rewrite rule.
 
 ### GitHub Pages
 
@@ -48,20 +55,6 @@ trakr is static files, so any HTTPS static host works (HTTPS is required for ser
 3. Push to `main`. The Actions tab shows the deploy and its URL when it finishes.
 
 To check a sub-path build locally: `BASE_PATH=/trakr/ npm run build && npm run preview`, then open `http://localhost:4173/trakr/`.
-
-### Cloudflare Pages
-
-1. Push the repository to GitHub/GitLab.
-2. In the Cloudflare dashboard: Workers & Pages, Create, Pages, Connect to Git, pick the repo.
-3. Build command: `npm run build`. Build output directory: `dist`. Node version 20 or later (set `NODE_VERSION` if needed).
-4. Deploy. `_redirects` (`/*  /index.html  200`) provides the SPA fallback.
-
-Or with Wrangler: `npm run build && npx wrangler pages deploy dist`.
-
-### Netlify
-
-1. New site from Git, same build command (`npm run build`) and publish directory (`dist`).
-2. The same `_redirects` file is honoured by Netlify. Alternatively add a `netlify.toml` with a `[[redirects]]` rule from `/*` to `/index.html` with status 200.
 
 ### Updates
 

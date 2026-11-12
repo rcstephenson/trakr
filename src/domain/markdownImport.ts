@@ -1,4 +1,4 @@
-// Parses a markdown program (the workouts/workout_A.md table format) into a Program (SPEC 4.1).
+// Parses a markdown program (the workouts/workout_A.md table format) into a Program.
 import { parseProgram, type ParseProgramResult } from './programSchema';
 import type { Equipment, Exercise, ExerciseKind, LoadType, Program, WorkoutItem } from './types';
 

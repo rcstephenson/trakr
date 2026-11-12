@@ -70,7 +70,7 @@ describe('activity helpers', () => {
   it('supports tennis with a label and icon', () => {
     expect(ACTIVITY_TYPES).toContain('tennis');
     expect(ACTIVITY_LABELS.tennis).toBe('Tennis');
-    expect(activityIcon('tennis')).toBe('circle-dot');
+    expect(activityIcon('tennis')).toBe('tennis-ball');
   });
   it('backup schemas accept every activity type', async () => {
     const { parseBackup } = await import('../../../src/lib/backup');

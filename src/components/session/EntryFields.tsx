@@ -40,7 +40,7 @@ const inputBase =
   'num h-12 w-full min-w-0 bg-transparent px-1 text-center text-lg font-medium placeholder:text-sm placeholder:font-normal placeholder:text-muted focus-visible:outline-offset-[-2px]';
 
 /**
- * The single entry for an exercise (SPEC 6.1): a weight field and a reps field side by side, a
+ * The single entry for an exercise: a weight field and a reps field side by side, a
  * log / update / un-log button, and a one-line caption (unit and reps labels, the parsed preview,
  * or a hint). Enter in weight moves to reps; Enter in reps submits.
  */

@@ -3,7 +3,7 @@ import * as history from '../db/repositories/history';
 import type { Performance } from '../db/repositories/history';
 
 /**
- * Live last completed performance of an exercise (SPEC §5.2): working sets only.
+ * Live last completed performance of an exercise: working sets only.
  * `undefined` while loading, `null` if the exercise has no history.
  */
 export function useLastPerformance(

@@ -62,7 +62,7 @@ async function deleteSlotSets(
 }
 
 /**
- * One entry per exercise (SPEC 6.1): replaces every set of the slot's exercise in the session with
+ * One entry per exercise: replaces every set of the slot's exercise in the session with
  * `count` identical working sets (sequential `setIndex`) in one transaction, so logging, editing
  * and normalising legacy sets all use the same write with no duplicates or orphans.
  */

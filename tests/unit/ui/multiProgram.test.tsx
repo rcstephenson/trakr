@@ -127,10 +127,10 @@ describe('Program screen history', () => {
     page(<Program />);
 
     const past = await screen.findByTestId('past-programs');
-    expect(within(past).getByText(/V-Taper/)).toBeInTheDocument();
+    expect(within(past).getByText(/Upper\/Lower \(4-day\)/)).toBeInTheDocument();
     expect(within(past).getByText(/2 sessions/)).toBeInTheDocument();
 
-    fireEvent.click(within(past).getByRole('button', { name: /^Switch to V-Taper/ }));
+    fireEvent.click(within(past).getByRole('button', { name: /^Switch to Upper\/Lower \(4-day\)/ }));
     expect((await screen.findAllByText(/Active program/))[0]).toBeInTheDocument();
     expect((await programs.getActive())?.id).toBe(ARCHIVED);
   });

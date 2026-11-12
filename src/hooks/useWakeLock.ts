@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 /**
- * Keeps the screen awake while `active` (SPEC 6.2). Re-acquires the lock when the tab becomes
+ * Keeps the screen awake while `active`. Re-acquires the lock when the tab becomes
  * visible again; does nothing where the Wake Lock API is unsupported or the request is refused.
  */
 export function useWakeLock(active: boolean): void {

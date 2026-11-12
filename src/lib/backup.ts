@@ -1,4 +1,4 @@
-// Backup export/import (SPEC 4.3) and clear-all-data. Works on all tables in one transaction.
+// Backup export/import and clear-all-data. Works on all tables in one transaction.
 import { z } from 'zod';
 import { db } from '../db/schema';
 import { ensureSeeded } from '../db/seed';

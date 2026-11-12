@@ -1,4 +1,4 @@
-﻿import type { Unit } from './types';
+import type { Unit } from './types';
 
 const KG_PER_LB = 0.45359237;
 
@@ -14,7 +14,7 @@ export function toUnit<T extends { weight: number; unit: Unit }>(set: T, display
   return { ...set, weight: convert(set.weight, set.unit, displayUnit), unit: displayUnit };
 }
 
-/** Round to 1 lb or 0.5 kg (SPEC 5.4). */
+/** Round to 1 lb or 0.5 kg. */
 export function roundForDisplay(value: number, unit: Unit): number {
   return unit === 'kg' ? Math.round(value * 2) / 2 : Math.round(value);
 }
@@ -32,7 +32,7 @@ export interface FormatWeightOptions {
 
 /**
  * Display string for a stored weight. Values entered in the display unit are shown as entered
- * (fractions kept); converted values are rounded to 1 lb / 0.5 kg (SPEC 5.4).
+ * (fractions kept); converted values are rounded to 1 lb / 0.5 kg.
  */
 export function formatWeight(
   value: number,

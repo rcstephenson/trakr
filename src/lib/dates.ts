@@ -73,11 +73,6 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-/** ISO-8601 string of the Monday that starts the week containing `date`. */
-export function weekStartIso(date: Date): string {
-  return startOfWeek(date).toISOString();
-}
-
 /** Whole calendar days from `from` to `to` (positive when `to` is later). */
 export function diffInDays(from: Date, to: Date): number {
   return Math.round((startOfDay(to).getTime() - startOfDay(from).getTime()) / DAY_MS);

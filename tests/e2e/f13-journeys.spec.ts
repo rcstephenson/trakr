@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-/** Words that would indicate coaching / recommendations (SPEC 1 non-goals). */
+/** Words that would indicate coaching / recommendations. */
 const ADVICE = /\b(recommend\w*|suggest\w*|advice|advise\w*|you should|try adding|deload)\b/i;
 /** A running clock reads like 12:34 or 0:05:12 (a pace such as 5:36 /km is not a clock). */
 const CLOCK = /(^|\s)\d{1,2}:\d{2}(:\d{2})?(?!\s*\/)(\s|$)/;

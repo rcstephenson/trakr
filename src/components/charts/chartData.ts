@@ -90,7 +90,7 @@ export function buildChartPoints(
   return points.sort((a, b) => a.t - b.t);
 }
 
-/** Formats a plotted value. Derived metrics and converted weights are rounded (SPEC 5.4). */
+/** Formats a plotted value. Derived metrics and converted weights are rounded. */
 export function formatMetricValue(metric: Metric, point: ChartPoint, displayUnit: Unit): string {
   const exact = metric === 'topWeight' && !point.converted;
   const v = exact ? point.value : roundForDisplay(point.value, displayUnit);

@@ -1,7 +1,7 @@
 # Backup format v2
 
 Settings > Export writes `trakr-backup-YYYY-MM-DD.json` in this compact format
-(`backupVersion: 2`). Import reads both v2 and the original verbose v1 (SPEC 4.3). Code:
+(`backupVersion: 2`). Import reads both v2 and the original verbose v1. Code:
 `src/lib/backupV2.ts` (codec) and `src/lib/backup.ts` (export/import). Both versions are
 decoded to the same table rows and validated by the same Zod schema before anything is written.
 

@@ -1,4 +1,4 @@
-// Shared domain types. Mirrors SPEC §4.1-§4.3. Types only, no logic (except DEFAULT_SETTINGS).
+// Shared domain types. Types only, no logic (except DEFAULT_SETTINGS).
 
 export type Unit = 'lb' | 'kg';
 export type DistanceUnit = 'km' | 'mi';
@@ -7,7 +7,7 @@ export type ExerciseKind = 'compound' | 'isolation';
 export type LoadType = 'total' | 'per-hand' | 'bodyweight-plus' | 'none';
 export type ThemePreference = 'light' | 'dark' | 'system';
 
-/** Catalog exercise (SPEC §4.1). Shared identity across workouts and programs. */
+/** Catalog exercise. Shared identity across workouts and programs. */
 export interface Exercise {
   id: string;
   name: string;
@@ -15,7 +15,7 @@ export interface Exercise {
   kind: ExerciseKind;
   load: LoadType;
   muscles: string[];
-  /** True for user-created exercises (§4.2). */
+  /** True for user-created exercises. */
   custom?: boolean;
 }
 
@@ -60,7 +60,7 @@ export interface StoredProgram extends Program {
 
 export type SessionStatus = 'active' | 'completed' | 'discarded';
 
-/** Template target snapshotted at session start (§4.2). */
+/** Template target snapshotted at session start. */
 export interface SessionTarget {
   slotIndex: number;
   exerciseId: string;
@@ -134,7 +134,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
 };
 
-/** `trakr-backup-YYYY-MM-DD.json` (SPEC §4.3). */
+/** `trakr-backup-YYYY-MM-DD.json`. */
 export interface Backup {
   app: 'trakr';
   backupVersion: 1;

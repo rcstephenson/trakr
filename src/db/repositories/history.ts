@@ -7,7 +7,7 @@ export interface Performance {
 }
 
 /**
- * SPEC §5.2: the most recent completed session containing a non-warm-up set for
+ * The most recent completed session containing a non-warm-up set for
  * the exercise (excluding `excludeSessionId`), with its working sets sorted by setIndex.
  */
 export async function lastPerformance(

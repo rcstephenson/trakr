@@ -20,7 +20,7 @@ export function weightInUnit(set: Pick<LoggedSet, 'weight' | 'unit'>, displayUni
 }
 
 /**
- * Prefill for an exercise (SPEC 6.1): the previous session's first working set, converted to the
+ * Prefill for an exercise: the previous session's first working set, converted to the
  * display unit and otherwise unadjusted. `lastSets` are already working sets sorted by setIndex.
  */
 export function prefillFromLast(

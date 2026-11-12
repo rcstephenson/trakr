@@ -10,7 +10,7 @@ import type {
   StoredProgram,
 } from '../domain/types';
 
-/** The single settings row, keyed by `app` (SPEC §4.2). */
+/** The single settings row, keyed by `app`. */
 export type StoredSettings = Partial<Settings> & { key: 'app' };
 
 export class TrakrDB extends Dexie {

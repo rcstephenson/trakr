@@ -1,7 +1,7 @@
 import type { Program, Session } from './types';
 
 /**
- * Id of the workout that should come next (SPEC 5.1).
+ * Id of the workout that should come next.
  * Sequence-based: the entry after the most recently completed session's workout in
  * `program.schedule`, skipping `rest`, wrapping around. Falls back to the first workout when
  * there are no completed sessions or the last workout id is no longer in the schedule.

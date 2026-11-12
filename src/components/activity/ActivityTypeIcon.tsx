@@ -1,7 +1,6 @@
 import {
   Activity as ActivityGlyph,
   Bike,
-  CircleDot,
   Footprints,
   Mountain,
   PersonStanding,
@@ -11,6 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { activityIcon, type ActivityIconName } from '../../domain/activity';
+import { TennisBall } from './TennisBallIcon';
 import type { ActivityType } from '../../domain/types';
 
 const COMPONENTS: Record<ActivityIconName, LucideIcon> = {
@@ -19,7 +19,7 @@ const COMPONENTS: Record<ActivityIconName, LucideIcon> = {
   waves: Waves,
   'person-standing': PersonStanding,
   mountain: Mountain,
-  'circle-dot': CircleDot,
+  'tennis-ball': TennisBall,
   trophy: Trophy,
   users: Users,
   activity: ActivityGlyph,

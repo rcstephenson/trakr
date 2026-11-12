@@ -64,7 +64,7 @@ function check(weight: number): number | null {
 }
 
 /**
- * Validates the two entry fields (SPEC 6.1) into numbers in the display unit. Anything outside the
+ * Validates the two entry fields into numbers in the display unit. Anything outside the
  * rules is rejected with a short hint naming the field; this never guesses.
  * - weight: a non-negative number (`.` decimal), optional `lb`/`kg` suffix (converted). Bodyweight-plus
  *   also takes `+25` (added load) and `bw`/empty/0 (bodyweight). Load `none` ignores the weight.

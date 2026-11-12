@@ -1,6 +1,6 @@
-# V-Taper Hypertrophy Program — Upper/Lower Split
+# Upper/Lower (4-day)
 
-**Goal:** Lean muscle, V-taper/hourglass emphasis
+**Goal:** Lean muscle
 **Priority muscles:** Lateral delts, rear delts, lats/upper back, glute max, glute medius
 **Moderate:** Chest, arms, quads, hamstrings, calves, abs
 

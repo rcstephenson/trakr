@@ -56,7 +56,7 @@ describe('bundled programs', () => {
   it('shares exercise ids with the earlier 4-day program so logged progress carries over', () => {
     const [current] = BUNDLED_PROGRAMS;
     const old = load('tests/fixtures/workout_A.program.json');
-    expect(old.id).toBe('v-taper-upper-lower');
+    expect(old.id).toBe('upper-lower-4-day');
     const shared = current.exercises.filter((e) => old.exercises.some((a) => a.id === e.id));
     expect(shared.length).toBeGreaterThan(20);
     expect(shared.map((e) => e.id)).toContain('barbell-bench-press');
@@ -97,7 +97,7 @@ describe('programs/_template.json', () => {
 describe('programCheck helpers', () => {
   const [current] = BUNDLED_PROGRAMS;
   const archived = frozen as unknown as Program;
-  const others = [{ file: 'v-taper-upper-lower.json', program: archived }];
+  const others = [{ file: 'upper-lower-4-day.json', program: archived }];
 
   it('scores names by shared words', () => {
     expect(nameSimilarity('Barbell Bench Press', 'Bench Press (Barbell)')).toBeGreaterThanOrEqual(

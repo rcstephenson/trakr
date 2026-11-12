@@ -1,538 +1,111 @@
-# trakr — Product & Technical Specification
+# trakr: product and technical overview
 
-A mobile-first web app for logging gym workouts against a predefined program, tracking weight/rep progression per exercise, and logging other activities (runs, sports, classes).
+trakr is a local-first, mobile-first progressive web app for logging gym workouts against a predefined program, tracking weight and rep progression per exercise, and logging other activities (runs, tennis, classes). Live at https://rcstephenson.github.io/trakr/.
 
-This document is the source of truth for implementation agents. Each feature in [§9 Feature Backlog](#9-feature-backlog) is sized to be built by one agent in one pass. **Agents: read §1–§8 in full before implementing any feature, implement only the feature you were assigned, and update this spec if you must change a shared contract (schema, routes, repository API).**
+Setup, scripts, deployment and sync steps are in [`README.md`](README.md). This document describes what the app does and how it is built.
 
----
+## 1. Principles
 
-## 1. Goals & Non-Goals
+- **Fast logging at the gym**: one hand, phone, poor signal. Fields are prefilled from last time, so repeating a lift is one Enter.
+- **Program-driven**: the user defines a routine once; the app knows what is next and what the targets are.
+- **Data, not advice**: the app records and charts what the user did. It never recommends weights, reps, progression or changes to the routine, and has no timers (no rest timer, no running clock). A finished session's duration is recorded and shown as a plain stat.
+- **Local-first**: everything works offline; there is no required server or account.
+- **Out of scope**: social features, coaching, nutrition tracking, native apps.
 
-### Goals
-- **Fast logging at the gym**: one hand, phone, poor signal. Logging a set should take ≤ 2 taps when repeating last session's numbers.
-- **Program-driven**: the user defines a routine once (e.g. Upper A / Lower A / Upper B / Lower B); the app knows what's next and what the targets are.
-- **Progression visibility**: for every exercise, see last session's numbers while logging, and a history chart over time.
-- **Data, not advice**: the app records and visualizes what the user did. It never recommends weights, reps, or changes to the routine.
-- **Other activities**: quick free-form log for non-program activities.
-- **Minimalist, bright, sleek UI**.
+## 2. Architecture
 
-### Non-Goals (v1)
-- Multi-user accounts, social features, coaching.
-- Nutrition tracking (the source markdown contains nutrition notes; display only, not tracked).
-- Timers of any kind: no rest timer and no running workout/elapsed clock. (A finished session's duration is still recorded and shown as a plain stat.)
-- Training recommendations of any kind: no suggested weights/reps, progression hints, deload prompts, or routine advice.
-- Native apps. (The PWA is installable to the home screen.)
-- Cloud sync — designed for, but deferred to F14.
+All data lives in IndexedDB on the device (Dexie). Hosted as static files on GitHub Pages. JSON backup export/import moves data between devices; optional Dexie Cloud sync (section 8) does it automatically.
 
----
-
-## 2. Architecture Overview
-
-**Local-first Progressive Web App.** All data lives on the device in IndexedDB; the app works fully offline (gyms often have poor signal). Hosted as static files, so hosting is free and there is no server to maintain. JSON export/import provides backup and device migration; optional cloud sync comes later.
-
-```
-┌────────────────────── Browser / installed PWA ──────────────────────┐
-│  UI (React routes & components)                                     │
-│        │                                                            │
-│  Hooks (useLiveQuery) ── Domain logic (pure TS: rotation,           │
-│        │                 e1RM, PRs, stats)                          │
-│  Repositories (typed CRUD)                                          │
-│        │                                                            │
-│  Dexie ── IndexedDB                Service worker (offline cache)   │
-└─────────────────────────────────────────────────────────────────────┘
-        ▲ seed / import                         ▼ export
-  programs/*.json (canonical program format)   trakr-backup-YYYY-MM-DD.json
-```
-
-### Tech stack
-
-| Concern | Choice | Why |
+| Layer | Where | Notes |
 |---|---|---|
-| Build | Vite + TypeScript (strict) | Fast, simple static output |
-| UI | React 18 | Ecosystem, agent familiarity |
-| Routing | React Router v6 (hash or browser router) | Static-host friendly |
-| Styling | Tailwind CSS with design tokens (§7) | Consistent minimalist styling |
-| Storage | Dexie.js (IndexedDB) + `dexie-react-hooks` | Reactive queries, offline |
-| Validation | Zod | Validate program files and backups |
-| Charts | Recharts | Simple line charts |
-| PWA | `vite-plugin-pwa` (Workbox) | Offline + installable |
-| Icons | `lucide-react` | Clean line icons |
-| Unit tests | Vitest + Testing Library | |
-| E2E | Playwright (mobile viewport, e.g. iPhone 13) | |
-| Hosting | Cloudflare Pages / Netlify / GitHub Pages | Free static hosting with HTTPS (required for PWA) |
+| UI | `src/routes/`, `src/components/` | React 18, React Router 6 (`BrowserRouter`), Tailwind with design tokens, `lucide-react` icons, Recharts |
+| Hooks | `src/hooks/` | `useLiveQuery` wrappers (`useSettings`, `useActiveProgram`, `useActiveSession`, `useSessions`, `useLastPerformance`, ...) |
+| Repositories | `src/db/repositories/` | Typed async CRUD; UI code does not query Dexie directly |
+| Database | `src/db/schema.ts` | Dexie `trakr` database; seeding in `src/db/seed.ts`; bundled programs in `src/db/bundled.ts` |
+| Domain | `src/domain/` | Pure, unit-tested functions with no React or Dexie imports: rotation, stats (e1RM, PRs, volume), units, set-entry parsing, program schema (Zod), markdown import, program history |
+| Lib | `src/lib/` | ids (ULID), dates, theme, backup (v1/v2), cloud sync |
+| Dev only | `src/dev/` | `/dev/ui` (design system page) and `/dev/seed` (demo data seeder); excluded from production builds |
+| Tests | `tests/unit/` (Vitest + Testing Library), `tests/e2e/` (Playwright, mobile viewport, against a production preview build) | |
 
-No backend in v1.
+Other tooling: Vite, TypeScript (strict), Zod, `vite-plugin-pwa` (Workbox), ESLint, Prettier. Business logic in `src/domain/` is covered by unit tests; each main flow has an e2e test.
 
----
+## 3. Screens
 
-## 3. Directory Structure
+The bottom tab bar is **Today, History, Progress, Program**. It is hidden during an active session, where the sticky session header carries back, title and Finish. Settings is an icon in the Program header.
 
-```
-trakr/
-├── SPEC.md
-├── programs/                     # canonical program definitions (seed data)
-│   └── 5day-upperlower-rev2.json   # the one bundled program
-├── workouts/                     # original source material
-│   └── workout_A.md              # also the markdown-import test fixture
-├── public/
-│   ├── icons/                    # PWA icons 192/512, maskable
-│   └── manifest.webmanifest      # generated by vite-plugin-pwa
-├── src/
-│   ├── main.tsx
-│   ├── App.tsx                   # router + layout
-│   ├── routes/                   # one file per screen (§6)
-│   │   ├── Today.tsx
-│   │   ├── Session.tsx
-│   │   ├── History.tsx
-│   │   ├── SessionDetail.tsx
-│   │   ├── ExerciseProgress.tsx
-│   │   ├── Exercises.tsx
-│   │   ├── ActivityForm.tsx
-│   │   ├── Program.tsx
-│   │   ├── WorkoutEditor.tsx
-│   │   └── Settings.tsx
-│   ├── components/
-│   │   ├── ui/                   # primitives: Button, Card, Sheet, Chip, TabBar, EmptyState
-│   │   ├── today/                # Today screen pieces
-│   │   ├── session/              # ExerciseRow, EntryFields (weight + reps), FinishSheet, discard dialog
-│   │   ├── history/              # feed, session summary
-│   │   ├── charts/               # ProgressChart, Sparkline
-│   │   ├── activity/             # activity form pieces
-│   │   ├── program/              # program overview, editor, import
-│   │   └── settings/             # settings sections
-│   ├── dev/                      # dev-only routes: UiDemo.tsx, SeedDemo.tsx (excluded from prod)
-│   ├── db/
-│   │   ├── schema.ts             # Dexie database + table definitions
-│   │   ├── repositories/         # programs.ts, sessions.ts, sets.ts, activities.ts, settings.ts
-│   │   └── seed.ts               # load bundled program on first run
-│   ├── domain/                   # PURE functions, no React/Dexie imports
-│   │   ├── types.ts              # shared TS types (mirrors §4)
-│   │   ├── programSchema.ts      # Zod schemas
-│   │   ├── rotation.ts           # next workout in the schedule
-│   │   ├── stats.ts              # e1RM, volume, PRs
-│   │   ├── units.ts              # lb/kg conversion and formatting
-│   │   ├── setEntry.ts           # parse/format the weight and reps entry fields
-│   │   ├── activity.ts           # pace and activity formatting
-│   │   └── markdownImport.ts     # parse markdown tables → Program
-│   ├── hooks/                    # useActiveSession, useLastPerformance, useSettings ...
-│   ├── lib/                      # ids (ulid), dates, theme, backup export/import
-│   └── styles/index.css          # Tailwind + CSS variables
-├── tests/
-│   ├── unit/
-│   └── e2e/
-├── index.html
-├── vite.config.ts
-├── tailwind.config.ts
-└── package.json
-```
-
-Rule: `src/domain/` contains all business logic as pure, unit-tested functions. Components and repositories call into it; it never imports from them.
-
----
-
-## 4. Data Model
-
-### 4.1 Program file format (canonical, `programs/*.json`)
-
-The markdown source is reinterpreted into this JSON. It separates the **exercise catalog** (shared identity, so "Hip Thrust" on Lower A and Lower B share one history) from **workout templates** (what to do on a given day).
-
-```jsonc
-{
-  "schemaVersion": 1,
-  "id": "v-taper-upper-lower",
-  "name": "V-Taper Hypertrophy — Upper/Lower",
-  "description": "Lean muscle, V-taper emphasis.",
-  "schedule": ["upper-a", "lower-a", "rest", "upper-b", "lower-b", "rest", "rest"],
-  "exercises": [
-    {
-      "id": "barbell-bench-press",
-      "name": "Barbell Bench Press",
-      "equipment": "barbell",       // barbell | dumbbell | cable | machine | bodyweight | other
-      "kind": "compound",           // compound | isolation
-      "load": "total",              // total | per-hand | bodyweight-plus | none
-      "muscles": ["chest", "triceps", "front-delts"]
-    }
-    // ...
-  ],
-  "workouts": [
-    {
-      "id": "upper-a",
-      "name": "Upper A",
-      "items": [
-        {
-          "exerciseId": "barbell-bench-press",
-          "sets": 3,
-          "repMin": 6,
-          "repMax": 10,
-          "notes": "",
-          "alternatives": []        // exerciseIds that may be swapped in for this slot
-        }
-        // ...
-      ]
-    }
-    // ...
-  ],
-  "notes": "Markdown string: execution rules, nutrition, references (displayed read-only)."
-}
-```
-
-Mapping rules from `workouts/workout_A.md`:
-- Each `## UPPER A` / `## LOWER A` / … table → one `workouts[]` entry, rows in order.
-- `Reps` "6–10" → `repMin: 6, repMax: 10` (accept en dash, hyphen, or a single number where min = max).
-- Names containing " or " / " / " (e.g. "Incline Dumbbell or Barbell Press", "Dips / Machine Chest Press", "Pull-Up or Neutral-Grip Lat Pulldown", "Machine or Dumbbell Lateral Raise") → split into separate catalog exercises; first is `exerciseId`, rest go in `alternatives`. Notes like "Optional swap: seated DB overhead press" also add an alternative.
-- Identical names across days map to the same exercise id (Rear-Delt Fly, Hip Thrust, Back Squat, Romanian Deadlift, Seated Leg Curl, Hip Abduction Machine, Core / Leg Raise).
-- "Weekly layout: Upper A / Lower A / Rest / Upper B / Lower B / Rest / Rest" → `schedule`.
-- Weekly Volume, Execution Rules (including the progression rule), Nutrition, Changes, Research → `notes` (markdown, display only; the app does not act on it).
-- `load`: dumbbell exercises default to `per-hand`; pull-ups/dips default to `bodyweight-plus`; core/leg raise → `none` or `bodyweight-plus`.
-
-### 4.2 IndexedDB tables (Dexie)
-
-All ids are ULIDs (sortable by creation time) except catalog/template ids, which are slugs from the program file. Timestamps are ISO-8601 strings. Weights are stored **in the unit they were entered in** alongside that unit; conversion happens at display time.
-
-| Table | Key | Indexes | Fields |
-|---|---|---|---|
-| `programs` | `id` | `isActive` | Full Program object (§4.1) + `isActive: 0/1`, `importedAt` |
-| `exercises` | `id` | `name` | Catalog entries, merged across programs; user-created exercises allowed (`custom: true`) |
-| `sessions` | `id` | `startedAt`, `programId`, `workoutId`, `status` | `programId`, `workoutId`, `workoutName` (snapshot), `startedAt`, `finishedAt?`, `status: "active" \| "completed" \| "discarded"`, `notes?`, `bodyweight?` |
-| `sets` | `id` | `sessionId`, `exerciseId`, `[exerciseId+completedAt]` | `sessionId`, `exerciseId`, `slotIndex` (position in workout), `setIndex`, `weight`, `unit: "lb" \| "kg"`, `reps`, `rir?` (reps in reserve), `isWarmup: boolean`, `completedAt` |
-| `activities` | `id` | `startedAt`, `type` | `type` (e.g. run, cycle, swim, climb, sport, class, walk, other), `title?`, `startedAt`, `durationMin?`, `distance?`, `distanceUnit?: "km" \| "mi"`, `intensity?: 1–5`, `notes?` |
-| `settings` | `key` | — | single row `key: "app"`: `unit`, `theme: "light" \| "dark" \| "system"`, `rotationPointer?` |
-
-Notes:
-- Sessions snapshot the template targets at start (`targets: {slotIndex, exerciseId, sets, repMin, repMax, kind}[]`) so later program edits don't rewrite history.
-- A session's exercise slot may be swapped to an alternative; sets record the actual `exerciseId` used.
-- Dexie schema versions must be bumped with migrations, never edited in place once released.
-
-### 4.3 Backup format
-
-`trakr-backup-YYYY-MM-DD.json`: `{ "app": "trakr", "backupVersion": 1, "exportedAt": ..., "programs": [...], "exercises": [...], "sessions": [...], "sets": [...], "activities": [...], "settings": {...} }`. Export now writes the compact `backupVersion: 2` format described in `docs/backup-format.md`; import accepts both v1 (the shape above) and v2. Validated with Zod on import. Import modes: **replace all** or **merge** (upsert by id).
-
-### 4.4 Repository & hook API (shared contract)
-
-Implemented by F02 in `src/db/repositories/` and `src/hooks/`; every UI feature consumes these and must not query Dexie directly. All repository functions are `async`.
-
-| Module | Functions |
+| Route | Screen |
 |---|---|
-| `programs` | `getActive()`, `list()`, `get(id)`, `save(program, { activate? })` (also upserts its exercises into the catalog), `setActive(id)`, `remove(id)` |
-| `exercises` | `list()`, `get(id)`, `upsert(exercise)` |
-| `sessions` | `start(programId, workoutId, { startedAt? })` → `Session` (snapshots targets; `startedAt` ISO defaults to now, used to log a past day; throws if a session is already active), `get(id)`, `getActive()`, `list({ from?, to?, status? })`, `update(id, patch)`, `swapExercise(id, slotIndex, exerciseId)`, `finish(id)` (a session started on an earlier local day gets `finishedAt = startedAt`, so rotation/History use the chosen day), `discard(id)`, `remove(id)` (also deletes its sets) |
-| `sets` | `add(input)`, `update(id, patch)`, `remove(id)`, `listBySession(sessionId)`, `listByExercise(exerciseId)`, `replaceExerciseSets({ sessionId, slotIndex, exerciseId, count, weight, unit, reps })` (deletes the slot's sets and writes `count` identical working sets in one transaction), `removeExerciseSets(sessionId, slotIndex, exerciseId)` |
-| `history` | `lastPerformance(exerciseId, { excludeSessionId? })` → `{ session, sets }` or `null` (§5.2) |
-| `activities` | `add(input)`, `get(id)`, `update(id, patch)`, `remove(id)`, `list({ from?, to? })` |
-| `settings` | `get()` (merged with defaults), `update(patch)` |
+| `/` | **Today**: a This-week strip (Mon to Sun tiles: workout, activity or none), then a hero card with the selected workout (default: the rotation's next), a tile picker of all the program's workouts (`NEXT` marks the rotation), a **Day** picker (defaults to today, no future dates; a past day makes the button **Log <Workout> . date** and records the session on that day), and a **Start** button. With an active session the hero becomes **Resume** with **Discard** (confirmed). **Log activity**. The last few entries below. |
+| `/session/:id` | **Session**: see 3.1. |
+| `/history` | **History**: a 14-week contribution grid, then the feed of sessions and activities grouped by week. Chips: All / Workouts / Activities, plus a program filter when sessions exist for more than one program (activities belong to no program and are hidden while one is picked). |
+| `/history/session/:id` | **Session detail**: sets, volume and PRs; Edit mode to fix mistakes (per-set rows, warm-up flag, add and delete sets); Delete. |
+| `/progress` | **Progress**: searchable exercise list with a sparkline of top-set weight and last-performed date. |
+| `/progress/:exerciseId` | **Exercise progress**: line chart (metric: top weight, e1RM or volume; range: 1M, 3M, 1Y, All), PR cards, table of past sessions, and a program filter when the exercise was done in more than one program. History is keyed by exercise id, so it carries across programs. |
+| `/activity/new`, `/activity/:id` | **Activity form**: type (run, cycle, swim, climb, tennis, sport, class, walk, other), title, date and time, duration, distance (run, cycle, swim, walk), intensity 1 to 5, notes. Leaving with unsaved input asks to confirm. |
+| `/program` | **Program**: active program name and description, weekly schedule, workout cards (exercise rows with sets x rep range, primary lifts in bold, `alt.` alternatives, per-item notes), the program's markdown notes, and **Past programs** with their date ranges. Header actions: Import, Export, Switch program (when more than one is stored), Settings. |
+| `/program/edit/:workoutId` | **Workout editor**: drag to reorder, add and remove exercises (picker with search), edit sets, rep range, notes, alternatives and the primary-lift flag. |
+| `/settings` | **Settings**: Units (lb / kg), Appearance (light / dark / system), Data (export backup, import backup with Merge or Replace, Clear all data with a type-DELETE confirmation), Account & sync (section 8). |
 
-Reactive hooks (`useLiveQuery`): `useSettings()`, `useActiveProgram()`, `useActiveSession()`, `useSession(id)`, `useSessionSets(sessionId)`, `useLastPerformance(exerciseId, excludeSessionId?)`, `useSessions(range?)`, `useActivities(range?)`, `useExerciseHistory(exerciseId)` (completed sessions + their sets for that exercise).
+**Program import** accepts a program `.json` file, a `.md` file with workout tables (converted by `src/domain/markdownImport.ts`; see `workouts/workout_A.md` for the format) or a built-in program, shows a preview, and saves it, optionally making it active. Importing an id that already exists replaces that program. Switching programs keeps all logged sessions; each session is tied to the program active when it started, and "next workout" is computed per program.
 
-Implementation notes (as built by F02; authoritative over the table above where they differ):
-- `get(...)` and `getActive()` return `null` when nothing is found; hooks return `undefined` only while loading. Test with `!x` / `=== null`, not `=== undefined`.
-- `history.forExercise(exerciseId)` (wrapped by `useExerciseHistory`) returns completed sessions containing the exercise, oldest first, each with all its sets for that exercise **including warm-ups**; filter on `isWarmup` where needed.
-- `sessions.list({from, to, status})` and `activities.list({from, to})` take inclusive ISO bounds on `startedAt` and return newest first. `sets.listBySession` sorts by slot then set index; `sets.listByExercise` is oldest first and includes warm-ups.
-- `sets.add` takes the set fields minus `id` (`isWarmup` defaults to false, `completedAt` to now); `activities.add` takes the fields minus `id`.
-- `settings.update` accepts a partial `Settings` and merges it over the defaults; keys from older versions (`increments`, `restTimerEnabled`, `restTimerSound`) are dropped on read and on backup import.
-- `sessions.swapExercise` rewrites the target's `exerciseId` and `kind` but leaves already-logged sets alone. `programs.save` keeps the existing active flag unless `activate` is true. `programs.remove` leaves past sessions alone.
-- `useSession`, `useSessionSets`, `useLastPerformance` and `useExerciseHistory` accept an `undefined` id.
-- `lastPerformance` picks the most recent completed session by `startedAt`.
+### 3.1 Session logging
 
-Display rule: every weight shown in the UI goes through `formatWeight()` from `domain/units.ts` with `useSettings().unit`, so changing units in Settings updates every screen.
+Each exercise has **one** weight field and **one** reps field (`src/domain/setEntry.ts`), and that entry applies to all of the exercise's target sets: logging writes that many identical working sets in one transaction (`sets.replaceExerciseSets`), so volume, e1RM, PRs, History and backups read ordinary set rows.
 
----
+- **Entry rules**: weight is a non-negative number (`135`, `62.5`) with an optional `lb` or `kg` suffix converted to the display unit; reps is a whole number 1 to 999. By load type: `total` and `per-hand` need a weight; `bodyweight-plus` takes `+25` or `25` (added) or `bw`, `0` or blank (bodyweight); `none` shows reps only. Invalid input shows a hint and disables logging.
+- **Prefill**: fields start filled (muted) with the previous completed session's first working set for that exercise, converted to the display unit. Under each exercise: the target (`3 x 6-10`) and a `LAST` line.
+- **Flow**: Enter in weight moves to reps; Enter in reps (or the button) logs the exercise and focuses the next one. Logged rows stay editable; tapping the tick un-logs.
+- **Skip**: entering `x` (or leaving both fields blank) records the exercise as skipped; the mark can be tapped to un-skip. Finishing records every still-unlogged exercise as skipped (the finish sheet lists them).
+- **Finish** opens a summary (sets, volume, PRs, plain duration; duration is hidden under a minute and for backdated sessions) and completes the session. **Discard workout** asks to confirm and deletes the session and its sets.
+- Everything persists immediately; reloading resumes the session. The screen is kept awake during a session via the Wake Lock API where supported (needs HTTPS).
 
-## 5. Domain Logic
+### 3.2 Rotation and stats
 
-### 5.1 Rotation (`domain/rotation.ts`)
-- The next workout is the template following the most recently **completed** session's `workoutId` in `schedule`, skipping `rest` entries. If there are no sessions, it's the first non-rest entry.
-- The rotation is sequence-based, not calendar-based (missing a day doesn't skip a workout).
-- The user can always pick any workout manually from the Today screen.
+- **Next workout**: the entry following the most recently completed session's workout in the active program's `schedule`, skipping `rest`. It is sequence-based, not calendar-based, and any workout can be picked by hand.
+- **Last performance**: working sets of the latest completed session containing the exercise (warm-ups excluded).
+- **Stats**: Epley e1RM `w x (1 + reps/30)` for reps up to 12; per-session top weight, best e1RM, volume and total reps; PRs for heaviest weight and best e1RM, flagged in the UI.
+- **Units**: weights are stored in the unit entered, with that unit; every displayed weight goes through `formatWeight()` using the Settings unit. Converted values round to 1 lb or 0.5 kg.
 
-### 5.2 Last performance (`useLastPerformance(exerciseId)`)
-- Returns the sets from the most recent completed session that contains `exerciseId` (any workout), excluding warm-ups. Used to prefill and show "Last: 135 × 8, 8, 7".
+## 4. Data model
 
-### 5.3 Stats (`domain/stats.ts`)
-- Estimated 1RM (Epley): `w × (1 + reps/30)`; only for reps ≤ 12, otherwise null.
-- Per-session metrics per exercise: top-set weight, best e1RM, total volume (Σ weight × reps), total reps.
-- PRs: heaviest weight at any reps, best e1RM. A set that sets a PR is flagged in the UI.
+IDs are ULIDs, except catalog and template ids, which are slugs from the program file. Timestamps are ISO-8601 strings. Types are in `src/domain/types.ts`; tables in `src/db/schema.ts`.
 
-### 5.4 Units (`domain/units.ts`)
-- Display unit comes from settings. Convert stored values when units differ; round display to 0.5 (kg) / 1 (lb) unless the value is fractional by entry.
+| Table | Contents |
+|---|---|
+| `programs` | A full program plus `isActive` and `importedAt` |
+| `exercises` | Exercise catalog shared across programs (`custom: true` for user-created ones) |
+| `sessions` | `programId`, `workoutId`, `workoutName` and `targets` (snapshotted at start so later program edits do not rewrite history), `startedAt`, `finishedAt`, `status` (`active`, `completed`, `discarded`), `skippedSlots`, `notes`, `bodyweight` |
+| `sets` | `sessionId`, `exerciseId` (the exercise actually used), `slotIndex`, `setIndex`, `weight`, `unit`, `reps`, `rir`, `isWarmup`, `completedAt` |
+| `activities` | `type`, `title`, `startedAt`, `durationMin`, `distance`, `distanceUnit`, `intensity`, `notes` |
+| `settings` | One row (`key: "app"`): `unit`, `theme`, `rotationPointer` |
 
----
+Rules: never edit a released Dexie version in place (add a new version with an upgrade); never delete user data without explicit confirmation; old stored or imported data containing removed fields (`restSeconds`, `increments`, rest-timer settings) must still load, and those fields are dropped.
 
-## 6. Screens & Routes
+## 5. Program file format
 
-Bottom tab bar (always visible except during an active session, where it is hidden and the sticky session header carries back, title and Finish): **Today · History · Progress · Program**. Settings via an icon in the Program header.
+A program is the exercise catalog, the workout templates and a weekly schedule, validated by `src/domain/programSchema.ts` (Zod). The format, load types, ID rules and how to add a routine are documented in [`programs/README.md`](programs/README.md); `programs/_template.json` is a starting point and `npm run program:check` validates files. One program is bundled (`programs/5day-upperlower-rev2.json`, listed in `src/db/bundled.ts`); it is installed on a fresh install, and bundled programs can also be added later from Program, Import, Built-in programs.
 
-| Route | Screen | Purpose |
-|---|---|---|
-| `/` | Today | This week's strip (Mon–Sun tiles: workout/activity/none) at the top, then the hero card: selected workout (default: the rotation's next) with a tile selector of all the program's workouts (`NEXT` marks the rotation), a **Day** date picker (defaults to today, no future dates) and a large **Start <Workout>** button (**Log <Workout> · Oct 28** for a past day); **+ Log activity**. If a session is active, the hero becomes **Resume** with a **Discard** action (confirm) and the selector is hidden. Below: last 3 entries. |
-| `/session/:id` | Active session | Two-column ledger: exercise, then one weight + reps entry per exercise (§6.1). Sticky header: workout name, Finish (no running clock). |
-| `/history` | History | A 14-week contribution grid (Mon–Sun columns, GitHub-style) at the top, then the reverse-chronological feed of sessions and activities grouped by week. Filter chips: All / Workouts / Activities. |
-| `/history/session/:id` | Session detail | Read-only summary (sets, volume, PRs) with Edit mode to fix mistakes; Delete. |
-| `/progress` | Exercises | Searchable list of exercises with a sparkline of top-set weight and last-performed date. |
-| `/progress/:exerciseId` | Exercise progress | Line chart (metric toggle: Top weight / e1RM / Volume; range: 1M / 3M / 1Y / All), PR cards, table of past sessions. |
-| `/activity/new`, `/activity/:id` | Activity form | Type chips, date/time (default now), duration, distance (shown for run/cycle/swim/walk), intensity 1–5, notes. **Cancel** and (new only) **Clear**, plus the back arrow, ask to confirm only when something was entered. |
-| `/program` | Program | Active program overview: schedule, workouts with exercise rows (sets × rep range). Read-only notes section rendered from markdown. Edit, Import, Export. |
-| `/program/edit/:workoutId` | Workout editor | Reorder (drag handle), add/remove exercises, edit sets/reps/notes/alternatives. |
-| `/settings` | Settings | Units, theme, backup export/import, "Clear all data" (double confirm). |
+## 6. Backup format
 
-### 6.1 Active session — the core interaction
+Settings, Export writes `trakr-backup-YYYY-MM-DD.json` in the compact `backupVersion: 2` format; import reads v2 and the older verbose v1, validates with Zod, and offers **Merge** (upsert by id, keeps current settings) or **Replace** (deletes existing data first). Format details are in [`docs/backup-format.md`](docs/backup-format.md); code is in `src/lib/backup.ts` and `src/lib/backupV2.ts`.
 
-The session screen is a two-column ledger inside one card. **Each exercise has ONE entry, a weight field and a reps field, that applies to all of its sets.** Column 1 is the exercise, column 2 is the user's entry. There is no per-set UI.
+## 7. Design
 
-```
-┌────────────────────────────────────────────────────┐
-│ EXERCISE · 3 / 8 LOGGED                WEIGHT / REPS │
-│ ▰▰▰▱▱▱▱▱                                            │  ← exercises logged (segmented bar)
-├───────────────────────┬────────────────────────────┤
-│ 01 Barbell Bench      │  ┌──────┬──────┐           │
-│    Press              │  │ 135  │  8   │  ✓        │  ← logged: tick, still editable
-│ 4 × 6–8 · LAST 135 x 8│  └──────┴──────┘           │
-│                       │    LB     REPS             │
-├───────────────────────┼────────────────────────────┤
-│ 02 Incline Dumbbell   │  ┌──────┬──────┐           │
-│    or Barbell Press   │  │ 60   │  10  │ ( ↵ )     │  ← prefilled from last time, muted
-│ 3 × 8–10 · LAST 60 x 10│ └──────┴──────┘           │
-├───────────────────────┼────────────────────────────┤
-│ 03 Core / Leg Raise   │  ┌─────────────┐            │
-│ 3 × 12–15             │  │    reps     │  ( ↵ )     │  ← load none: reps only
-└───────────────────────┴────────────────────────────┘
-                 Discard workout
-```
+The visual language ("Signal": hairline borders, mono numerals, one electric accent, light "Paper" and dark "Graphite" themes, 48px touch targets, WCAG AA) is documented against the code in [`docs/design-system.md`](docs/design-system.md). Tokens live in `src/styles/index.css` and `tailwind.config.ts`; `/dev/ui` (dev builds) renders every primitive.
 
-**Entry rules** (`domain/setEntry.ts`, pure and unit-tested). `parseWeightReps(weightText, repsText, { load, unit })` → `{ ok: true, weight, reps, unit } | { ok: false, field, hint }`; `formatWeightText(weight, load)` and `formatRepsText(reps)` produce the canonical field text for prefill.
-- **Weight** is a non-negative number with an optional `.` decimal (`135`, `62.5`) and an optional `lb` or `kg` suffix (`100kg`) that is converted to the display unit. Max 10000.
-- **Reps** is a whole number from 1 to 999.
-- Load type: `total` and `per-hand` need a weight. `bodyweight-plus`: `+25` or `25` means 25 added; `bw`, `0` or an empty weight means bodyweight. `none` (core work): the weight field is not shown; only reps; the stored weight is 0.
-- Anything else is invalid: a short mono hint in danger colour appears under the field (`weight (e.g. 135)`, `+25, or bw`, `whole reps (e.g. 8)`) and logging is disabled. Never guess.
+## 8. Optional cloud sync (Dexie Cloud)
 
-**Behaviour**
-- Both fields are `type="text"` with `inputMode="decimal"` (weight) and `inputMode="numeric"` (reps), `enterKeyHint="next"` / `"done"`, `autoComplete="off"`, `autoCorrect="off"`, `spellCheck={false}`, mono 18px. There are no separator characters to type, so the number pad is enough. Both select their text on focus.
-- **One entry, N sets.** The number of sets is the session target's `sets` (`session.targets[slot].sets`, at least 1). Logging writes that many identical `SetEntry` rows (same weight, reps, unit, `isWarmup: false`, sequential `setIndex`, same slot and exercise) in one transaction via `sets.replaceExerciseSets`. Volume, e1RM, PRs, History, Progress, Last performance and backups read these rows unchanged.
-- Rows are prefilled with the previous session's **first working set**, formatted canonically (weight and reps), muted until edited or logged. No history means empty fields with the placeholders `lb`/`kg` and `reps`. No adjustment is applied.
-- **Flow:** Enter in weight moves to reps. Enter in reps (or the ↵ button) logs the exercise and moves focus to the next exercise's first field, scrolling it into view, so a whole workout is typed without leaving the keyboard. After the last exercise, focus is dropped (Finish stays in the header).
-- Logged rows stay editable: change either field and press Enter in reps (or the button) to rewrite all N sets in place (`replaceExerciseSets` deletes and rewrites in one transaction, so there are no duplicates or orphans). Tapping the ✓ un-logs: it deletes all of the exercise's sets (the typed numbers stay in the fields).
-- Sessions with older data (differing sets, warm-ups) show the first working set as the entry and the exercise as logged; an edit normalises it to N identical sets.
-- While the user edits, a small mono preview of the parsed value (`100 lb × 8`) or the hint replaces the `LB` / `REPS` caption under the fields.
-- Under each exercise name: the target (`3 × 6–10`) and a compact `LAST` line from the previous completed session: `LAST 105 x 9` when its working sets were identical, otherwise the sets joined by ` · ` (`135 lb × 8 · 145 lb × 6`). Data only, no advice.
-- There is no Add set, no Swap exercise, no per-exercise Note, no warm-up/RIR flags and no per-set numbering on this screen. (`sessions.swapExercise` remains in the repository API but no screen calls it; legacy `Exercise N: …` lines in `Session.notes` are still displayed by History.)
-- Every change persists immediately to IndexedDB (no Save button). Reloading resumes the session (unlogged typing is not persisted).
-- The session screen has **no running clock**. Finish opens a summary sheet (sets, volume, PRs 🏆, and the plain recorded duration) → marks the session completed. Duration is hidden when under a minute (and for backfilled sessions). **Discard workout** (session screen bottom, Finish sheet when empty, Today Resume hero) opens a confirm ("Discard this workout?" – N logged sets will be deleted / Nothing logged yet) and calls `sessions.remove`.
-- Session detail (History): the read view shows an exercise's identical working sets as one line (`3 × 100 lb × 8`, with the PR trophy); warm-ups and legacy differing sets list one row each. Edit mode keeps per-set rows (index, weight and reps fields, with the options sheet for warm-up and delete, and Add set) as an error-fixing editor.
+Off by default. The Dexie Cloud addon is only compiled in when `VITE_DEXIE_CLOUD_URL` is set at build time; otherwise it is replaced by an empty stub and the app makes no network calls. When enabled the app still works signed out and offline; Settings gets an **Account & sync** section for signing in by email (one-time code), signing out and syncing. Units, theme and the next-workout pointer are per-device and not synced; "Clear all data" and a Replace import are shared across signed-in devices. Setup and behaviour are described in the README ("Cloud sync (Dexie Cloud)"); code is in `src/lib/cloud.ts`, `src/lib/cloudSync.ts`, `src/hooks/useCloud.ts` and `src/components/settings/AccountSection.tsx`.
 
-### 6.2 Screen awake
-- There are no timers anywhere in the app. Keep the screen awake during an open session via the Wake Lock API where supported (needs HTTPS, so it works once deployed).
+## 9. PWA, offline and deployment
 
----
+- `vite-plugin-pwa` generates the manifest and a Workbox service worker with a **prompt** update strategy: installed users see a "New version available" toast with a Reload button, and data is unaffected. The app shell is precached, so it opens offline after the first load. The service worker is only active in production builds.
+- Hosted on GitHub Pages at a sub-path. `.github/workflows/deploy.yml` builds on every push to `main` with `BASE_PATH=/<repo>/` (Vite `base`, manifest scope, service worker fallback and router `basename` follow it) and copies `index.html` to `404.html` so deep links and refreshes work.
+- The app asks the browser for persistent storage on start; users are told to export backups regularly.
 
-## 7. Design System — "Signal"
-
-The full, code-verified spec sheet is `docs/design-system.md`.
-
-**Mood:** precise, cool, a little technical. Think instrument panel or lab notebook, not a wellness app: hairline rules, mono numerals, terse uppercase micro-labels, near-black ink, and one electric accent used sparingly like an indicator light. Everything the user *did* (numbers) is the hero; chrome stays quiet.
-
-### Colour tokens
-
-| Token | Light "Paper" | Dark "Graphite" |
-|---|---|---|
-| `--bg` | `#EEF1F4` | `#0A0C10` |
-| `--surface` | `#F8FAFB` | `#11151B` |
-| `--raised` | `#FFFFFF` | `#171C24` |
-| `--ink` (text) | `#0A0E14` | `#E8EDF2` |
-| `--muted` | `#5B6572` | `#8893A0` |
-| `--hairline` (borders, dividers) | `#D3D9E0` | `#232A33` |
-| `--hairline-strong` (form-control borders, >= 3:1) | `#7D8794` | `#657080` |
-| `--accent` (fills, ticks, active) | `#C6FF3D` | `#C6FF3D` |
-| `--on-accent` (text on accent fills) | `#0A0E14` | `#0A0C10` |
-| `--accent-ink` (accent-coloured text and lines) | `#3D5A00` | `#C6FF3D` |
-| `--pr` (icons and borders only; fails AA for small text on Paper) | `#B86E00` | `#FFB84D` |
-| `--danger` | `#C62839` | `#FF6B7A` |
-
-Theme: `system` by default; both themes are first-class. Primary buttons are ink-on-paper (light) or accent fill (dark); the accent is for the *current* thing (active tab tick, current row, logged-set tick, PR, chart line), never for large areas.
-
-### Type
-- **UI:** Geist (variable). **Numbers, labels and data:** Geist Mono. Both self-hosted via `@fontsource-variable` packages (works offline). If Geist packages aren't available, use Space Grotesk + JetBrains Mono.
-- Every number the user logged or sees as data (weights, reps, volume, dates in lists, durations) is mono with tabular figures.
-- Micro-labels: mono, 11px, uppercase, +0.08em tracking, `--muted` (e.g. `LAST`, `UPPER A`, `THIS WEEK`).
-- Scale (Tailwind `micro` / `xs` / `sm` / `base` / `xl` / `display`): 11 / 13 / 15 / 18 / 24 / 40 (hero numerals and the next-workout name). `base` is 18px by design. Every text-entry control is at least 16px so iOS Safari does not zoom on focus. Weights 400/500/600.
-
-### Shape and surfaces
-- 1px hairline borders instead of shadows. Depth comes from the `--bg` → `--surface` → `--raised` steps. No drop shadows, no gradients except the page grid below.
-- Radii are small: cards 8px, inputs and buttons 6px, chips 4px (rectangular, not pills; the selected-chip underline is a square-ended 2px line). Segmented controls come in three sanctioned forms: chip row, joined radio group, inverted radio group (see `docs/design-system.md` 6.11).
-- Page background carries a faint dot grid (24px pitch; a 1px dot at 9% ink, which reads as roughly 4–5% overall) like graph paper; cards sit on top as solid surfaces.
-- Section headers are indexed micro-labels (`01 / UPPER A`), exercise rows are ledger lines (exercise left, entry right) with a mono index on the name, and the focused row has a 2px accent bar on its left edge plus an inset 2px focus ring.
-- Progress is shown with thin segmented bars (sets logged per exercise, workouts per week) rather than plain counters.
-- Tab bar: mono labels, a 2px accent tick above the active tab (drawn in `--accent-ink`, so it is visible on Paper and lime on Graphite). Today's hero shows the next workout name in large display type; the calendar week's workout/activity tiles live in the single "This week" strip below the hero, not duplicated as a rotation schedule.
-- Charts: 1.5px accent line, no area fill, hollow dots, hairline grid, mono axes, tooltip as a small ledger card.
-
-### Interaction
-- Minimum 48px touch targets for every tappable control (the text input rows are ≥ 48px tall; non-interactive read-only lines such as the session-detail set line may be 44px). Primary actions in the bottom thumb zone. No hover-dependent UI.
-- Motion: 120ms ease-out; the logged-set tick is the only flourish, and it is a static icon swap (log arrow to check) with no animation. Respect `prefers-reduced-motion`.
-- Accessibility: WCAG AA contrast in both themes (use `--accent-ink`, not `--accent`, for accent text on Paper), labelled inputs, visible 2px focus rings (`--accent-ink`, at least 3:1 on every surface in both themes; the set-entry field uses an inset ring), form-control borders at least 3:1 (`--hairline-strong`), 16px minimum text in inputs, screen-reader text on icon buttons, colour is never the only signal.
-- Layout: designed for 360–430px wide; on larger screens content is centered at max 560px.
-- Voice: terse and lowercase-friendly; no exclamation marks, no emoji except the 🏆 in the finish summary's PR list; elsewhere a PR is the amber `Trophy` icon.
-
----
-
-## 8. Quality Bar & Conventions
+## 10. Quality bar
 
 - TypeScript strict; no `any` in `domain/` or `db/`.
-- Every function in `src/domain/` has Vitest unit tests.
-- Each feature ships with at least one Playwright test for its main flow at a mobile viewport.
-- Lighthouse (mobile): Performance ≥ 90, Accessibility ≥ 95, PWA installable.
-- Data-safety: never delete user data without explicit confirmation; schema migrations must preserve existing data.
-- Commit per feature; feature id in the commit message (e.g. `F04: active session logging`).
-
-### 8.1 Parallel development rules
-
-Features are built by separate agents at the same time, each on its own git branch/worktree (`feat/fxx-<slug>`), and merged into `main` by the integrator. To keep merges clean:
-
-- **File ownership.** Each feature owns specific files (listed in its agent definition in `.claude/agents/`). Agents create and edit only their own files, plus any "minimal edit" files their definition allows.
-- **Shared contracts are frozen after they merge:** `src/domain/types.ts`, `src/db/schema.ts`, the §4.4 API, `src/App.tsx` route table, `src/components/ui/*`, `package.json`. If an agent truly must change one, it makes the smallest additive change, updates this spec in the same commit, and flags it in its report.
-- **No new dependencies.** F00 installs every library the project needs. Only F12 may add build-tool dependencies.
-- **Placeholders.** F00 creates every route file as a placeholder; feature agents replace the placeholder content and never edit the route table.
-- **Tests per feature** live in `tests/unit/<area>/` and `tests/e2e/fxx-<slug>.spec.ts`, so test files never collide.
-
----
-
-## 9. Feature Backlog
-
-Each feature lists dependencies, scope, and acceptance criteria. Features in the same **wave** can be built in parallel by separate agents; a feature may start as soon as its own dependencies are merged.
-
-### Wave 0 — Foundation
-
-#### F00 · Project scaffold & design system
-- **Depends on:** —
-- **Scope:** Vite + React + TS strict, Tailwind with §7 tokens as CSS variables, React Router with placeholder routes from §6, app layout with bottom TabBar, UI primitives in `components/ui/` (Button, Card, Stepper, Chip, Sheet/bottom-drawer, EmptyState, TabBar), Vitest + Playwright configured, ESLint + Prettier, `npm run dev|build|typecheck|lint|test|e2e` scripts. Also lays down the shared contracts so later agents can work in parallel: all project dependencies installed, `src/domain/types.ts` transcribing §4, every route file as a placeholder, and a minimal valid stub `programs/v-taper-upper-lower.json`.
-- **Done when:** app builds; all routes render placeholders; tab navigation works at 390 px; a primitives demo route (`/dev/ui`, dev-only) shows each component in light and dark.
-
-### Wave 1 — Contracts, data & core logic (F01, F02, F03 in parallel)
-
-#### F01 · Program schema & conversion of source program
-- **Depends on:** F00
-- **Scope:** `domain/programSchema.ts` (Zod) matching the §4.1 types in `domain/types.ts`, including `parseProgram()` with readable errors. Hand-convert `workouts/workout_A.md` into `programs/v-taper-upper-lower.json` following the §4.1 mapping rules, with a complete exercise catalog (equipment, kind, load, muscles).
-- **Done when:** the JSON validates against the Zod schema in a unit test; all 4 workouts and 33 slots are present; shared exercises share ids; alternatives are populated for the "X or Y" / "X / Y" rows.
-
-#### F02 · Data layer
-- **Depends on:** F00
-- **Scope:** Dexie schema (§4.2), repositories and hooks per §4.4 (including last performance, §5.2), `seed.ts` that installs the bundled program as active on first run, request `navigator.storage.persist()`, `useSettings` hook with defaults (unit lb; increments barbell 5, dumbbell 5, cable 2.5, machine 5, bodyweight 5).
-- **Done when:** repositories are unit-tested with `fake-indexeddb` (including last performance across workouts, excluding warm-ups and the current session); first launch seeds the program exactly once; settings persist across reloads.
-
-#### F03 · Domain logic: rotation, stats, units
-- **Depends on:** F00
-- **Scope:** `rotation.ts`, `stats.ts`, `units.ts` per §5, pure and fully unit-tested.
-- **Done when:** tests cover: first-ever rotation, rotation after each workout, wrap-around; e1RM cutoff; per-session metrics; PR detection; lb↔kg round-trip and formatting.
-
-### Wave 2 — Screens (F04, F08, F09, F10, F11 in parallel; F05 starts when F04 merges)
-
-#### F04 · Today screen
-- **Depends on:** F02, F03
-- **Scope:** §6 Today: next-up hero with Start/Resume, manual workout picker sheet, week strip, recent entries, "+ Log activity" button (links to F09 route). Start creates a session with target snapshot and navigates to `/session/:id`.
-- **Done when:** E2E: fresh install shows "Upper A" and Start opens `/session/:id`. Component test: after a completed Upper A it shows "Lower A", and an active session shows Resume.
-
-#### F05 · Active session logging
-- **Depends on:** F04
-- **Scope:** §6.1 entirely: exercise rows, prefill from last performance, Enter to log, autosave, Finish summary sheet with PRs, discard empty session, Wake Lock. (Rebuilt in R1a and again in R3; the original stepper UI and the per-set UI are superseded.)
-- **Done when:** E2E: start Upper A, log all sets with 1-tap on prefilled values, reload mid-session and resume with data intact, finish, see summary; a second Upper A session shows "Last: …" and prefills its rows from the first session.
-
-#### F06 · ~~Rest timer~~ (removed)
-- Dropped by product decision: trakr has no timers. Built once, then deleted in R1a.
-
-#### F07 · History & session detail/edit
-- **Depends on:** F05 (reuses its SetRow for edit mode)
-- **Scope:** `/history` feed grouped by week with filter chips; `/history/session/:id` summary with edit (change weight/reps, add/remove sets) and delete (confirm).
-- **Done when:** E2E: edit a logged set's weight and see it reflected in Last performance on the next session.
-
-#### F08 · Exercise progress & charts
-- **Depends on:** F02, F03
-- **Scope:** `/progress` searchable list with sparklines; `/progress/:exerciseId` chart (Top weight / e1RM / Volume; 1M/3M/1Y/All), PR cards, past-sessions table. Charts styled per §7 (accent line, minimal gridlines, tabular numbers, tap-to-inspect tooltip).
-- **Done when:** with seeded fake history (dev-only route `/dev/seed` that generates ~6 months of demo history), charts render correct values verified against `stats.ts` outputs; empty states for exercises with no history.
-
-#### F09 · Activities
-- **Depends on:** F02
-- **Scope:** `/activity/new` and `/activity/:id` per §6, appears in History feed and Today recents; delete with confirm.
-- **Done when:** E2E: log a 5 km run in 28 min; it appears in History with pace computed (5:36 /km).
-
-#### F10 · Program view, editor & import
-- **Depends on:** F01, F02
-- **Scope:** `/program` overview with notes rendered from markdown; `/program/edit/:workoutId` editor (reorder, add/remove/edit items, create custom exercise); import a program `.json` (Zod-validated, friendly errors); `domain/markdownImport.ts` that parses markdown in the `workout_A.md` table format into a Program (preview before saving); export program JSON; switch active program.
-- **Done when:** importing `workouts/workout_A.md` through the UI produces a program equivalent to `tests/fixtures/workout_A.program.json` (the frozen conversion of that file; unit test compares them); editing a template doesn't alter past sessions.
-
-#### F11 · Settings & backup
-- **Depends on:** F02
-- **Scope:** §6 Settings: units, theme; export backup (§4.3) via file download / Web Share API on mobile; import with replace/merge; clear all data.
-- **Done when:** round-trip test: export → clear → import restores identical data; switching units converts displayed values (component test here; checked across all screens in F13).
-
-### Wave 3 — Ship
-
-#### F12 · PWA, offline & deployment
-- **Depends on:** F04–F11
-- **Scope:** `vite-plugin-pwa` manifest (name "trakr", theme color = accent, icons incl. maskable), precache app shell, update prompt ("New version — reload"), deploy config for Cloudflare Pages (or Netlify) with SPA fallback, README with install-to-home-screen instructions for iOS/Android.
-- **Done when:** Lighthouse PWA installable; E2E in offline mode can start and log a session; production URL serves over HTTPS.
-
-#### F13 · QA & polish pass
-- **Depends on:** F12
-- **Scope:** full mobile E2E suite run, Lighthouse targets (§8), accessibility audit, visual consistency pass against §7, fix defects found.
-- **Done when:** all §8 targets met and the suite is green.
-
-### Redesign round (R1) — after F12, before the final QA
-
-Product changes requested after the first build: a distinctive look ("Signal", §7), no timers, and one text entry per set (§6.1; later changed to one weight + reps entry per exercise in R3).
-
-#### R1a · Logging rework: single text entry, no timers
-- **Depends on:** F12 merged.
-- **Scope:** `domain/setEntry.ts` + tests (grammar in §6.1); rebuild `SetRow` as the single-input row (also used by History edit mode); focus flow, preview/hint, prefill, un-log; **remove** the rest timer (`restTimer.ts`, `useRestTimer`, `RestTimer.tsx`, their tests and e2e), the running clock in the Session header, the `restSeconds` field (types, Zod schema, bundled program, markdown importer, with schema parsing still tolerant of old files containing it), the `restTimerEnabled`/`restTimerSound`/`increments` settings (types, defaults, Settings UI, backup schema must still accept old backups containing them), and the `NumberStepper`. Update every unit/e2e test that touched weight/reps fields. Does **not** restyle anything beyond what the new row needs.
-- **Done when:** unit tests cover the grammar (all separators, decimals, unit suffix, bodyweight-plus, load `none`, invalid input); e2e: log a full exercise purely with the keyboard (type `100x8` Enter, then Enter on prefilled rows), reload, finish; a second session prefills the first's values; editing a logged row updates it; old backups still import; no timer UI remains anywhere (grep for `RestTimer`/`restSeconds` returns nothing in `src/`).
-
-#### R1b · Signal design foundation
-- **Depends on:** F12 merged (runs in parallel with R1a).
-- **Scope:** §7 in full for the foundation layer: CSS variables for both themes in `styles/index.css`, Tailwind mapping, fonts (`@fontsource-variable` packages; the only dependency additions allowed), dot-grid page background, all `components/ui/*` primitives restyled (Button, Card, Chip, Sheet, EmptyState, TabBar, PageHeader, ConfirmDialog, plus a new `SectionLabel`, `SegmentedBar`, `Mono` number helper), the app shell, the Today screen (hero with schedule strip, no running clock on Resume), and `/dev/ui` updated. Do not edit `src/components/session/*`, Settings, or anything R1a owns.
-- **Done when:** the app builds and every existing test passes; Today and `/dev/ui` match §7 in both themes at 360/390/430 px (screenshots reviewed); contrast checked for `--accent-ink` on Paper.
-
-#### R1c · Restyle all remaining screens
-- **Depends on:** R1a and R1b merged.
-- **Scope:** apply §7 to Session (exercise rows, finish sheet), History feed and session detail, Progress list and charts, Activity form, Program overview and editor, Settings, import/export sheets. No behaviour changes. Delete the unused `Stepper` primitive.
-- **Done when:** every screen reviewed via screenshots at 390 px in both themes; tests green; no hard-coded colours outside the token layer.
-
-#### R2 · Pick any workout for any day; cancel/clear
-- **Scope:** Today tile selector + day control (backfill via `sessions.start(..., { startedAt })`, `finish` sets `finishedAt = startedAt` for past days), discard confirm for sessions (session screen, Resume hero, empty Finish sheet), Cancel/Clear/back-arrow confirms on the activity form. Removes the `WorkoutPicker` sheet.
-- **Done when:** unit tests for backfill/rotation/duration pass; `tests/e2e/r2-pick-and-cancel.spec.ts` green.
-
-#### R3 · One entry per exercise, two-column exercise rows
-- **Depends on:** R2.
-- **Scope:** the session screen becomes a two-column ledger (exercise | entry) with ONE weight field and ONE reps field per exercise that applies to all of the target's sets (§6.1). Weight and reps are separate text inputs (no `x` to type): `domain/setEntry.ts` now exposes `parseWeightReps` / `formatWeightText` / `formatRepsText` (the single `weight x reps` parser is removed). New `sets.replaceExerciseSets` / `sets.removeExerciseSets` write, rewrite and delete the N identical sets in one transaction (additive to §4.4). Removes Add set, Swap exercise, Note, the per-set options sheet and per-set numbering from the session screen (`SwapSheet`, `NoteSheet`, `SetRow`, `ExerciseCard`, `useProgramById`, `writeSlotNote`); History read view shows identical working sets as `3 × 100 lb × 8`, History edit mode keeps per-set rows using the same two-field control. No data-model change.
-- **Done when:** unit tests cover the weight/reps rules, the N-sets write/rewrite/delete (fake-indexeddb), first-set prefill, the compact LAST and History lines; e2e covers a whole workout by keyboard with N sets stored per exercise, edit rewrites all sets, un-log, load `none`, long names at 360 px, and the absence of Add set / Swap / Note; screenshots reviewed at 360/390/430 in both themes.
-
-### Later (optional)
-
-#### F14 · Cloud sync
-- Add accounts + sync (e.g. Supabase with row-level security) so data follows you across devices. Keep local-first: IndexedDB stays the source of truth, sync via `updatedAt` + soft deletes (`deletedAt`) with last-write-wins. Requires adding `updatedAt`/`deletedAt` to all tables — a schema migration.
-
-#### Other ideas
-- Plate calculator for barbell lifts.
-- Weekly sets-per-muscle chart (logged volume only).
-- Bodyweight tracking chart.
-- Superset grouping.
-
----
-
-## 10. Dependency Graph
-
-Built so far (all merged): F00–F05, F07–F12 (F06 was built then removed), R1a–R1c, R2. R3 (one entry per exercise) follows R2. Remaining:
-
-```
-F12 ─┬─► R1a (logging rework, no timers) ─┐
-     └─► R1b (Signal foundation) ─────────┴─► R1c (restyle all screens) ─► F13 (final QA) ─► (F14)
-```
-
-| Step | Run in parallel | Starts when merged |
-|---|---|---|
-| 8 | R1a, R1b | F12 |
-| 9 | R1c | R1a, R1b |
-| 10 | F13 | R1c |
-| 11 | R2 | F13 |
-| 12 | R3 | R2 |
-
----
-
-## 11. Implementation Agents
-
-Each feature has a Sonnet agent definition in `.claude/agents/trakr-fxx-*.md` with its scope, owned files, and done criteria; `trakr-integrator` merges branches. See `docs/agent-playbook.md` for how to run them.
+- `npm run program:check`, `npm run typecheck`, `npm run lint`, `npm test` and `npm run e2e` all pass before a change is deployed.
+- Mobile Lighthouse targets: Performance 90 or more, Accessibility 95 or more, installable PWA.
+- Do not put personal details (names, emails, body measurements) in the repository: the repo is public and program files ship with the app.

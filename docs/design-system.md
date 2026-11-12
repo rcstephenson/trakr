@@ -2,8 +2,8 @@
 
 The visual language of trakr, a mobile-first workout-logging PWA. This sheet documents what the code does today, so the look can be reproduced and extended by people and by coding agents.
 
-- **Source of truth:** the code. Where it disagrees with `SPEC.md` §7, this document follows the code and lists the difference in [Spec drift](#13-spec-drift).
-- **Rationale:** `SPEC.md` §7 (design), §6.1 (logging screen), §1 (data, not advice; no timers).
+- **Source of truth:** the code. If this sheet and the code disagree, fix the sheet.
+- **Product rationale:** data, not advice; no timers (see `SPEC.md`).
 - **Living style page:** run the app and open `/dev/ui` (dev builds only; `src/dev/UiDemo.tsx`). It renders tokens, type, and every primitive in Paper or Graphite, with a "Compare both themes" toggle.
 - **Files that define the system:** `src/styles/index.css` (tokens, `.micro`, `.num`, dot grid, focus, reduced motion), `tailwind.config.ts` (utilities, scale, radii, fonts), `src/components/ui/*` (primitives).
 
@@ -21,7 +21,6 @@ The visual language of trakr, a mobile-first workout-logging PWA. This sheet doc
 10. [Voice & content](#10-voice--content)
 11. [Do / Don't gallery](#11-do--dont-gallery)
 12. [Implementation cookbook](#12-implementation-cookbook)
-13. [Spec drift](#13-spec-drift)
 
 ---
 
@@ -492,7 +491,7 @@ Two modes: `value`/`total` produces `on` then `off` segments (sets logged, worko
 
 ### 6.2 Exercise ledger (session)
 
-The session is **one table**: exercise on the left, the user's entry on the right. Each exercise has ONE weight field and ONE reps field that apply to all of its sets (SPEC 6.1).
+The session is **one table**: exercise on the left, the user's entry on the right. Each exercise has ONE weight field and ONE reps field that apply to all of its sets.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -529,7 +528,7 @@ The session is **one table**: exercise on the left, the user's entry on the righ
 
 | Part | Spec |
 |---|---|
-| Weight field | `type="text"` `inputMode="decimal"` `enterKeyHint="next"`; `num h-12 w-full min-w-0 bg-transparent px-1 text-center text-lg font-medium` (18px, never under 16px so iOS does not zoom); placeholder `weight` (`placeholder:text-sm font-normal text-muted`); `aria-label="<Exercise> weight"`. Accepts `135`, `62.5`, `100kg`, `+25`, `bw` per load type (SPEC 6.1). Not rendered for load `none`. |
+| Weight field | `type="text"` `inputMode="decimal"` `enterKeyHint="next"`; `num h-12 w-full min-w-0 bg-transparent px-1 text-center text-lg font-medium` (18px, never under 16px so iOS does not zoom); placeholder `weight` (`placeholder:text-sm font-normal text-muted`); `aria-label="<Exercise> weight"`. Accepts `135`, `62.5`, `100kg`, `+25`, `bw` per load type. Not rendered for load `none`. |
 | Reps field | `type="text"` `inputMode="numeric"` `enterKeyHint="done"`, same classes plus `border-l border-hairline` between the two fields; placeholder `reps`; `aria-label="<Exercise> reps"`. For load `none` it is the only field and takes the full width. |
 | Common attributes | `autoCapitalize="off" autoCorrect="off" autoComplete="off" spellCheck={false}`. Both select their text on focus. |
 | Log button | 48x48, `border-l border-hairline`. Unlogged or edited: `CornerDownLeft` 20px, `text-muted`, `aria-label="Log <Exercise>"` / `"Update <Exercise>"`, disabled at 30% when the pair is invalid. Logged and unedited: `Check` 22px stroke 3, `text-accent`, `aria-pressed`, `aria-label="Un-log <Exercise>"`; tapping deletes all the exercise's sets. |
@@ -886,7 +885,7 @@ No exclamation marks, no "Oops", no second-person pep talk, no advice about weig
 2. Map it in `tailwind.config.ts` under `theme.extend.colors` (`name: 'var(--name)'`).
 3. Compute contrast for every text/background pair it will meet in both themes (use the formula in 2.5) and record it in section 2.5.
 4. Add a swatch to `SWATCHES` in `src/dev/UiDemo.tsx`.
-5. Update section 2 here and `SPEC.md` §7. If the theme-colour meta values change, update `index.html` (both tags), `src/lib/theme.ts` and `vite.config.ts`.
+5. Update section 2 here. If the theme-colour meta values change, update `index.html` (both tags), `src/lib/theme.ts` and `vite.config.ts`.
 
 ### 12.3 Contrast script (reference)
 
@@ -914,27 +913,3 @@ ratio('3d5a00', 'f8fafb'); // accent-ink on Paper surface -> 7.54
 - **Mono for data** (`.num`), `.micro` for labels, only the three sanctioned segmented-control forms.
 - **Labelled controls and graphics** per 8.3.
 - Primitives are covered by `tests/unit/ui/primitives.test.tsx`; run the unit and e2e suites for behavioural changes.
-
----
-
-## 13. Spec drift
-
-All thirteen items from the first audit are resolved: either the code was fixed or `SPEC.md` §7 was updated to match the code (and this sheet follows both). Deliberately kept differences, each with its reason:
-
-none.
-
-Resolution log (for the record):
-
-1. **Logged-set flourish.** Kept static; SPEC §7 now says the tick is a static icon swap with no animation (8.1).
-2. **Dot-grid opacity.** SPEC §7 and 2.6 now state the real value: a 1px dot at 9% ink, 24px pitch.
-3. **Focus ring colour / set-entry focus.** Ring stays `--accent-ink` (SPEC wording updated). The set-entry input now shows an inset 2px ring on both themes (previously suppressed).
-4. **Lime-only indicators on Paper.** Tab tick, chip and radio underlines, focused-row bar, resume bar and schedule-tile bar now use `bg-accent-ink` (olive on Paper, lime on Graphite). Lime remains for fills and 8px squares.
-5. **PR marker.** SPEC §7 and 10.3 now say the 🏆 appears only in the finish summary; elsewhere the amber `Trophy` icon.
-6. **`--pr` text.** SPEC token table and 2.1 now mark `--pr` as icons and borders only.
-7. **Hairline contrast.** New `--hairline-strong` (`#7d8794` / `#657080`, 3.2 to 3.9:1) for form-control borders; card and row hairlines are unchanged and documented as decorative.
-8. **Type scale.** `2xl` removed (six distinct steps), `text-[10px]` literals replaced by `micro`, and the Progress search, editor note, swap search, note sheet and picker fields moved from 15px to `base` (18px) so nothing is under 16px.
-9. **Manifest/theme colour.** `index.html` carries light and dark theme-color tags, `applyTheme()` syncs them with the applied theme, and the misleading `vite.config.ts` comment is fixed.
-10. **Session footer.** SPEC §6 now says Finish lives in the sticky session header.
-11. **Segmented controls.** The three forms are the sanctioned set (6.11) and SPEC §7 points here.
-12. **Read-only set line height.** 44px is a documented exemption for non-interactive lines (4.3, SPEC §7).
-13. **Pill detail.** The chip underline is now square (no `rounded-full`).

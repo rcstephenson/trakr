@@ -23,7 +23,7 @@ function repRange(t: SessionTarget): string {
 
 /**
  * One ledger row: the exercise on the left, its single weight + reps entry on the right. The entry
- * applies to all of the target's sets (SPEC 6.1).
+ * applies to all of the target's sets.
  */
 export function ExerciseRow(props: ExerciseRowProps) {
   const { session, target, exercise, settings } = props;
