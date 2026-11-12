@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "5day-upperlower-rev2",
   "name": "Upper/Lower + Full Body",
-  "description": "5-day upper/lower split plus a full-body day.",
+  "description": "5-day upper/lower split with a full-body day.",
   "schedule": ["upper-a", "lower-a", "rest", "upper-b", "lower-b", "rest", "full-body"],
   "exercises": [
     {
