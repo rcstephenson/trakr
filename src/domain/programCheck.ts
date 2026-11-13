@@ -98,7 +98,7 @@ export function programWarnings(program: Program, others: ReadonlyArray<NamedPro
   for (const w of program.workouts) {
     for (const item of w.items) {
       used.add(item.exerciseId);
-      item.alternatives.forEach((a) => used.add(a));
+      item.alternatives.forEach((a) => used.add(typeof a === 'string' ? a : a.exerciseId));
     }
   }
   for (const ex of program.exercises) {

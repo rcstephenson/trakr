@@ -208,6 +208,20 @@ describe('sessions', () => {
     expect((await sessions.get(s.id))?.targets[1].exerciseId).toBe('curl');
   });
 
+  it("swapExercise applies an alternative's own sets and reps and clears a skip", async () => {
+    const s = await sessions.start('p1', 'a');
+    await sessions.skipSlot(s.id, 0, 'bench');
+    const swapped = await sessions.swapExercise(s.id, 0, 'curl', {
+      sets: 5,
+      repMin: 4,
+      repMax: 6,
+    });
+    expect(swapped.targets[0]).toMatchObject({ exerciseId: 'curl', sets: 5, repMin: 4, repMax: 6 });
+    const stored = await sessions.get(s.id);
+    expect(stored?.targets[0]).toMatchObject({ exerciseId: 'curl', sets: 5, repMin: 4, repMax: 6 });
+    expect(stored?.skippedSlots).toEqual([]);
+  });
+
   it('list filters by range and status, newest first', async () => {
     const s1 = await completedSession('a', '2026-01-01T10:00:00.000Z');
     const s2 = await completedSession('b', '2026-02-01T10:00:00.000Z');

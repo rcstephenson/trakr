@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { ChevronLeft } from 'lucide-react';
+import { slotOptions, type SlotOption } from '../domain/alternatives';
+import type { SessionTarget } from '../domain/types';
+import * as programsRepo from '../db/repositories/programs';
 import { ExerciseRow } from '../components/session/ExerciseRow';
 import { DiscardWorkoutDialog } from '../components/session/DiscardWorkoutDialog';
 import { FinishSheet } from '../components/session/FinishSheet';
@@ -19,6 +23,15 @@ export default function Session() {
   const sets = useSessionSets(id);
   const settings = useSettings();
   const catalog = useExerciseCatalog();
+  const programId = session?.programId;
+  // Tagged with its id: useLiveQuery keeps the previous result while a new id loads, and a stale
+  // result must not count as this session's program.
+  const loadedProgram = useLiveQuery(
+    async () => ({ id: programId, program: programId ? await programsRepo.get(programId) : null }),
+    [programId],
+  );
+  const programLoaded = loadedProgram !== undefined && loadedProgram.id === programId;
+  const program = programLoaded ? loadedProgram.program : null;
 
   const [finishOpen, setFinishOpen] = useState(false);
   // Recorded once when Finish is opened: a plain stat, not a running clock.
@@ -46,7 +59,14 @@ export default function Session() {
     next.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
   }
 
-  if (session === undefined || sets === undefined || settings === undefined || !catalog) {
+  // Wait for the program too, so swappable names do not turn into dropdowns after first paint.
+  if (
+    session === undefined ||
+    sets === undefined ||
+    settings === undefined ||
+    !catalog ||
+    !programLoaded
+  ) {
     return (
       <>
         <PageHeader title="Session" />
@@ -92,6 +112,18 @@ export default function Session() {
   }
 
   const exercises = new Map(catalog.map((e) => [e.id, e]));
+  const nameOf = (exerciseId: string) => exercises.get(exerciseId)?.name ?? exerciseId;
+  const workoutItems = program?.workouts.find((w) => w.id === session.workoutId)?.items;
+  // A slot's options come from the program's item at the same position. If the template was edited
+  // since the session started and the slot's exercise is no longer one of them, offer no swap.
+  const slotFor = (target: SessionTarget): { options: SlotOption[]; primary: boolean } | null => {
+    const item = workoutItems?.[target.slotIndex];
+    if (!item) return null;
+    const options = slotOptions(item);
+    if (!options.some((o) => o.exerciseId === target.exerciseId)) return null;
+    // The primary flag belongs to the slot, so it stays on when an alternative is swapped in.
+    return { options, primary: item.primary === true };
+  };
   const hasSets = (slot: number) => sets.some((x) => x.slotIndex === slot);
   // A skip is an entry too (a null log), so it counts towards the progress bar.
   const loggedCount = session.targets.filter(
@@ -176,6 +208,9 @@ export default function Session() {
                 sets={sets}
                 settings={settings}
                 onLogged={advance}
+                options={slotFor(target)?.options}
+                primary={slotFor(target)?.primary}
+                nameOf={nameOf}
               />
             ))}
           </ul>

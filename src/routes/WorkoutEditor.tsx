@@ -25,6 +25,7 @@ import { useActiveProgram } from '../hooks/useActiveProgram';
 import * as programsRepo from '../db/repositories/programs';
 import * as exercisesRepo from '../db/repositories/exercises';
 import { newId } from '../lib/ids';
+import { altId } from '../domain/alternatives';
 import type { Exercise, WorkoutItem } from '../domain/types';
 
 type PickerTarget = { mode: 'add' } | { mode: 'alt'; key: string } | null;
@@ -116,7 +117,7 @@ export default function WorkoutEditor() {
       const key = picker.key;
       setDraft(
         draft.map((d) =>
-          d.key === key && !d.item.alternatives.includes(exercise.id)
+          d.key === key && !d.item.alternatives.some((a) => altId(a) === exercise.id)
             ? { ...d, item: { ...d.item, alternatives: [...d.item.alternatives, exercise.id] } }
             : d,
         ),
@@ -130,7 +131,7 @@ export default function WorkoutEditor() {
     try {
       const base = toProgram(activeProgram);
       const items = draft.map((d) => d.item);
-      const used = new Set(items.flatMap((i) => [i.exerciseId, ...i.alternatives]));
+      const used = new Set(items.flatMap((i) => [i.exerciseId, ...i.alternatives.map(altId)]));
       const known = new Set(base.exercises.map((e) => e.id));
       const added = allExercises.filter((e) => used.has(e.id) && !known.has(e.id));
       await programsRepo.save({
@@ -208,7 +209,9 @@ export default function WorkoutEditor() {
         title={picker?.mode === 'alt' ? 'Add alternative' : 'Add exercise'}
         catalog={allExercises}
         exclude={
-          pickerTarget ? [pickerTarget.item.exerciseId, ...pickerTarget.item.alternatives] : []
+          pickerTarget
+            ? [pickerTarget.item.exerciseId, ...pickerTarget.item.alternatives.map(altId)]
+            : []
         }
         onClose={() => setPicker(null)}
         onPick={pick}

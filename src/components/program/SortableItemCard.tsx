@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { GripVertical, Plus, Trash2, X } from 'lucide-react';
 import { Card } from '../ui';
+import { altId, repRangeText, slotOptions } from '../../domain/alternatives';
 import type { WorkoutItem } from '../../domain/types';
 
 export interface DraftItem {
@@ -166,24 +167,40 @@ export function SortableItemCard({
         </label>
 
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          {item.alternatives.map((alt) => (
-            <span
-              key={alt}
-              className="inline-flex min-h-touch items-center gap-1 rounded-chip border border-hairline bg-bg pl-3 text-xs text-ink"
-            >
-              or {nameOf(alt)}
-              <button
-                type="button"
-                aria-label={`Remove alternative ${nameOf(alt)}`}
-                onClick={() =>
-                  onChange({ ...item, alternatives: item.alternatives.filter((a) => a !== alt) })
-                }
-                className="inline-flex min-h-touch min-w-touch items-center justify-center text-muted"
-              >
-                <X size={16} aria-hidden="true" />
-              </button>
-            </span>
-          ))}
+          {slotOptions(item)
+            .filter((o) => !o.isDefault)
+            .map((alt) => {
+              // Show an alternative's own prescription only when it differs from the default's.
+              const own =
+                alt.sets !== item.sets || alt.repMin !== item.repMin || alt.repMax !== item.repMax;
+              return (
+                <span
+                  key={alt.exerciseId}
+                  className="inline-flex min-h-touch items-center gap-1 rounded-chip border border-hairline bg-bg pl-3 text-xs text-ink"
+                >
+                  {nameOf(alt.exerciseId)}
+                  {own ? (
+                    <span className="num text-muted">
+                      {' '}
+                      · {alt.sets} × {repRangeText(alt)}
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    aria-label={`Remove alternative ${nameOf(alt.exerciseId)}`}
+                    onClick={() =>
+                      onChange({
+                        ...item,
+                        alternatives: item.alternatives.filter((a) => altId(a) !== alt.exerciseId),
+                      })
+                    }
+                    className="inline-flex min-h-touch min-w-touch items-center justify-center text-muted"
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                </span>
+              );
+            })}
           <button
             type="button"
             onClick={onAddAlternative}

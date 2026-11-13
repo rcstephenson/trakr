@@ -19,6 +19,8 @@ export default {
         'on-accent': 'var(--on-accent)',
         danger: 'var(--danger)',
         pr: 'var(--pr)',
+        lift: 'var(--lift)',
+        'lift-tint': 'var(--lift-tint)',
         scrim: 'var(--scrim)',
         'grid-empty': 'var(--grid-empty)',
         'grid-workout': 'var(--grid-workout)',

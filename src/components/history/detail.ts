@@ -24,6 +24,7 @@ export function formatUniformRun(
   displayUnit: Unit,
 ): string {
   const s = sets[0];
+  if (exercise?.load === 'completion') return 'Done';
   if (exercise?.load === 'none') return `${sets.length} × ${s.reps} reps`;
   const w = formatWeight(s.weight, s.unit, displayUnit, {
     perHand: exercise?.load === 'per-hand',

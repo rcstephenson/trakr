@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { altId } from '../../../src/domain/alternatives';
 import { parseProgram } from '../../../src/domain/programSchema';
 import type { Program } from '../../../src/domain/types';
 import bundled from '../../../programs/5day-upperlower-rev2.json';
@@ -105,7 +106,7 @@ describe('bundled 5day-upperlower-rev2 program', () => {
       'seated-leg-curl',
       'leg-extension',
       'incline-dumbbell-press',
-      'neutral-grip-lat-pulldown',
+      'lat-pulldown',
       'cable-lateral-raise',
       'machine-triceps-extension',
       'dumbbell-curl',
@@ -121,7 +122,9 @@ describe('bundled 5day-upperlower-rev2 program', () => {
     for (const w of p.workouts) {
       for (const item of w.items) {
         expect(ids.has(item.exerciseId), `${w.id}: ${item.exerciseId}`).toBe(true);
-        for (const alt of item.alternatives) expect(ids.has(alt), `alt ${alt}`).toBe(true);
+        for (const alt of item.alternatives.map(altId)) {
+          expect(ids.has(alt), `alt ${alt}`).toBe(true);
+        }
       }
     }
   });
@@ -152,7 +155,7 @@ describe('bundled 5day-upperlower-rev2 program', () => {
     const shared: Record<string, number> = {
       'barbell-bench-press': 2,
       'chest-supported-row': 2,
-      'lat-pulldown': 2,
+      'lat-pulldown': 3,
       'cable-lateral-raise': 3,
       'rear-delt-fly': 2,
       'dumbbell-curl': 3,
@@ -173,14 +176,50 @@ describe('bundled 5day-upperlower-rev2 program', () => {
     const p = load();
     const item = (w: string, ex: string) =>
       p.workouts.find((x) => x.id === w)!.items.find((i) => i.exerciseId === ex)!;
-    expect(item('upper-a', 'barbell-bench-press').alternatives).toEqual(['machine-chest-press']);
-    expect(item('upper-a', 'cable-lateral-raise').alternatives).toEqual([
-      'machine-lateral-raise',
-      'dumbbell-lateral-raise',
+    expect(item('upper-a', 'barbell-bench-press').alternatives).toEqual(['dumbbell-bench-press']);
+    expect(item('upper-a', 'chest-supported-row').alternatives).toEqual([
+      'seated-cable-row',
+      'single-arm-dumbbell-row',
     ]);
+    expect(item('upper-a', 'cable-lateral-raise').alternatives).toEqual(['dumbbell-lateral-raise']);
+    expect(item('upper-b', 'rear-delt-fly').alternatives).toEqual([
+      'reverse-cable-fly',
+      'face-pull',
+    ]);
+    expect(item('lower-a', 'romanian-deadlift').alternatives).toEqual([
+      'dumbbell-romanian-deadlift',
+      '45-degree-back-extension',
+    ]);
+    expect(item('full-body', 'bulgarian-split-squat').alternatives).toEqual(['step-up']);
     expect(item('full-body', 'incline-dumbbell-press').alternatives).toEqual([
       'incline-barbell-press',
     ]);
+    expect(item('upper-a', 'dumbbell-curl').alternatives).toEqual([]);
+    expect(item('lower-b', 'core-leg-raise').alternatives.map(altId)).toEqual([
+      'stair-master',
+      'hanging-knee-raise',
+      'plank',
+      'sit-up',
+      'ab-wheel-rollout',
+    ]);
+  });
+
+  it('logs plank as a single completion mark', () => {
+    const p = load();
+    expect(p.exercises.find((e) => e.id === 'plank')?.load).toBe('completion');
+  });
+
+  it('drops the machine and curl variants replaced in the alternatives update', () => {
+    const ids = new Set(load().exercises.map((e) => e.id));
+    for (const gone of [
+      'machine-chest-press',
+      'neutral-grip-lat-pulldown',
+      'machine-lateral-raise',
+      'preacher-curl',
+      'hammer-curl',
+    ]) {
+      expect(ids.has(gone), gone).toBe(false);
+    }
   });
 
   it('keeps sets and rep ranges', () => {

@@ -14,14 +14,6 @@
       "muscles": ["chest", "triceps", "front-delts"]
     },
     {
-      "id": "machine-chest-press",
-      "name": "Machine Chest Press",
-      "equipment": "machine",
-      "kind": "compound",
-      "load": "total",
-      "muscles": ["chest", "triceps", "front-delts"]
-    },
-    {
       "id": "incline-dumbbell-press",
       "name": "Incline Dumbbell Press",
       "equipment": "dumbbell",
@@ -62,14 +54,6 @@
       "muscles": ["lats", "upper-back", "biceps"]
     },
     {
-      "id": "neutral-grip-lat-pulldown",
-      "name": "Neutral-Grip Lat Pulldown",
-      "equipment": "cable",
-      "kind": "compound",
-      "load": "total",
-      "muscles": ["lats", "upper-back", "biceps"]
-    },
-    {
       "id": "pull-up",
       "name": "Pull-Up",
       "equipment": "bodyweight",
@@ -81,14 +65,6 @@
       "id": "cable-lateral-raise",
       "name": "Cable Lateral Raise",
       "equipment": "cable",
-      "kind": "isolation",
-      "load": "total",
-      "muscles": ["lateral-delts"]
-    },
-    {
-      "id": "machine-lateral-raise",
-      "name": "Machine Lateral Raise",
-      "equipment": "machine",
       "kind": "isolation",
       "load": "total",
       "muscles": ["lateral-delts"]
@@ -127,7 +103,7 @@
     },
     {
       "id": "machine-triceps-extension",
-      "name": "Machine Triceps Extension",
+      "name": "Triceps Extension",
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
@@ -135,23 +111,7 @@
     },
     {
       "id": "dumbbell-curl",
-      "name": "Dumbbell Curl",
-      "equipment": "dumbbell",
-      "kind": "isolation",
-      "load": "per-hand",
-      "muscles": ["biceps"]
-    },
-    {
-      "id": "preacher-curl",
-      "name": "Preacher Curl",
-      "equipment": "machine",
-      "kind": "isolation",
-      "load": "total",
-      "muscles": ["biceps"]
-    },
-    {
-      "id": "hammer-curl",
-      "name": "Hammer Curl",
+      "name": "Bicep Curl",
       "equipment": "dumbbell",
       "kind": "isolation",
       "load": "per-hand",
@@ -191,7 +151,7 @@
     },
     {
       "id": "seated-leg-curl",
-      "name": "Seated Leg Curl",
+      "name": "Leg Curl",
       "equipment": "machine",
       "kind": "isolation",
       "load": "total",
@@ -239,7 +199,7 @@
     },
     {
       "id": "core-leg-raise",
-      "name": "Core / Leg Raise",
+      "name": "Leg Raise",
       "equipment": "bodyweight",
       "kind": "isolation",
       "load": "none",
@@ -252,6 +212,86 @@
       "kind": "compound",
       "load": "none",
       "muscles": ["quads", "glute-max", "calves"]
+    },
+    {
+      "id": "dumbbell-bench-press",
+      "name": "Dumbbell Bench Press",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": ["chest", "triceps", "front-delts"]
+    },
+    {
+      "id": "single-arm-dumbbell-row",
+      "name": "Single-Arm Dumbbell Row",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": ["lats", "upper-back", "rear-delts", "biceps"]
+    },
+    {
+      "id": "face-pull",
+      "name": "Face Pull",
+      "equipment": "cable",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": ["rear-delts", "upper-back"]
+    },
+    {
+      "id": "reverse-cable-fly",
+      "name": "Reverse Cable Fly",
+      "equipment": "cable",
+      "kind": "isolation",
+      "load": "total",
+      "muscles": ["rear-delts", "upper-back"]
+    },
+    {
+      "id": "dumbbell-romanian-deadlift",
+      "name": "Dumbbell Romanian Deadlift",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": ["hamstrings", "glute-max", "upper-back"]
+    },
+    {
+      "id": "45-degree-back-extension",
+      "name": "45-Degree Back Extension",
+      "equipment": "bodyweight",
+      "kind": "compound",
+      "load": "bodyweight-plus",
+      "muscles": ["hamstrings", "glute-max"]
+    },
+    {
+      "id": "step-up",
+      "name": "Step-Up",
+      "equipment": "dumbbell",
+      "kind": "compound",
+      "load": "per-hand",
+      "muscles": ["quads", "glute-max"]
+    },
+    {
+      "id": "hanging-knee-raise",
+      "name": "Hanging Knee Raise",
+      "equipment": "bodyweight",
+      "kind": "isolation",
+      "load": "none",
+      "muscles": ["abs"]
+    },
+    {
+      "id": "plank",
+      "name": "Plank",
+      "equipment": "bodyweight",
+      "kind": "isolation",
+      "load": "completion",
+      "muscles": ["abs"]
+    },
+    {
+      "id": "sit-up",
+      "name": "Sit-ups",
+      "equipment": "bodyweight",
+      "kind": "isolation",
+      "load": "none",
+      "muscles": ["abs"]
     }
   ],
   "workouts": [
@@ -265,7 +305,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": ["machine-chest-press"],
+          "alternatives": ["dumbbell-bench-press"],
           "primary": true
         },
         {
@@ -274,7 +314,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": [],
+          "alternatives": ["seated-cable-row", "single-arm-dumbbell-row"],
           "primary": true
         },
         {
@@ -283,7 +323,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": ["neutral-grip-lat-pulldown", "pull-up"],
+          "alternatives": ["pull-up"],
           "primary": true
         },
         {
@@ -292,7 +332,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["machine-lateral-raise", "dumbbell-lateral-raise"]
+          "alternatives": ["dumbbell-lateral-raise"]
         },
         {
           "exerciseId": "rear-delt-fly",
@@ -300,7 +340,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": []
+          "alternatives": ["face-pull"]
         },
         {
           "exerciseId": "triceps-pressdown",
@@ -308,7 +348,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["overhead-triceps-extension", "machine-triceps-extension"]
+          "alternatives": ["overhead-triceps-extension"]
         },
         {
           "exerciseId": "dumbbell-curl",
@@ -316,7 +356,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["preacher-curl", "hammer-curl"]
+          "alternatives": []
         }
       ]
     },
@@ -348,7 +388,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": [],
+          "alternatives": ["dumbbell-romanian-deadlift", "45-degree-back-extension"],
           "primary": true
         },
         {
@@ -381,7 +421,17 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["core-leg-raise", "stair-master"]
+          "alternatives": [
+            "stair-master",
+            "hanging-knee-raise",
+            {
+              "exerciseId": "plank",
+              "sets": 1,
+              "repMin": 1,
+              "repMax": 1
+            },
+            "sit-up"
+          ]
         }
       ]
     },
@@ -395,7 +445,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": ["machine-chest-press"],
+          "alternatives": ["dumbbell-bench-press"],
           "primary": true
         },
         {
@@ -404,7 +454,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": [],
+          "alternatives": ["single-arm-dumbbell-row"],
           "primary": true
         },
         {
@@ -413,7 +463,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": ["neutral-grip-lat-pulldown", "pull-up"],
+          "alternatives": ["pull-up"],
           "primary": true
         },
         {
@@ -422,7 +472,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": []
+          "alternatives": ["single-arm-dumbbell-row"]
         },
         {
           "exerciseId": "cable-lateral-raise",
@@ -430,7 +480,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["machine-lateral-raise", "dumbbell-lateral-raise"]
+          "alternatives": ["dumbbell-lateral-raise"]
         },
         {
           "exerciseId": "rear-delt-fly",
@@ -438,7 +488,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": []
+          "alternatives": ["reverse-cable-fly", "face-pull"]
         },
         {
           "exerciseId": "overhead-triceps-extension",
@@ -446,7 +496,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["triceps-pressdown", "machine-triceps-extension"]
+          "alternatives": ["triceps-pressdown"]
         },
         {
           "exerciseId": "dumbbell-curl",
@@ -454,7 +504,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["preacher-curl", "hammer-curl"]
+          "alternatives": []
         }
       ]
     },
@@ -486,7 +536,7 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "",
-          "alternatives": [],
+          "alternatives": ["dumbbell-romanian-deadlift", "45-degree-back-extension"],
           "primary": true
         },
         {
@@ -519,7 +569,18 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["ab-wheel-rollout", "stair-master"]
+          "alternatives": [
+            "stair-master",
+            "hanging-knee-raise",
+            {
+              "exerciseId": "plank",
+              "sets": 1,
+              "repMin": 1,
+              "repMax": 1
+            },
+            "sit-up",
+            "ab-wheel-rollout"
+          ]
         }
       ]
     },
@@ -533,7 +594,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": []
+          "alternatives": ["step-up"]
         },
         {
           "exerciseId": "seated-leg-curl",
@@ -560,12 +621,12 @@
           "alternatives": ["incline-barbell-press"]
         },
         {
-          "exerciseId": "neutral-grip-lat-pulldown",
+          "exerciseId": "lat-pulldown",
           "sets": 2,
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["pull-up", "lat-pulldown"]
+          "alternatives": ["pull-up"]
         },
         {
           "exerciseId": "cable-lateral-raise",
@@ -573,7 +634,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["machine-lateral-raise", "dumbbell-lateral-raise"]
+          "alternatives": ["dumbbell-lateral-raise"]
         },
         {
           "exerciseId": "machine-triceps-extension",
@@ -581,7 +642,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["overhead-triceps-extension", "triceps-pressdown"]
+          "alternatives": ["triceps-pressdown"]
         },
         {
           "exerciseId": "dumbbell-curl",
@@ -589,7 +650,7 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["preacher-curl", "hammer-curl"]
+          "alternatives": []
         },
         {
           "exerciseId": "core-leg-raise",
@@ -597,7 +658,18 @@
           "repMin": 10,
           "repMax": 15,
           "notes": "",
-          "alternatives": ["ab-wheel-rollout", "stair-master"]
+          "alternatives": [
+            "stair-master",
+            "hanging-knee-raise",
+            {
+              "exerciseId": "plank",
+              "sets": 1,
+              "repMin": 1,
+              "repMax": 1
+            },
+            "sit-up",
+            "ab-wheel-rollout"
+          ]
         }
       ]
     }

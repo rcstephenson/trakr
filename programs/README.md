@@ -36,9 +36,27 @@ An exercise: `id`, `name`, `equipment` (`barbell`, `dumbbell`, `cable`, `machine
 `other`), `kind` (`compound` or `isolation`), `load`, and `muscles` (free-text list).
 
 A workout item: `exerciseId`, `sets`, `repMin`, `repMax` (min must not exceed max), `notes` (can be
-empty), `alternatives` (exercise ids that can be swapped in for that slot; they must also be in
-`exercises`) and optionally `"primary": true` to mark a primary lift (shown in bold on the Program
-screen; also toggleable in the workout editor).
+empty), `alternatives` (exercises that can be swapped in for that slot, see below) and optionally
+`"primary": true` to mark a primary lift (shown in bold on the Program screen; also toggleable in
+the workout editor).
+
+### Alternatives
+
+Each entry in `alternatives` is either a bare exercise id, which uses the item's own sets, reps and
+notes, or an object with its own prescription. Fields left out of the object are taken from the
+item. Every alternative must also be in `exercises`.
+
+```json
+"alternatives": [
+  "machine-chest-press",
+  { "exerciseId": "incline-dumbbell-press", "sets": 3, "repMin": 8, "repMax": 12, "notes": "Slow negatives" }
+]
+```
+
+An exercise with alternatives shows a dropdown on its name. On the Program screen it previews each
+option's sets, reps and notes. During a workout it swaps that day's exercise (and its sets and
+reps) before you log it. Sets are logged against the exercise you actually did, so each alternative
+keeps its own progress history.
 
 ### Load types
 
@@ -47,7 +65,8 @@ screen; also toggleable in the workout editor).
 | `total`           | The full weight on the bar or stack | Barbell bench, cable row |
 | `per-hand`        | The weight of one dumbbell          | Dumbbell press           |
 | `bodyweight-plus` | Added weight only (0 = bodyweight)  | Pull-up, dips            |
-| `none`            | No weight field, reps only          | Leg raise, plank         |
+| `none`            | No weight field, reps only          | Leg raise, sit-ups       |
+| `completion`      | Nothing: just mark it done          | Plank                    |
 
 ## Rules
 

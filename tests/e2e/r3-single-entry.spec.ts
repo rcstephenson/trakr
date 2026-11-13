@@ -124,16 +124,31 @@ test('the log button logs when both fields are valid', async ({ page }) => {
   expect(sets.every((s) => s.weight === 62.5 && s.reps === 10)).toBe(true);
 });
 
-test('no Add set, Swap exercise, Note or per-set options on the session screen', async ({
-  page,
-}) => {
+test('no Add set, Note or per-set options on the session screen', async ({ page }) => {
   await startWorkout(page);
   await expect(page.getByTestId('exercise-row').first()).toBeVisible();
-  await expect(page.getByText(/add set|swap exercise/i)).toHaveCount(0);
+  await expect(page.getByText(/add set/i)).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^note$/i })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /options/i })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Finish', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Discard workout' })).toBeVisible();
+});
+
+test('an exercise with alternatives can be swapped from its name, and logs as the alternative', async ({
+  page,
+}) => {
+  await startWorkout(page);
+  const row = exerciseRow(page, 0);
+  const select = row.getByRole('combobox', { name: /switch to an alternative/ });
+  await expect(select).toHaveValue('barbell-bench-press');
+  await select.selectOption('dumbbell-bench-press');
+  await expect(row.getByLabel('Dumbbell Bench Press weight')).toBeVisible();
+  await logRow(exerciseRow(page, 0), '120', '10');
+  await expectLogged(exerciseRow(page, 0));
+  await expect(exerciseRow(page, 0).getByRole('combobox')).toBeDisabled();
+  const sets = await storedSets(page);
+  expect(sets.length).toBeGreaterThan(0);
+  expect(sets.every((s) => s.exerciseId === 'dumbbell-bench-press' && s.slotIndex === 0)).toBe(true);
 });
 
 test('load none rows have a reps field only; bodyweight-plus takes +25 and bw', async ({

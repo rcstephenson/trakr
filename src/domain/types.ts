@@ -4,7 +4,8 @@ export type Unit = 'lb' | 'kg';
 export type DistanceUnit = 'km' | 'mi';
 export type Equipment = 'barbell' | 'dumbbell' | 'cable' | 'machine' | 'bodyweight' | 'other';
 export type ExerciseKind = 'compound' | 'isolation';
-export type LoadType = 'total' | 'per-hand' | 'bodyweight-plus' | 'none';
+/** `none` logs reps only; `completion` logs only that it was done (no weight or reps). */
+export type LoadType = 'total' | 'per-hand' | 'bodyweight-plus' | 'none' | 'completion';
 export type ThemePreference = 'light' | 'dark' | 'system';
 
 /** Catalog exercise. Shared identity across workouts and programs. */
@@ -19,6 +20,21 @@ export interface Exercise {
   custom?: boolean;
 }
 
+/**
+ * An exercise that may be swapped into a workout slot, with its own prescription. Fields left out
+ * are taken from the slot's default exercise.
+ */
+export interface WorkoutAlternative {
+  exerciseId: string;
+  sets?: number;
+  repMin?: number;
+  repMax?: number;
+  notes?: string;
+}
+
+/** A plain exercise id (same sets, reps and notes as the default) or a full alternative. */
+export type AlternativeRef = string | WorkoutAlternative;
+
 /** One row of a workout template. */
 export interface WorkoutItem {
   exerciseId: string;
@@ -26,8 +42,8 @@ export interface WorkoutItem {
   repMin: number;
   repMax: number;
   notes: string;
-  /** Exercise ids that may be swapped into this slot. */
-  alternatives: string[];
+  /** Exercises that may be swapped into this slot (see `slotOptions`). */
+  alternatives: AlternativeRef[];
   /** A primary lift of the workout (shown in bold on the Program screen). */
   primary?: boolean;
 }

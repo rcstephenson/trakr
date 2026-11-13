@@ -42,7 +42,7 @@ const ExerciseV2 = z.object({
   name: str,
   equipment: z.enum(['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'other']),
   kind,
-  load: z.enum(['total', 'per-hand', 'bodyweight-plus', 'none']).optional(),
+  load: z.enum(['total', 'per-hand', 'bodyweight-plus', 'none', 'completion']).optional(),
   muscles: z.array(str),
   custom: z.boolean().optional(),
 });
@@ -55,7 +55,20 @@ const ItemV2 = z.tuple([
   z
     .object({
       notes: str.optional(),
-      alt: z.array(str).optional(),
+      alt: z
+        .array(
+          z.union([
+            str,
+            z.object({
+              exerciseId: str,
+              sets: z.number().optional(),
+              repMin: z.number().optional(),
+              repMax: z.number().optional(),
+              notes: str.optional(),
+            }),
+          ]),
+        )
+        .optional(),
       primary: z.literal(true).optional(),
     })
     .optional(),

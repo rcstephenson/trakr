@@ -3,6 +3,7 @@ export { Card, type CardProps } from './Card';
 export { Chip, type ChipProps } from './Chip';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
+export { InlineSelect, type InlineSelectProps } from './InlineSelect';
 export { Mono } from './Mono';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { SectionLabel, type SectionLabelProps } from './SectionLabel';

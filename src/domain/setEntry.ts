@@ -43,7 +43,7 @@ function toDisplayUnit(value: number, from: Unit | undefined, unit: Unit): numbe
  * acceptable for this load type. Load `none` has no weight (always 0).
  */
 function parseWeight(text: string, load: LoadType, unit: Unit): number | null {
-  if (load === 'none') return 0;
+  if (load === 'none' || load === 'completion') return 0;
   const t = text.trim().toLowerCase();
   if (load === 'bodyweight-plus' && (t === '' || t === 'bw' || t === 'bodyweight')) return 0;
   if (t === '') return null;
@@ -103,9 +103,9 @@ function num(n: number): string {
   return String(Number(n.toFixed(2)));
 }
 
-/** Canonical weight field text: `135`, `62.5`; bodyweight-plus is `bw` or `+25`; load none is ''. */
+/** Canonical weight field text: `135`, `62.5`; bodyweight-plus is `bw` or `+25`; none/completion ''. */
 export function formatWeightText(weight: number, load?: LoadType): string {
-  if (load === 'none') return '';
+  if (load === 'none' || load === 'completion') return '';
   if (load === 'bodyweight-plus') return weight === 0 ? 'bw' : `+${num(weight)}`;
   return num(weight);
 }

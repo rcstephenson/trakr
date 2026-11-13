@@ -54,6 +54,7 @@ export function formatSets(
   displayUnit: Unit,
   exercise: LoadInfo,
 ): string {
+  if (exercise?.load === 'completion') return sets.length > 0 ? 'done' : '';
   const groups: { key: string; weight: number; unit: Unit; reps: number[] }[] = [];
   for (const s of sets) {
     const key = `${s.weight}${s.unit}`;
@@ -84,6 +85,7 @@ export function formatLast(
   exercise: LoadInfo,
 ): string {
   if (sets.length === 0) return '';
+  if (exercise?.load === 'completion') return 'done';
   if (!allIdentical(sets)) return formatSets(sets, displayUnit, exercise);
   const s = sets[0];
   if (exercise?.load === 'none') return `${s.reps} reps`;

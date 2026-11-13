@@ -36,6 +36,57 @@ function previewText(parsed: ParsedEntry, load: LoadType): string {
   return `${w} × ${parsed.reps}`;
 }
 
+/**
+ * The entry for a `completion` exercise: one button that marks it done (no weight or reps), and
+ * un-marks it once done.
+ */
+function CompletionEntry(props: {
+  label: string;
+  unit: Unit;
+  completed: boolean;
+  skipped: boolean;
+  onSubmit: (parsed: ParsedEntry) => void;
+  onUnlog: () => void;
+  onUnskip?: () => void;
+}) {
+  const { label, completed, skipped } = props;
+  const action = completed
+    ? { onClick: props.onUnlog, aria: `Un-mark ${label} done` }
+    : skipped
+      ? { onClick: () => props.onUnskip?.(), aria: `Un-skip ${label}` }
+      : {
+          onClick: () => props.onSubmit({ ok: true, weight: 0, reps: 1, unit: props.unit }),
+          aria: `Mark ${label} done`,
+        };
+  return (
+    <div className="flex min-w-0 flex-1" data-testid="entry-fields">
+      <button
+        type="button"
+        onClick={action.onClick}
+        aria-label={action.aria}
+        aria-pressed={completed || skipped}
+        className={`flex h-full min-h-12 min-w-0 flex-1 items-center justify-center gap-2 font-mono text-xs font-semibold uppercase tracking-micro ${
+          completed ? 'text-accent' : 'text-muted'
+        }`}
+      >
+        {completed ? (
+          <>
+            <Check size={20} strokeWidth={3} aria-hidden="true" />
+            Done
+          </>
+        ) : skipped ? (
+          <>
+            <Minus size={20} strokeWidth={3} aria-hidden="true" />
+            Skipped
+          </>
+        ) : (
+          'Mark done'
+        )}
+      </button>
+    </div>
+  );
+}
+
 const inputBase =
   'num h-12 w-full min-w-0 bg-transparent px-1 text-center text-lg font-medium placeholder:text-sm placeholder:font-normal placeholder:text-muted focus-visible:outline-offset-[-2px]';
 
@@ -58,6 +109,20 @@ export function EntryFields(props: EntryFieldsProps) {
     if (w === null && active === weightEl.current) weightEl.current?.select();
     if (r === null && active === repsEl.current) repsEl.current?.select();
   }, [baseWeight, baseReps, w, r]);
+
+  if (load === 'completion') {
+    return (
+      <CompletionEntry
+        label={label}
+        unit={unit}
+        completed={completed}
+        skipped={!!props.skipped && !completed}
+        onSubmit={props.onSubmit}
+        onUnlog={props.onUnlog}
+        onUnskip={props.onUnskip}
+      />
+    );
+  }
 
   const weightText = w ?? baseWeight;
   const repsText = r ?? baseReps;

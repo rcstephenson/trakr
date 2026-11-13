@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Pencil } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { Card, Mono, SectionLabel } from '../ui';
-import type { Program, WorkoutTemplate } from '../../domain/types';
+import { Card, InlineSelect, Mono, SectionLabel } from '../ui';
+import { prescriptionText, slotOptions } from '../../domain/alternatives';
+import type { LoadType, Program, WorkoutItem, WorkoutTemplate } from '../../domain/types';
 
 export function SchedulePills({ program }: { program: Program }) {
   const names = new Map(program.workouts.map((w) => [w.id, w.name]));
@@ -53,6 +54,8 @@ export function WorkoutCard({
 }) {
   const names = new Map(program.exercises.map((e) => [e.id, e.name]));
   const nameOf = (id: string) => names.get(id) ?? id;
+  const loads = new Map(program.exercises.map((e) => [e.id, e.load]));
+  const loadOf = (id: string) => loads.get(id);
   const idx = index !== undefined ? String(index).padStart(2, '0') : null;
   return (
     <Card aria-label={workout.name} role="region" className="!p-0">
@@ -76,32 +79,61 @@ export function WorkoutCard({
       </div>
       <ol className="divide-y divide-hairline">
         {workout.items.map((item, i) => (
-          <li key={i} className="flex gap-3 px-3 py-2">
-            <Mono className="w-5 shrink-0 pt-0.5 text-xs text-muted">
-              {String(i + 1).padStart(2, '0')}
-            </Mono>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className={`text-sm text-ink ${item.primary ? 'font-bold' : 'font-medium'}`}>
-                  {nameOf(item.exerciseId)}
-                  {item.primary ? <span className="sr-only"> (primary lift)</span> : null}
-                </span>
-                <Mono className="shrink-0 text-xs text-ink">
-                  {item.sets} ×{' '}
-                  {item.repMin === item.repMax ? item.repMin : `${item.repMin}–${item.repMax}`}
-                </Mono>
-              </div>
-              {item.notes ? <p className="text-xs text-muted">{item.notes}</p> : null}
-              {item.alternatives.length > 0 ? (
-                <p className="text-xs text-muted">
-                  alt. {item.alternatives.map(nameOf).join(', ')}
-                </p>
-              ) : null}
-            </div>
-          </li>
+          <WorkoutItemRow key={i} item={item} index={i} nameOf={nameOf} loadOf={loadOf} />
         ))}
       </ol>
     </Card>
+  );
+}
+
+/**
+ * One exercise of a workout card. With alternatives, the name is a dropdown that previews each
+ * option's own sets, reps and notes (the swap itself happens on the session screen).
+ */
+function WorkoutItemRow({
+  item,
+  index,
+  nameOf,
+  loadOf,
+}: {
+  item: WorkoutItem;
+  index: number;
+  nameOf: (id: string) => string;
+  loadOf: (id: string) => LoadType | undefined;
+}) {
+  const options = slotOptions(item);
+  const [selectedId, setSelectedId] = useState(item.exerciseId);
+  const shown = options.find((o) => o.exerciseId === selectedId) ?? options[0];
+  const nameClass = `text-sm text-ink ${item.primary ? 'font-bold' : 'font-medium'}`;
+  return (
+    // relative: the dropdown covers the whole row, so the tap target is the full width.
+    <li className="relative flex gap-3 px-3 py-2">
+      <Mono className="w-5 shrink-0 pt-0.5 text-xs text-muted">
+        {String(index + 1).padStart(2, '0')}
+      </Mono>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="min-w-0">
+            {options.length > 1 ? (
+              <InlineSelect
+                label={`Exercise ${index + 1} and its alternatives`}
+                value={shown.exerciseId}
+                options={options.map((o) => ({ value: o.exerciseId, label: nameOf(o.exerciseId) }))}
+                onChange={setSelectedId}
+                className={nameClass}
+              />
+            ) : (
+              <span className={nameClass}>{nameOf(item.exerciseId)}</span>
+            )}
+            {item.primary ? <span className="sr-only"> (primary lift)</span> : null}
+          </span>
+          <Mono className="shrink-0 text-xs text-ink">
+            {prescriptionText(shown, loadOf(shown.exerciseId))}
+          </Mono>
+        </div>
+        {shown.notes ? <p className="text-xs text-muted">{shown.notes}</p> : null}
+      </div>
+    </li>
   );
 }
 

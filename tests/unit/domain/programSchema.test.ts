@@ -123,6 +123,55 @@ describe('parseProgram', () => {
     if (!r2.ok) expect(r2.errors).toContain('exercises[1].id: duplicate exercise id "x"');
   });
 
+  it('accepts alternatives with their own sets, reps and notes, mixed with bare ids', () => {
+    const p = clone();
+    p.exercises.push({ ...p.exercises[1], id: 'z', name: 'Z' });
+    p.workouts[0].items[0].alternatives = [
+      'y',
+      { exerciseId: 'z', sets: 4, repMin: 5, repMax: 8, notes: 'Slow eccentric' },
+      // Partial: the rest is inherited from the item.
+    ];
+    const r = parseProgram(p);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.program.workouts[0].items[0].alternatives).toEqual([
+        'y',
+        { exerciseId: 'z', sets: 4, repMin: 5, repMax: 8, notes: 'Slow eccentric' },
+      ]);
+    }
+    p.workouts[0].items[0].alternatives = [{ exerciseId: 'y', sets: 2 }];
+    expect(parseProgram(p).ok).toBe(true);
+  });
+
+  it('reports a broken alternative object', () => {
+    const p = clone();
+    p.workouts[0].items[0].alternatives = [{ exerciseId: 'ghost' }];
+    const r = parseProgram(p);
+    expect(r.ok).toBe(false);
+    if (!r.ok)
+      expect(r.errors).toContain(
+        'workouts[0].items[0].alternatives[0].exerciseId: unknown exercise "ghost" (not in the exercises list)',
+      );
+  });
+
+  it("checks an alternative's rep range after inheriting from the item", () => {
+    const p = clone();
+    // repMax 10 is inherited, so repMin 12 is out of range.
+    p.workouts[0].items[0].alternatives = [{ exerciseId: 'y', repMin: 12 }];
+    const r = parseProgram(p);
+    expect(r.ok).toBe(false);
+    if (!r.ok)
+      expect(r.errors).toContain(
+        'workouts[0].items[0].alternatives[0].repMin: repMin (12) must not be greater than repMax (10)',
+      );
+  });
+
+  it('rejects unknown fields on an alternative object', () => {
+    const p = clone();
+    p.workouts[0].items[0].alternatives = [{ exerciseId: 'y', reps: 8 }];
+    expect(parseProgram(p).ok).toBe(false);
+  });
+
   it('rejects non-object input', () => {
     const r = parseProgram(null);
     expect(r.ok).toBe(false);

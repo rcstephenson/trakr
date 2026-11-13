@@ -91,21 +91,32 @@ export async function update(id: string, patch: Partial<Omit<Session, 'id'>>): P
   });
 }
 
-/** Points a slot at a different exercise. Already logged sets keep their own exerciseId. */
+/**
+ * Points a slot at a different exercise, optionally with that exercise's own sets and rep range
+ * (a program alternative's prescription). Clears the slot's skipped mark. Already logged sets keep
+ * their own exerciseId.
+ */
 export async function swapExercise(
   id: string,
   slotIndex: number,
   exerciseId: string,
+  prescription: Partial<Pick<SessionTarget, 'sets' | 'repMin' | 'repMax'>> = {},
 ): Promise<Session> {
   return db.transaction('rw', db.sessions, db.exercises, async () => {
     const session = await db.sessions.get(id);
     if (!session) throw new Error(`Session not found: ${id}`);
     const exercise = await db.exercises.get(exerciseId);
     const targets = session.targets.map((t) =>
-      t.slotIndex === slotIndex ? { ...t, exerciseId, kind: exercise?.kind ?? t.kind } : t,
+      t.slotIndex === slotIndex
+        ? { ...t, ...prescription, exerciseId, kind: exercise?.kind ?? t.kind }
+        : t,
     );
-    await db.sessions.update(id, { targets });
-    return { ...session, targets };
+    const patch: Partial<Session> = { targets };
+    if (session.skippedSlots?.includes(slotIndex)) {
+      patch.skippedSlots = session.skippedSlots.filter((s) => s !== slotIndex);
+    }
+    await db.sessions.update(id, patch);
+    return { ...session, ...patch };
   });
 }
 

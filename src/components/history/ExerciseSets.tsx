@@ -21,6 +21,7 @@ export interface ExerciseSetsProps {
 }
 
 function setText(s: SetEntry, exercise: Exercise | undefined, settings: Settings): string {
+  if (exercise?.load === 'completion') return 'Done';
   if (exercise?.load === 'none') return `${s.reps} reps`;
   const w = formatWeight(s.weight, s.unit, settings.unit, {
     perHand: exercise?.load === 'per-hand',

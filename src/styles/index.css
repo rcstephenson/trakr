@@ -29,6 +29,9 @@
   /* Primary buttons: ink on paper (light), accent fill (dark). */
   --primary: #0a0e14;
   --on-primary: #f8fafb;
+  /* Primary lifts on the session screen: vibrant blue (AA as text on surface) and a faint tint. */
+  --lift: #1a5ae6;
+  --lift-tint: #eaf1ff;
   --scrim: rgb(10 14 20 / 0.5);
   color-scheme: light;
 }
@@ -52,6 +55,8 @@
   --grid-both: #a07cff;
   --primary: #c6ff3d;
   --on-primary: #0a0c10;
+  --lift: #4d94ff;
+  --lift-tint: #121d31;
   --scrim: rgb(0 0 0 / 0.65);
   color-scheme: dark;
 }

@@ -14,11 +14,11 @@
       "muscles": ["chest", "triceps", "front-delts"]
     },
     {
-      "id": "machine-chest-press",
-      "name": "Machine Chest Press",
-      "equipment": "machine",
+      "id": "dumbbell-bench-press",
+      "name": "Dumbbell Bench Press",
+      "equipment": "dumbbell",
       "kind": "compound",
-      "load": "total",
+      "load": "per-hand",
       "muscles": ["chest", "triceps", "front-delts"]
     },
     {
@@ -89,7 +89,16 @@
           "repMin": 6,
           "repMax": 10,
           "notes": "Notes are shown on the exercise during a session.",
-          "alternatives": ["machine-chest-press", "incline-dumbbell-press"],
+          "alternatives": [
+            "dumbbell-bench-press",
+            {
+              "exerciseId": "incline-dumbbell-press",
+              "sets": 3,
+              "repMin": 8,
+              "repMax": 12,
+              "notes": "An alternative can have its own sets, reps and notes."
+            }
+          ],
           "primary": true
         },
         {
