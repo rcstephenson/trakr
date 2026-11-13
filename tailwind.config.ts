@@ -25,7 +25,6 @@ export default {
         'grid-empty': 'var(--grid-empty)',
         'grid-workout': 'var(--grid-workout)',
         'grid-activity': 'var(--grid-activity)',
-        'grid-both': 'var(--grid-both)',
       },
       // Accent-coloured text and lines use accent-ink (AA on Paper); fills keep the lime.
       textColor: { accent: 'var(--accent-ink)' },

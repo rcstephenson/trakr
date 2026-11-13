@@ -639,7 +639,7 @@ The cells are separate rounded squares: one `<ol>` is a CSS grid (`grid-flow-col
 | `none` (nothing logged) | `bg-grid-empty` | `#e4e9ee` | `#1a2029` |
 | `workout` (gym session) | `bg-grid-workout` (electric blue, pairs with the lime) | `#1f6bff` | `#3d8bff` |
 | `activity` (any other activity) | `bg-grid-activity` (magenta) | `#e8388a` | `#ff5fa2` |
-| `both` (session and activity) | `bg-grid-both` (violet, between the two) | `#8250f0` | `#a07cff` |
+| `both` (session and activity) | `bg-grid-both` (diagonal split: workout blue top-left, activity magenta bottom-right; a CSS utility, not a colour token) | — | — |
 
 The grid tokens are used only here. Today's cell gets a 1px `outline-ink` ring with a 1px offset, drawn into the gap. Colour is not the only carrier: each cell has its own `aria-label` ("Wednesday, Jan 15 (today): workout done and activity logged").
 

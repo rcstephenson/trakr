@@ -34,7 +34,7 @@ const DESCRIPTION: Record<DayState, string> = {
 
 /**
  * GitHub-style contribution grid: `weeks` columns of Mon-Sun. Gym workouts are blue, other
- * activities magenta, and a day with both is violet.
+ * activities magenta, and a day with both is split diagonally: blue top-left, magenta bottom-right.
  */
 export function ActivityGrid({ today, sessions, activities, weeks = 14 }: ActivityGridProps) {
   const firstWeekStart = startOfWeek(today);
